@@ -3,8 +3,9 @@
 #include <lwk/sched.h>
 
 
-#include "call.h"
-#include "ffa.h"
+#include <arch/hafnium/call.h>
+#include <arch/hafnium/ffa.h>
+
 #include "transport.h"
 #include "hf.h"
 

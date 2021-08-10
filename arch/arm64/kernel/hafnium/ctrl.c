@@ -8,13 +8,13 @@
 #include <lwk/driver.h>
 #include <lwk/string.h>
 
-#include "call.h"
-#include "ffa.h"
-#include "transport.h"
-#include "types.h"
+#include <arch/hafnium/call.h>
+#include <arch/hafnium/ffa.h>
+#include <arch/hafnium/types.h>
+
 #include "ctrl.h"
 #include "hf.h"
-
+#include "transport.h"
 
 
 
@@ -138,6 +138,8 @@ __init_hypervisor()
 		ret = -ENOMEM;
 		goto fail_with_cleanup;
 	}
+
+	printk("Hafnium found %d VMs\n", hf_vm_get_count());
 
 
     if (hf_vm_get_count() < 2) {

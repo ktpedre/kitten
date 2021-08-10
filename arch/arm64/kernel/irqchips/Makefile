@@ -1,1 +1,1 @@
-obj-y += gic2.o gic3.o bcm2836.o
+obj-y += gic2.o gic3.o bcm2836.o hafnium_vintc.o
