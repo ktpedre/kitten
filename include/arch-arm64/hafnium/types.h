@@ -35,43 +35,41 @@ typedef phys_addr_t hf_ipaddr_t;
 #include <stddef.h>
 #include <stdint.h>
 
+
+
 typedef uintptr_t hf_ipaddr_t;
 
 #endif
 
-#define HF_HYPERVISOR_VM_ID (0)
-
-/**
- * An offset to use when assigning VM IDs.
- * The offset is needed because VM ID 0 is reserved.
- */
-#define HF_VM_ID_OFFSET     (1)
-
-/**
- * The index and ID of the primary VM, which is responsible for scheduling.
- *
- * These are not equal because ID 0 is reserved for the hypervisor itself.
- * Primary VM therefore gets ID 1 and all other VMs come after that.
- */
-#define HF_PRIMARY_VM_INDEX (0)
-#define HF_PRIMARY_VM_ID    (HF_VM_ID_OFFSET + HF_PRIMARY_VM_INDEX)
-
-/**
- * The special VM ID reserved for the OS running in the trusted execution
- * environment, e.g. secure EL1 on AArch64.
- */
-#define HF_TEE_VM_ID              (0x8000)
+#include <arch/hafnium/vmid_base.h>
+#include <arch/hafnium/vm_ids.h>
 
 /** Sleep value for an indefinite period of time. */
-#define HF_SLEEP_INDEFINITE       (0xffffffffffffffff)
+#define HF_SLEEP_INDEFINITE 0xffffffffffffffff
 
 /** The amount of data that can be sent to a mailbox. */
-#define HF_MAILBOX_SIZE           (4096)
+#define HF_MAILBOX_SIZE 4096
 
+/** The number of virtual interrupt IDs which are supported. */
+#define HF_NUM_INTIDS 64
 
-#define HF_NUM_INTIDS             (64)         /** The number of virtual interrupt IDs which are supported.  */
+/** Interrupt ID returned when there is no interrupt pending. */
+#define HF_INVALID_INTID 0xffffffff
 
-#define HF_INVALID_INTID          0xffffffff /** Interrupt ID returned when there is no interrupt pending. */
-#define HF_MAILBOX_READABLE_INTID 1          /** Interrupt ID indicating the mailbox is readable.          */
-#define HF_MAILBOX_WRITABLE_INTID 2          /** Interrupt ID indicating a mailbox is writable.            */
-#define HF_VIRTUAL_TIMER_INTID    3          /** The virtual interrupt ID used for the virtual timer.      */
+/** Interrupt ID indicating the mailbox is readable. */
+#define HF_MAILBOX_READABLE_INTID 1
+
+/** Interrupt ID indicating a mailbox is writable. */
+#define HF_MAILBOX_WRITABLE_INTID 2
+
+/** The virtual interrupt ID used for the virtual timer. */
+#define HF_VIRTUAL_TIMER_INTID 3
+
+/** The virtual interrupt ID used for managed exit. */
+#define HF_MANAGED_EXIT_INTID 4
+
+/** Type of interrupts */
+enum interrupt_type {
+	INTERRUPT_TYPE_IRQ,
+	INTERRUPT_TYPE_FIQ,
+};

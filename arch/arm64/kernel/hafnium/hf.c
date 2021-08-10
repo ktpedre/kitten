@@ -5,6 +5,7 @@
 
 #include <arch/hafnium/call.h>
 #include <arch/hafnium/ffa.h>
+#include <arch/hafnium/types.h>
 
 #include "transport.h"
 #include "hf.h"
@@ -12,9 +13,10 @@
 
 
 
-struct hf_vm   * hf_vms;
+struct hf_vm   * hf_vms = NULL;
 ffa_vm_count_t   hf_vm_count;
 
+extern struct ffa_partition_info * partition_info;
 
 
 int64_t 
@@ -88,12 +90,12 @@ hf_vcpu_sleep(struct hf_vcpu * vcpu)
 static struct hf_vm *
 hf_vm_from_id(ffa_vm_id_t vm_id)
 {
-	if ((vm_id <  FIRST_SECONDARY_VM_ID) ||
-	    (vm_id >= FIRST_SECONDARY_VM_ID + hf_vm_count)) {
+	if ((vm_id <  HF_PRIMARY2_VM_INDEX) ||
+	    (vm_id >= HF_PRIMARY2_VM_INDEX + hf_vm_count)) {
 		return NULL;
 	}
 
-	return &hf_vms[vm_id - FIRST_SECONDARY_VM_ID];
+	return &hf_vms[vm_id - HF_PRIMARY2_VM_INDEX];
 }
 
 static int 
@@ -274,8 +276,9 @@ hf_launch_vm(ffa_vm_id_t vm_id)
     int ret;
 
     /* Adjust the index as only the secondaries are tracked. */
-    vm->id         = vm_id;
-    vm->vcpu_count = hf_vcpu_get_count(vm->id);
+    vm->id         = partition_info[vm_id + 1].vm_id;
+    vm->vcpu_count = partition_info[vm_id + 1].vcpu_count;
+	
     vm->vcpu       = kmem_alloc(vm->vcpu_count * sizeof(struct hf_vcpu));
 
     if (vm->vcpu == NULL) {

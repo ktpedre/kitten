@@ -23,19 +23,20 @@
 /* clang-format off */
 
 /* TODO: Define constants below according to spec. */
-#define HF_VM_GET_COUNT                0xff01
-#define HF_VCPU_GET_COUNT              0xff02
-#define HF_MAILBOX_WRITABLE_GET        0xff03
-#define HF_MAILBOX_WAITER_GET          0xff04
-#define HF_INTERRUPT_ENABLE            0xff05
-#define HF_INTERRUPT_GET               0xff06
-#define HF_INTERRUPT_INJECT            0xff07
+#define HF_MAILBOX_WRITABLE_GET        0xff01
+#define HF_MAILBOX_WAITER_GET          0xff02
+#define HF_INTERRUPT_ENABLE            0xff03
+#define HF_INTERRUPT_GET               0xff04
+#define HF_INTERRUPT_INJECT            0xff05
 
 /* Custom FF-A-like calls returned from FFA_RUN. */
-#define HF_FFA_RUN_WAIT_FOR_INTERRUPT  0xff09
-#define HF_FFA_RUN_WAKE_UP             0xff0a
+#define HF_FFA_RUN_WAIT_FOR_INTERRUPT 0xff06
+#define HF_FFA_RUN_WAKE_UP            0xff07
 
-/* This matches what Trusty and its ATF module currently use. */
-#define HF_DEBUG_LOG                   0xbd000000
+#define HF_PIN_VM 0xff08
+
+/* This matches what Trusty and its TF-A module currently use. */
+#define HF_DEBUG_LOG            0xbd000000
+
 
 /* clang-format on */

@@ -12,10 +12,6 @@
 #define CONFIG_HAFNIUM_MAX_VMS   (16)
 #define CONFIG_HAFNIUM_MAX_VCPUS (32)
 
-#define HF_VM_ID_BASE            (0)
-#define PRIMARY_VM_ID            (HF_VM_ID_OFFSET + 0)
-#define PRIMARY2_VM_ID   		 (HF_VM_ID_OFFSET + 1)
-#define FIRST_SECONDARY_VM_ID    (HF_VM_ID_OFFSET + 2)
 
 
 struct hf_vcpu {

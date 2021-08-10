@@ -20,12 +20,11 @@
 
 #define HAFNIUM_CMD_PATH "/dev/hafnium"
 static char * options = NULL;
-
+struct ffa_partition_info * partition_info = NULL;
 
 
 static void           * hf_send_page;
 static void           * hf_recv_page;
-
 
 #if 0
 static atomic64_t       hf_next_port = ATOMIC64_INIT(0);
@@ -37,6 +36,19 @@ static DEFINE_SPINLOCK(hf_send_lock);
 //static DEFINE_HASHTABLE(hf_local_port_hash, 7);
 static DEFINE_SPINLOCK(hf_local_port_hash_lock);
 #endif
+
+/**
+ * Print the error code of the given FF-A value if it is an error, or the
+ * function ID otherwise.
+ */
+static void print_ffa_error(struct ffa_value ffa_ret)
+{
+	if (ffa_ret.func == FFA_ERROR_32)
+		printk("FF-A error code %d\n", ffa_ret.arg2);
+	else
+		printk("Unexpected FF-A function %#x\n", ffa_ret.func);
+}
+
 
 static void 
 hf_free_resources(void)
@@ -92,6 +104,10 @@ __init_hypervisor()
 	struct ffa_value ffa_ret;
 	int64_t          ret;
 
+	struct ffa_uuid null_uuid;
+	ffa_vm_count_t secondary_vm_count;
+	const struct ffa_partition_info *partition_info;
+
 	printk("Setting up Hafnium environment\n");
 
 	/* Allocate a page for send and receive buffers. */
@@ -131,26 +147,37 @@ __init_hypervisor()
 	}
 
 
-	/* Only track the secondary VMs. */
-	hf_vms = kmem_alloc(CONFIG_HAFNIUM_MAX_VMS * sizeof(struct hf_vm));
 
-	if (hf_vms == NULL) {
-		ret = -ENOMEM;
+
+	/* Get information about secondary VMs. */
+	ffa_uuid_init(0, 0, 0, 0, &null_uuid);
+	ffa_ret = ffa_partition_info_get(&null_uuid);
+	if (ffa_ret.func != FFA_SUCCESS_32) {
+		pr_err("Unable to get VM information.\n");
+		print_ffa_error(ffa_ret);
+		ret = -EIO;
+		goto fail_with_cleanup;
+	}
+	secondary_vm_count = ffa_ret.arg2 - 1;
+
+	partition_info = kmem_get_pages(0);
+	memcpy(partition_info, hf_recv_page, PAGE_SIZE_4KB);
+
+
+	printk("Hafnium found %d VMs\n", secondary_vm_count);
+
+	/* Validate the number of VMs. There must at least be the primary. */
+	if (secondary_vm_count > CONFIG_HAFNIUM_MAX_VMS - 1) {
+		pr_err("Number of VMs is out of range: %d\n",
+		       secondary_vm_count);
+		ret = -EDQUOT;
 		goto fail_with_cleanup;
 	}
 
-	printk("Hafnium found %d VMs\n", hf_vm_get_count());
-
-
-    if (hf_vm_get_count() < 2) {
-        pr_err("Primary2 VM missing from manifest\n");
-        ret = -EINVAL;
-        goto fail_with_cleanup;
-    }
 
 	/* Start the Admin VM */
     printk("Launching Admin VM\n");
-    if (hf_launch_vm(PRIMARY2_VM_ID) != 0) {
+    if (hf_launch_vm(HF_PRIMARY2_VM_ID) != 0) {
         pr_err("Could not launch Primary2 VM\n");
         ret = -EFAULT;
         goto fail_with_cleanup;
