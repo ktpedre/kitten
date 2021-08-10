@@ -13,7 +13,8 @@ typedef enum {
 
 
 struct arch_irq {
-	enum {ARCH_IRQ_IPI,
+	enum {ARCH_IRQ_INVALID,
+		  ARCH_IRQ_IPI,
 	      ARCH_IRQ_EXT} type;
 
 	uint32_t vector;

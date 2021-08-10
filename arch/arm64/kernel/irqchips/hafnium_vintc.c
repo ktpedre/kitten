@@ -69,7 +69,12 @@ __hafnium_vintc_ack_irq(void)
 {
    	struct arch_irq irq = {.vector = hf_interrupt_get()};
 
-	if (irq.vector < 16) {
+	printk("Hafnium ACKED IRQ %d\n", irq.vector);
+
+
+	if (irq.vector == -1) {
+		irq.type = ARCH_IRQ_INVALID;
+	} else if (irq.vector < 16) {
 		irq.type = ARCH_IRQ_IPI;
 	} else {
 		irq.type = ARCH_IRQ_EXT;
@@ -150,7 +155,7 @@ __hafnium_vintc_parse_irqs(struct device_node *  dt_node,
 
 	irq_cells = be32_to_cpup(ip);
 
-	if (irq_cells != 2) {
+	if (irq_cells != 3) {
 		printk("Interrupt Cell size of (%d) is not supported\n", irq_cells);
 		goto err;
 	}

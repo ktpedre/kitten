@@ -112,12 +112,16 @@ handle_irq(struct pt_regs * regs)
 
 	irqreturn_t ret = IRQ_NONE;
 
-	//	printk(">> Hardware IRQ!!!! [%d]\n", irq.vector);
+	printk(">> Hardware IRQ!!!! [%d]\n", irq.vector);
+
+
 
 	if (irq.type == ARCH_IRQ_EXT) {
 		irqvec_table[irq.vector](regs, irq.vector);
 	} else if (irq.type == ARCH_IRQ_IPI) {
 		ipivec_table[irq.vector](regs, irq.vector);
+	} else if (irq.type == ARCH_IRQ_INVALID) {
+		printk("Received Spurious IRQ\n");
 	}
  	
 	irqchip_do_eoi(irq);
