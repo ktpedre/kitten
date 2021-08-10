@@ -86,6 +86,18 @@ __hypervisor_tick(int irq, void * dev_id)
 	return IRQ_HANDLED;
 }
 
+static void 
+__reload_virt_timer()
+{
+	uint64_t curr_cnt  = mrs(CNTVCT_EL0);
+	uint64_t reset_val = 0;
+
+	reset_val = read_pda(timer_reload_value);
+
+	printk("Reloading Timer with %lld at %lld\n", reset_val, curr_cnt);
+	msr(CNTV_TVAL_EL0, reset_val);
+}
+
 static irqreturn_t 
 __virt_timer_tick(int irq, void * dev_id)
 {
@@ -100,7 +112,7 @@ __virt_timer_tick(int irq, void * dev_id)
 	// the next return to user-space
 	set_bit(TF_NEED_RESCHED_BIT, &current->arch.flags);
 
-	__reload_timer();
+	__reload_virt_timer();
 
 	msr(CNTV_CTL_EL0, 1);
 
@@ -125,8 +137,10 @@ __armv8_timer_core_init()
 static void
 __armv8_virt_timer_core_init()
 {
-	irq_request(timer_irqs[IRQ_IDX_VIRTUAL].vector, __virt_timer_tick, 0, "timer", NULL);
-	irqchip_enable_irq(timer_irqs[IRQ_IDX_VIRTUAL].vector, timer_irqs[IRQ_IDX_VIRTUAL].mode);
+	printk("Enabling IRQ %d for virtual Timer\n", 3);
+
+	irq_request(3, __virt_timer_tick, 0, "timer", NULL);
+	irqchip_enable_irq(3, timer_irqs[IRQ_IDX_VIRTUAL].mode);
 }
 
 
