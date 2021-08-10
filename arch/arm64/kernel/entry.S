@@ -279,7 +279,7 @@ el1_da:
 	 * Data abort handling
 	 */
 	mrs	x0, far_el1
-	enable_dbg_if_not_stepping x2
+	//enable_dbg_if_not_stepping x2
 	// re-enable interrupts if they were enabled in the aborted context
 	tbnz	x23, #7, 1f			// PSR_I_BIT
 	enable_irq
@@ -327,7 +327,7 @@ ENDPROC(el1_sync)
 	.align	6
 el1_irq:
 	kernel_entry 1
-	enable_dbg_if_not_stepping x0
+//	enable_dbg_if_not_stepping x0
 #ifdef CONFIG_TRACE_IRQFLAGS
 	bl	trace_hardirqs_off
 #endif
@@ -356,7 +356,7 @@ ENDPROC(el1_irq)
 el1_preempt:
 	b .
 	mov	x24, lr
-1:	enable_dbg
+1:	// enable_dbg
 	bl	preempt_schedule_irq		// irq en/disable is done inside
 	ldr	x0, [tsk, #TI_FLAGS]		// get new tasks TI_FLAGS
 	tbnz	x0, #TIF_NEED_RESCHED, 1b	// needs rescheduling?
@@ -436,9 +436,9 @@ el0_da:
 	 * Data abort handling
 	 */
 	mrs	x0, far_el1
-	disable_step x1
+//	disable_step x1
 	isb
-	enable_dbg
+	//enable_dbg
 	// enable interrupts before calling the main handler
 	enable_irq
 	mov	x1, x25
@@ -450,9 +450,9 @@ el0_ia:
 	 * Instruction abort handling
 	 */
 	mrs	x0, far_el1
-	disable_step x1
+//	disable_step x1
 	isb
-	enable_dbg
+	//enable_dbg
 	// enable interrupts before calling the main handler
 	enable_irq
 	orr	x1, x25, #1 << 24		// use reserved ISS bit for instruction aborts
@@ -480,7 +480,7 @@ el0_sp_pc:
 	mrs	x0, far_el1
 	disable_step x1
 	isb
-	enable_dbg
+	//enable_dbg
 	// enable interrupts before calling the main handler
 	enable_irq
 	mov	x1, x25
@@ -498,7 +498,7 @@ el0_dbg:
 	 */
 	tbnz	x24, #0, el0_inv		// EL0 only
 	mrs	x0, far_el1
-	disable_step x1
+//	disable_step x1
 	mov	x1, x25
 	mov	x2, sp
 	b	. //do_debug_exception
@@ -513,9 +513,9 @@ ENDPROC(el0_sync)
 el0_irq:
 	kernel_entry 0
 el0_irq_naked:
-	disable_step x1
+//	disable_step x1
 	isb
-	enable_dbg
+	//enable_dbg
 #ifdef CONFIG_TRACE_IRQFLAGS
 	bl	trace_hardirqs_off
 #endif
@@ -611,7 +611,7 @@ work_pending:
 	//bl	do_notify_resume
 	b	ret_to_user
 work_resched:
-	enable_dbg
+	//enable_dbg
 	bl	schedule
 
 /*
@@ -623,7 +623,7 @@ ret_to_user:
 	and	x2, x1, #_TIF_WORK_MASK
 	cbnz	x2, work_pending
 	tbz	x1, #TIF_SINGLESTEP, no_work_pending
-	disable_dbg
+	//disable_dbg
 	enable_step x2
 no_work_pending:
 	kernel_exit 0, ret = 0
@@ -651,9 +651,9 @@ el0_svc:
 	mov	sc_nr, #__NR_syscall_max //__NR_syscall_max
 el0_svc_naked:					// compat entry point
 	stp	x0, scno, [sp, #S_ORIG_X0]	// save the original x0 and syscall number
-	disable_step x16
+//	disable_step x16
 	isb
-	enable_dbg
+	//enable_dbg
 	enable_irq
 
 	get_thread_info tsk
