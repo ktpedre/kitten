@@ -1,1 +1,1 @@
-obj-y += armv7.o armv8.o
+obj-y += armv7.o armv8.o hafnium.o

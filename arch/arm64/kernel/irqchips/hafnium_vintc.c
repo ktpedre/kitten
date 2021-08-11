@@ -167,37 +167,29 @@ __hafnium_vintc_parse_irqs(struct device_node *  dt_node,
 
 	irq_cells = be32_to_cpup(ip);
 
-	if (irq_cells != 3) {
+	if (irq_cells != 1) {
 		printk("Interrupt Cell size of (%d) is not supported\n", irq_cells);
 		goto err;
 	}
 	
 
 	for (i = 0; i < num_irqs; i++) {
-		uint32_t type   = 0;
 		uint32_t vector = 0;
-		uint32_t mode   = 0;
 		
-		ret |= of_property_read_u32_index(dt_node, "interrupts", &type,   (i * 3));
-		ret |= of_property_read_u32_index(dt_node, "interrupts", &vector, (i * 3) + 1);
+		ret |= of_property_read_u32_index(dt_node, "interrupts", &vector, i);
 
 		if (ret != 0) {
 			printk("Failed to fetch interrupt cell\n");
 			goto err;
 		}
 
+		printk("Fetched interrupt;  vector = %d\n", vector);
 
-		irqs[i].mode = IRQ_EDGE_TRIGGERED;
+		irqs[i].mode   = IRQ_EDGE_TRIGGERED;
+		irqs[i].vector = vector;
 
-
-		if (type == GIC_PPI) {
-			irqs[i].vector = vector + PPI_VECTOR_START;
-		} else if (type == GIC_SPI) {
-			irqs[i].vector = vector + SPI_VECTOR_START;
-		} else {
-			panic("Invalid IRQ Type\n");
-		}
 	}
+
 
 	return 0;
 

@@ -25,10 +25,6 @@
   */
 static struct irq_def timer_irqs[4];
 
-/* 
- * Indicates whether the kernel is running as a VM, and should use the VIRTUAL timer
- */
-static int is_virtual = 0;
 
 struct cntp_ctl_el0 {
     union {
@@ -86,40 +82,7 @@ __hypervisor_tick(int irq, void * dev_id)
 	return IRQ_HANDLED;
 }
 
-static void 
-__reload_virt_timer()
-{
-	uint64_t curr_cnt  = mrs(CNTVCT_EL0);
-	uint64_t reset_val = 0;
 
-	reset_val = read_pda(timer_reload_value);
-
-	printk("Reloading Timer with %lld at %lld\n", reset_val, curr_cnt);
-	msr(CNTV_TVAL_EL0, reset_val);
-}
-
-static irqreturn_t 
-__virt_timer_tick(int irq, void * dev_id)
-{
-
-	printk("Tick!\n");
-
-	msr(CNTV_CTL_EL0, 0);
-
-	expire_timers();
-
-	// This causes schedule() to be called right before
-	// the next return to user-space
-	set_bit(TF_NEED_RESCHED_BIT, &current->arch.flags);
-
-	__reload_virt_timer();
-
-	msr(CNTV_CTL_EL0, 1);
-
-
-	return IRQ_HANDLED;
-
-}
 
 
 static void
@@ -132,14 +95,6 @@ __armv8_timer_core_init()
 	irqchip_enable_irq(timer_irqs[IRQ_IDX_HYPERVISOR].vector, timer_irqs[IRQ_IDX_HYPERVISOR].mode);
 
 	
-}
-
-static void
-__armv8_virt_timer_core_init()
-{
-
-	irq_request(3, __virt_timer_tick, 0, "timer", NULL);
-	irqchip_enable_irq(3, timer_irqs[IRQ_IDX_VIRTUAL].mode);
 }
 
 
@@ -177,39 +132,6 @@ __armv8_timer_set_timer_freq(unsigned int hz)
 	return;
 }
 
-//CNTVCT_EL0
-//CNTV_CVAL_EL0
-//CNTV_TVAL_EL0
-//CNTV_CTL_EL0
-//Poll CTP_CTL_EL0
-static void
-__armv8_virt_timer_set_timer_freq(unsigned int hz)
-{
-
-	struct cntp_ctl_el0 cntv_ctl_el0 = {mrs(CNTV_CTL_EL0)};
-
-	uint32_t cpu_hz    = (u32)mrs(CNTFRQ_EL0);
-	uint64_t reset_val = cpu_hz / (hz);
-
-	printk("Setting timer frequency to %d HZ\n", hz);
-	printk("Setting Timer countdown value to %d\n", reset_val);
-	printk("CTL initial value=%x\n", cntv_ctl_el0.val);
-
-	cntv_ctl_el0.irq_mask = 0;
-	cntv_ctl_el0.enabled  = 0;
-	msr(CNTV_CTL_EL0, cntv_ctl_el0.val);
-
-
-	msr(CNTV_TVAL_EL0, reset_val);
-	write_pda(timer_reload_value, reset_val);
-
-	cntv_ctl_el0.enabled = 1;
-	msr(CNTV_CTL_EL0, cntv_ctl_el0.val);
-
-	printk("Timer Enabled and running\n");
-
-	return;
-}
 
 static struct arch_timer armv8_timer = {
 	.name               = "ARMv8",
@@ -219,12 +141,6 @@ static struct arch_timer armv8_timer = {
 };
 
 
-static struct arch_timer armv8_virt_timer = {
-	.name               = "ARMv8",
-	.dt_node            = NULL,
-	.core_init          = __armv8_virt_timer_core_init,
-	.set_timer_freq     = __armv8_virt_timer_set_timer_freq
-};
 
 void
 armv8_timer_init( struct device_tree * dt_node )
@@ -247,12 +163,6 @@ armv8_timer_init( struct device_tree * dt_node )
 		panic("Could not parse Timer IRQ info\n");
 	}
 
-	hypervisor_prop = of_find_property(dt_node, "hypervisor", &prop_len);
-
-	if (hypervisor_prop != NULL) {
-		is_virtual = 1;
-	}
-
 	/*
 	 * Cache the CPU frequency
 	 */
@@ -270,10 +180,7 @@ armv8_timer_init( struct device_tree * dt_node )
 	);
 
 	armv8_timer.dt_node = dt_node;
-	if (is_virtual) {
-		arch_timer_register(&armv8_virt_timer);
-	} else {
-		arch_timer_register(&armv8_timer);
-	}
+	arch_timer_register(&armv8_timer);
+
 }
 

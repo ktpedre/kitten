@@ -19,10 +19,12 @@ DEFINE_PER_CPU(struct arch_timer, arch_timer);
 
 extern int armv7_timer_init(struct device_node * dt_node);
 extern int armv8_timer_init(struct device_node * dt_node);
+extern int hafnium_timer_init(struct device_node * dt_node);
 
 static const struct of_device_id timer_of_match[]  = {
-	{ .compatible = "arm,armv8-timer",	.data = armv8_timer_init},
-	{ .compatible = "arm,armv7-timer",	.data = armv7_timer_init},
+	{ .compatible = "arm,armv8-timer",   .data = armv8_timer_init},
+	{ .compatible = "arm,armv7-timer",	 .data = armv7_timer_init},
+	{ .compatible = "arm,hafnium-timer", .data = hafnium_timer_init},
 	{},
 };
 
