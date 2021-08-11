@@ -137,7 +137,6 @@ __armv8_timer_core_init()
 static void
 __armv8_virt_timer_core_init()
 {
-	printk("Enabling IRQ %d for virtual Timer\n", 3);
 
 	irq_request(3, __virt_timer_tick, 0, "timer", NULL);
 	irqchip_enable_irq(3, timer_irqs[IRQ_IDX_VIRTUAL].mode);

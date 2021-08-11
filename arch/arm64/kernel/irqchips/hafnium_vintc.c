@@ -56,10 +56,11 @@ __hafnium_vintc_enable_irq(uint32_t           irq_num,
         panic("only edge triggered interrupts supported in hafnium\n");
     }
 
-	printk("Hafnium enabling IRQ %d\n", irq_num);
     ret = hf_interrupt_enable(irq_num, true, INTERRUPT_TYPE_IRQ);
 
-	printk("nf_interrupt_enable() returned %d\n", ret);
+	if (ret != 0) {
+		printk("ERROR: Could not enable IRQ %d\n", irq_num);
+	}
 }
 
 
@@ -82,7 +83,8 @@ __hafnium_vintc_ack_irq(void)
 	} else if (irq.vector < 16) {
 		irq.type = ARCH_IRQ_EXT;
 	} else {
-		irq.type = ARCH_IRQ_IPI;
+		irq.type    = ARCH_IRQ_IPI;
+		irq.vector -= 16;
 	}
 
     return irq;
@@ -106,7 +108,12 @@ __hafnium_vintc_send_ipi(int target_cpu, uint32_t vector)
 static int 
 __hafnium_vintc_core_init()
 {
+	int i = 0;
 
+
+	for (i = 0; i < 16; i++) {
+	    hf_interrupt_enable(16 + i, true, INTERRUPT_TYPE_IRQ);
+	}
 
 }
 
