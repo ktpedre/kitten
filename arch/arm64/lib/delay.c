@@ -20,12 +20,14 @@ void __delay(unsigned long cycles)
 	uint64_t bclock, now;
 
 	// rdtscl(bclock);
-	bclock = mrs(CNTPCT_EL0);
+	// bclock = mrs(CNTPCT_EL0);
+	bclock = mrs(pmccntr_el0);
 	do
 	{
 		rep_nop(); 
-		now = mrs(CNTPCT_EL0);
-		//rdtscl(now);
+		// rdtscl(now);
+		// now = mrs(CNTPCT_EL0);
+		now = mrs(pmccntr_el0);
 	}
 	while((now - bclock) < cycles);
 }
