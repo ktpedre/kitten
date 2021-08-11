@@ -28,14 +28,18 @@ irqchip_local_init(void)
 extern int gic3_global_init(struct device_node * dt_node);
 extern int gic2_global_init(struct device_node * dt_node);
 extern int bcm2836_global_init(struct device_node * dt_node);
+#ifdef CONFIG_HAFNIUM
 extern int hafnium_vintc_global_init(struct device_node * dt_node);
+#endif
 
 static const struct of_device_id intr_ctrlr_of_match[]  = {
 	{ .compatible = "arm,gic-v3",				.data = gic3_global_init},	          // Qemu w/ gic-version=3
 	{ .compatible = "arm,gic-400",				.data = gic2_global_init},            // Pine A64
 	{ .compatible = "arm,cortex-a15-gic",		.data = gic2_global_init},	          // Qemu default
 	{ .compatible = "brcm,bcm2836-l1-intc",		.data = bcm2836_global_init},         // Raspberry Pi 3
+#ifdef CONFIG_HAFNIUM
 	{ .compatible = "hafnium,vintc",		    .data = hafnium_vintc_global_init},   // Hafnium
+#endif
 	{},
 };
 
