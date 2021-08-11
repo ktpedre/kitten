@@ -18,6 +18,7 @@ struct arch_irq {
 	      ARCH_IRQ_EXT} type;
 
 	uint32_t vector;
+	uint64_t eoi_val; 
 };
 
 struct irqchip {

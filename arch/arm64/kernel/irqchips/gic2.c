@@ -127,17 +127,17 @@ __gicc_setup()
 
 	// clear outstanding irqs
 	while (1) {
-		struct gicc_iar irq = {0};
+		struct gicc_iar iar = {0};
 
-		irq.val = __gicc_read32(GICC_IAR_OFFSET);
+		iar.val = __gicc_read32(GICC_IAR_OFFSET);
 
-		if (irq.intid == GIC2_SPURIOUS_IRQ) {
+		if (iar.intid == GIC2_SPURIOUS_IRQ) {
 			break;
 		}
 
-		printk("Clearing IRQ %d\n", irq.intid);
+		printk("Clearing IRQ %d\n", iar.intid);
 
-		__gicc_write32(GICC_EOIR_OFFSET, irq.val);
+		__gicc_write32(GICC_EOIR_OFFSET, iar.val);
 	}
 
 	ctlr.enable_grp1 = 1;
@@ -219,13 +219,19 @@ __gic2_disable_irq(uint32_t vector)
 static struct arch_irq 
 __gic2_ack_irq(void)
 {
-	struct arch_irq irq = {.vector = __gicc_read32(GICC_IAR_OFFSET)};
+	struct gicc_iar iar = {.val = __gicc_read32(GICC_IAR_OFFSET)};
+	struct arch_irq irq;
+
+	irq.vector  = iar.intid;
 
 	if (irq.vector < 16) {
 		irq.type = ARCH_IRQ_IPI;
 	} else {
 		irq.type = ARCH_IRQ_EXT;
 	}
+
+	irq.eoi_val = iar.val;
+
 
 	return irq;
 }
@@ -234,7 +240,7 @@ static void
 __gic2_do_eoi(struct arch_irq irq)
 {
 	ASSERT((irq.vector & 0xff000000) == 0);
-	__gicc_write32(GICC_EOIR_OFFSET, irq.vector);
+	__gicc_write32(GICC_EOIR_OFFSET, irq.eoi_val);
 }
 
 

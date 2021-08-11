@@ -345,8 +345,9 @@ struct gicc_aeoir {
 	union {
 		uint32_t val;
 		struct {
-			uint32_t intid : 24;
-			uint32_t res0  : 8;
+			uint32_t intid : 10;
+			uint32_t cpuid : 3;
+			uint32_t res0  : 19;
 		};
 	};
 } __attribute__((packed));
@@ -356,8 +357,9 @@ struct gicc_ahppir {
 	union {
 		uint32_t val;
 		struct {
-			uint32_t intid : 24;
-			uint32_t res0  : 8;
+			uint32_t intid : 10;
+			uint32_t cpuid : 3;
+			uint32_t res0  : 19;
 		};
 	};
 } __attribute__((packed));
@@ -368,8 +370,9 @@ struct gicc_aiar {
 	union {
 		uint32_t val;
 		struct {
-			uint32_t intid : 24;
-			uint32_t res0  : 8;
+			uint32_t intid : 10;
+			uint32_t cpuid : 3;
+			uint32_t res0  : 19;
 		};
 	};
 } __attribute__((packed));
@@ -417,8 +420,9 @@ struct gicc_dir {
 	union {
 		uint32_t val;
 		struct {
-			uint32_t intid : 24;
-			uint32_t res0  : 8;
+			uint32_t intid : 10;
+			uint32_t cpuid : 3;
+			uint32_t res0  : 19;
 		};
 	};
 } __attribute__((packed));
@@ -429,8 +433,9 @@ struct gicc_eoir {
 	union {
 		uint32_t val;
 		struct {
-			uint32_t intid : 24;
-			uint32_t res0  : 8;	
+			uint32_t intid : 10;
+			uint32_t cpuid : 3;
+			uint32_t res0  : 19;
 		};
 	};
 } __attribute__((packed));
@@ -441,8 +446,9 @@ struct gicc_hppir {
 	union {
 		uint32_t val;
 		struct {
-			uint32_t intid : 24;
-			uint32_t res0  : 8;
+			uint32_t intid : 10;
+			uint32_t cpuid : 3;
+			uint32_t res0  : 19;
 		};
 	};
 } __attribute__((packed));
@@ -453,8 +459,9 @@ struct gicc_iar {
 	union {
 		uint32_t val;
 		struct {
-			uint32_t intid : 24;
-			uint32_t res0  : 8;
+			uint32_t intid : 10;
+			uint32_t cpuid : 3;
+			uint32_t res0  : 19;
 		};
 	};
 } __attribute__((packed));
