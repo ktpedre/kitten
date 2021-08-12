@@ -106,7 +106,6 @@ __init_hypervisor()
 
 	struct ffa_uuid null_uuid;
 	ffa_vm_count_t secondary_vm_count;
-	const struct ffa_partition_info *partition_info;
 
 	printk("Setting up Hafnium environment\n");
 
@@ -159,10 +158,10 @@ __init_hypervisor()
 		goto fail_with_cleanup;
 	}
 	secondary_vm_count = ffa_ret.arg2 - 1;
+	hf_vms = kmem_alloc(secondary_vm_count * sizeof(struct hf_vm));
 
 	partition_info = kmem_get_pages(0);
 	memcpy(partition_info, hf_recv_page, PAGE_SIZE_4KB);
-
 
 	printk("Hafnium found %d VMs\n", secondary_vm_count);
 

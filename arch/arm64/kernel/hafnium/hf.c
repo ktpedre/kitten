@@ -6,6 +6,7 @@
 #include <arch/hafnium/call.h>
 #include <arch/hafnium/ffa.h>
 #include <arch/hafnium/types.h>
+#include <arch/hafnium/vm_ids.h>
 
 #include "transport.h"
 #include "hf.h"
@@ -15,9 +16,6 @@
 
 struct hf_vm   * hf_vms = NULL;
 ffa_vm_count_t   hf_vm_count;
-
-extern struct ffa_partition_info * partition_info;
-
 
 int64_t 
 hf_call(uint64_t arg0, 
@@ -168,7 +166,6 @@ hf_vcpu_thread(void * data)
 		switch (ret.func) {
 		/* Preempted. */
 		case FFA_INTERRUPT_32:
-			
 			if (test_bit(TF_NEED_RESCHED_BIT, &(current->arch.flags))) {
 				schedule();
 			}
@@ -268,7 +265,7 @@ hf_vcpu_thread(void * data)
 int 
 hf_launch_vm(ffa_vm_id_t vm_id)
 {
-    struct hf_vm      * vm = &hf_vms[vm_id];
+    struct hf_vm      * vm = &hf_vms[vm_id - HF_FIRST_SECONDARY_VM_INDEX];
 
     ffa_vcpu_count_t    vcpu_count;
    	ffa_vcpu_index_t j;
@@ -276,9 +273,9 @@ hf_launch_vm(ffa_vm_id_t vm_id)
     int ret;
 
     /* Adjust the index as only the secondaries are tracked. */
-    vm->id         = partition_info[vm_id + 1].vm_id;
-    vm->vcpu_count = partition_info[vm_id + 1].vcpu_count;
-	
+    vm->id         = partition_info[vm_id - 1].vm_id;
+    vm->vcpu_count = partition_info[vm_id - 1].vcpu_count;
+		vcpu_count = partition_info[vm_id - 1].vcpu_count;
     vm->vcpu       = kmem_alloc(vm->vcpu_count * sizeof(struct hf_vcpu));
 
     if (vm->vcpu == NULL) {
@@ -288,12 +285,13 @@ hf_launch_vm(ffa_vm_id_t vm_id)
 
     for (j = 0; j < vm->vcpu_count; j++) {
         struct hf_vcpu * vcpu = &vm->vcpu[j];
+				vcpu->task = kthread_create(hf_vcpu_thread, 
+														 vcpu,
+														 "vcpu_thread_%u_%u", 
+														 vm->id, 
+														 j);
 
-        vcpu->task = kthread_create(hf_vcpu_thread, 
-                                    vcpu,
-                                    "vcpu_thread_%u_%u", 
-                                    vm->id, 
-                                    j);
+				vcpu->task = (struct task_struct*)(PAGE_OFFSET | (long unsigned int)vcpu->task);
 
         if (vcpu->task == NULL) {
             pr_err("Error creating task (vm = %u, vcpu = %u): %lu\n",

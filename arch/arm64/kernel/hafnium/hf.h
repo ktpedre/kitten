@@ -31,5 +31,6 @@ struct hf_vm {
 
 extern struct hf_vm   * hf_vms;
 extern ffa_vm_count_t   hf_vm_count;
+extern struct ffa_partition_info* partition_info;
 
 #endif
