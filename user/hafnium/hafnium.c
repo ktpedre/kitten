@@ -48,6 +48,11 @@ main(int argc, char ** argv, char * envp[])
 
 
 	ret = ioctl(hafnium_fd, HAFNIUM_IOCTL_HYP_INIT, NULL);
+	ret = ioctl(hafnium_fd, HAFNIUM_IOCTL_LAUNCH_VM, 3);
+
+	if (ret != 0) {
+		print("Error launching vm [%d]\n", 3);
+	}
 
 	while (1) {
 #if 0

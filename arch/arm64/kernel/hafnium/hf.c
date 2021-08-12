@@ -12,7 +12,7 @@
 #include "hf.h"
 
 
-
+#define FIRST_SECONDARY_VM_ID (1)
 
 struct hf_vm   * hf_vms = NULL;
 ffa_vm_count_t   hf_vm_count;
@@ -88,12 +88,13 @@ hf_vcpu_sleep(struct hf_vcpu * vcpu)
 static struct hf_vm *
 hf_vm_from_id(ffa_vm_id_t vm_id)
 {
-	if ((vm_id <  HF_PRIMARY2_VM_INDEX) ||
-	    (vm_id >= HF_PRIMARY2_VM_INDEX + hf_vm_count)) {
-		return NULL;
-	}
+	printk("vm_from_id vm_id=%d, count=%d\n", vm_id, hf_vm_count);
 
-	return &hf_vms[vm_id - HF_PRIMARY2_VM_INDEX];
+	if (vm_id < FIRST_SECONDARY_VM_ID ||
+	    vm_id >= FIRST_SECONDARY_VM_ID + hf_vm_count)
+		return NULL;
+
+	return &hf_vms[vm_id - FIRST_SECONDARY_VM_ID];
 }
 
 static int 
@@ -150,6 +151,7 @@ hf_vcpu_thread(void * data)
 	struct ffa_value ret;
 
 	vcpu->timer.function = &hf_vcpu_timer_expired;
+	vcpu->timer.data     = &(vcpu->timer);
 
 	while (!kthread_should_stop()) {
 		ffa_vcpu_index_t i;
@@ -265,9 +267,8 @@ hf_vcpu_thread(void * data)
 int 
 hf_launch_vm(ffa_vm_id_t vm_id)
 {
-    struct hf_vm      * vm = &hf_vms[vm_id - HF_FIRST_SECONDARY_VM_INDEX];
+    struct hf_vm      * vm = &hf_vms[vm_id - 1];
 
-    ffa_vcpu_count_t    vcpu_count;
    	ffa_vcpu_index_t j;
 
     int ret;
@@ -275,7 +276,6 @@ hf_launch_vm(ffa_vm_id_t vm_id)
     /* Adjust the index as only the secondaries are tracked. */
     vm->id         = partition_info[vm_id - 1].vm_id;
     vm->vcpu_count = partition_info[vm_id - 1].vcpu_count;
-		vcpu_count = partition_info[vm_id - 1].vcpu_count;
     vm->vcpu       = kmem_alloc(vm->vcpu_count * sizeof(struct hf_vcpu));
 
     if (vm->vcpu == NULL) {
@@ -283,13 +283,16 @@ hf_launch_vm(ffa_vm_id_t vm_id)
         goto err;
     }
 
+	printk("Launching VM (vm->id = %d)\n", vm->id);
+
     for (j = 0; j < vm->vcpu_count; j++) {
         struct hf_vcpu * vcpu = &vm->vcpu[j];
-				vcpu->task = kthread_create(hf_vcpu_thread, 
-														 vcpu,
-														 "vcpu_thread_%u_%u", 
-														 vm->id, 
-														 j);
+				vcpu->task = kthread_create_on_cpu(j,
+											hf_vcpu_thread, 
+											vcpu,
+											"vcpu_thread_%u_%u", 
+											vm->id, 
+											j);
 
 				vcpu->task = (struct task_struct*)(PAGE_OFFSET | (long unsigned int)vcpu->task);
 

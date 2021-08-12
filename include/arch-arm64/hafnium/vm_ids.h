@@ -27,8 +27,9 @@
 #define HF_VM_ID_OFFSET (HF_VM_ID_BASE + 1)
 
 /** The index of the primary VM, if it exists in this world. */
-#define HF_PRIMARY_VM_INDEX 0
-#define HF_PRIMARY2_VM_INDEX (HF_PRIMARY_VM_INDEX + 1)
+#define HF_PRIMARY_VM_INDEX     (0)
+#define HF_PRIMARY2_VM_INDEX    (1)
+
 
 /**
  * The special VM ID reserved for the OS or SPMC running in the trusted

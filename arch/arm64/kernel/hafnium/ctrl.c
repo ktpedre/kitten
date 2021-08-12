@@ -105,7 +105,6 @@ __init_hypervisor()
 	int64_t          ret;
 
 	struct ffa_uuid null_uuid;
-	ffa_vm_count_t secondary_vm_count;
 
 	printk("Setting up Hafnium environment\n");
 
@@ -157,30 +156,25 @@ __init_hypervisor()
 		ret = -EIO;
 		goto fail_with_cleanup;
 	}
-	secondary_vm_count = ffa_ret.arg2 - 1;
-	hf_vms = kmem_alloc(secondary_vm_count * sizeof(struct hf_vm));
+
+	hf_vm_count = ffa_ret.arg2;
+	hf_vms = kmem_alloc(hf_vm_count * sizeof(struct hf_vm));
 
 	partition_info = kmem_get_pages(0);
 	memcpy(partition_info, hf_recv_page, PAGE_SIZE_4KB);
 
-	printk("Hafnium found %d VMs\n", secondary_vm_count);
+	printk("Hafnium found %d VMs\n", hf_vm_count);
 
 	/* Validate the number of VMs. There must at least be the primary. */
-	if (secondary_vm_count > CONFIG_HAFNIUM_MAX_VMS - 1) {
+	if (hf_vm_count > CONFIG_HAFNIUM_MAX_VMS) {
 		pr_err("Number of VMs is out of range: %d\n",
-		       secondary_vm_count);
+		       hf_vm_count);
 		ret = -EDQUOT;
 		goto fail_with_cleanup;
 	}
 
 
-	/* Start the Admin VM */
-    printk("Launching Admin VM\n");
-    if (hf_launch_vm(HF_PRIMARY2_VM_ID) != 0) {
-        pr_err("Could not launch Primary2 VM\n");
-        ret = -EFAULT;
-        goto fail_with_cleanup;
-    }
+
 
 	return 0;
 
@@ -345,8 +339,15 @@ __hafnium_ioctl(struct file   * filp,
         case HAFNIUM_IOCTL_HYP_INIT:
             ret = __init_hypervisor();
             break;
-        case HAFNIUM_IOCTL_LAUNCH_VM: /* Falls through. */
-        default:
+        case HAFNIUM_IOCTL_LAUNCH_VM: 
+		{
+			uint16_t vm_id = (uint16_t)arg;
+			printk("Launching VM %d\n", vm_id);
+			ret = hf_launch_vm(vm_id);
+
+			break;
+		}
+		default:
             printk(KERN_ERR "\tUnhandled global ctrl cmd: %d\n", ioctl);
             
             return -EINVAL;
