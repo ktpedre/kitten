@@ -414,12 +414,16 @@ write_pte(
 		_pte.XN  = 1;
 	}
 
+
 	if (flags & VM_NOCACHE) {
 		// I'm not really sure this is what we want here....
 //		_pte.attrIndx = MT_NORMAL_NC;
 		_pte.attrIndx = MT_DEVICE_nGnRnE;
 	} else {
 		_pte.attrIndx = MT_NORMAL;
+		_pte.SH0 = 1;
+		_pte.SH1 = 1;
+
 	}
 
 	if (pagesz == VM_PAGE_4KB) {
