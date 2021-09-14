@@ -112,7 +112,7 @@ handle_irq(struct pt_regs * regs)
 
 	irqreturn_t ret = IRQ_NONE;
 
-	printk(">> Hardware IRQ!!!! [%d]\n", irq.vector);
+	//printk(">> Hardware IRQ!!!! [%d]\n", irq.vector);
 
 
 

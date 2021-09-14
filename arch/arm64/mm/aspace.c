@@ -92,7 +92,7 @@ arch_aspace_activate(
 	struct aspace *	aspace
 )
 {
-	printk("activate aspace [%d] at %p\n", aspace->id, aspace->arch.pgd);
+	//printk("activate aspace [%d] at %p\n", aspace->id, aspace->arch.pgd);
 	//printk("aspace->child_list %p\n",aspace->child_list);
 	//printk("&aspace->child_list %p\n",&aspace->child_list);
 	//printk("(&aspace->child_list)->prev %p\n",(&aspace->child_list)->prev);

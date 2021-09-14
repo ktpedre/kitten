@@ -11,10 +11,6 @@ __arch_context_switch(struct task_struct *prev_p, struct task_struct *next_p)
 	id_t cpu = this_cpu;
 
 
-	printk("prev_p = %p, next_p = %p\n", prev_p, next_p);
-
-	printk("NExt TP_Value=%p\n", next->tp_value);
-
 	/* Load the TPIDR_EL0 for User TLS */
 	{
 		prev->tp_value = __mrs(tpidr_el0);

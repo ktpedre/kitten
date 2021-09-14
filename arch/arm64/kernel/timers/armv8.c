@@ -47,7 +47,7 @@ __reload_timer()
 
 	reset_val = read_pda(timer_reload_value);
 
-	printk("Reloading Timer with %lld at %lld\n", reset_val, curr_cnt);
+	//	printk("Reloading Timer with %lld at %lld\n", reset_val, curr_cnt);
 	msr(CNTP_TVAL_EL0, reset_val);
 }
 
@@ -55,7 +55,7 @@ static irqreturn_t
 __timer_tick(int irq, void * dev_id)
 {
 
-	printk("Tick!\n");
+	//	printk("Tick!\n");
 
 	msr(CNTP_CTL_EL0, 0);
 
