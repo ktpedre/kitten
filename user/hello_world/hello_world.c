@@ -18,7 +18,6 @@
 #include <sys/time.h>
 #include <utmpx.h>
 #include <unistd.h>
-#include <sys/syscall.h>
 #include <math.h>
 #include <lwk/rcr/rcr.h>
 #include <sys/mman.h>
@@ -91,13 +90,14 @@ main(int argc, char *argv[], char *envp[])
 		sleep(100000);
 }
 
-// Glibc doesn't provide a wrapper the Linux-specific gettid() call.
-static pid_t
-gettid(void)
+#if !defined(_GNU_SOURCE) || !defined(__GLIBC__) || __GLIBC__ < 2 || (__GLIBC__ == 2 && __GLIBC_MINOR__ < 30)
+#include <sys/syscall.h>
+static
+pid_t gettid ( void )
 {
-	return syscall(__NR_gettid);
+    return syscall ( SYS_gettid );
 }
-
+#endif
 
 static int
 pmem_api_test(void)
