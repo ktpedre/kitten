@@ -42,6 +42,7 @@ scripts/kallsyms
 .tmp_*
 include/arch
 init_task
+user/hafnium/hafnium
 user/hello_world/hello_world
 user/liblwk/liblwk.a
 user/powerinsight/powerinsight
