@@ -43,6 +43,7 @@ scripts/kallsyms
 include/arch
 init_task
 user/hello_world/hello_world
+user/hafnium/hafnium
 user/liblwk/liblwk.a
 user/powerinsight/powerinsight
 user/smartmap/smartmap_loader
