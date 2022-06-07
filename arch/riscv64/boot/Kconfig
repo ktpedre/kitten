@@ -1,0 +1,30 @@
+menu "ISOIMAGE Configuration"
+depends on PC
+
+config KERNEL_ARGS
+       string "Kernel command line arguments"
+       default "console=vga,serial"
+       help
+        Arguments passed to the kernel.
+
+config INIT_TASK_IMAGE
+       string "Initial task image"
+       default "init_task"
+       help
+         Path to the ELF executable or guest OS image to use for the
+         initial task.  Kitten loads this as the first user-level task.
+         It executes with root privilege.
+
+config INIT_TASK_ARGS
+	string "Initial Task Arguments"
+	default "one two three"
+	help
+	  Arguments to be passed to the initial task.
+
+config INIT_TASK_ENVS
+	string "Initial Task Environment Variables"
+	default "one=1 two=2 three=3"
+	help
+	  Environment to be passed to the initial task.
+
+endmenu

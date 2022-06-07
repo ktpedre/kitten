@@ -25,6 +25,8 @@
 #ifndef _LWK_ACPI_H
 #define _LWK_ACPI_H
 
+#ifndef CONFIG_RISCV64
+
 #ifndef _LINUX
 #define _LINUX
 #endif
@@ -228,5 +230,7 @@ static inline void __iomem *acpi_os_ioremap(acpi_physical_address phys,
 {
 	return ioremap(phys, size);
 }
+
+#endif 
 
 #endif	/*_LWK_ACPI_H*/

@@ -1,0 +1,132 @@
+mainmenu "Kitten Kernel Configuration"
+
+config RISCV64
+	bool
+	default y
+	help
+	  Support for the RISC-V64 architecture.
+
+config RISCV
+	bool
+	default y
+
+config OUTPUT_FORMAT
+        string
+        default "elf64-littleriscv" if RISCV64
+
+config BFDARCH
+        string
+        default "riscv" if ARM64
+
+source "kernel/Kconfig"
+
+menu "Target Configuration"
+
+choice
+	prompt "System Architecture"
+	default ARCH_QEMU
+
+config ARCH_QEMU
+    bool "Qemu"
+    help
+        Support for Qemu RISC-V platform
+
+endchoice
+
+choice
+	prompt "Processor Family"
+	default GENERIC_CPU
+
+config GENERIC_CPU
+	bool "Generic RISC-V64"
+	help
+	  Generic RISC-V64 CPU.
+
+endchoice
+
+choice
+	prompt "Timer Interrupt Strategy"
+	default TIMER_PERIODIC
+
+config TIMER_PERIODIC
+	bool "Periodic timer interrupts"
+	help
+	  Use a periodic interrupt at SCHED_HZ to drive timer
+	  expiration and scheduling in Kitten.
+
+config TIMER_ONESHOT
+	bool "One-shot timer interrupts"
+	help
+	  Uses one-shot timers to drive scheduling in kitten. Results
+	  in more accurate scheduling, particularly with EDF scheduling,
+	  but can result in higher overheads if fine-grained scheduling
+	  or timers are requested.
+
+endchoice
+
+
+config BLK_DEV_INITRD
+       bool "INITRD support"
+       help
+	"JRL: This is needed if you have an initrd from the bootloader...."
+
+#
+# Define implied options from the CPU selection
+#
+
+config SERIAL_PHYS
+	hex
+#	default "0x3f201000" if ARCH_RASPI3
+  default "0x0" if ARCH_QEMU
+
+
+config NR_CPUS
+        int "Maximum number of CPUs (2-256)"
+        range 1 255
+        default "64"
+        help
+          This allows you to specify the maximum number of CPUs which this
+          kernel will support. Current maximum is 256. Less depending on 
+          the hardware.
+
+          This is purely to save memory - each supported CPU requires
+          memory in the static kernel configuration.
+
+#
+# Physical address where the kernel is loaded
+#
+config PHYSICAL_START
+	hex
+	default "0x200000"
+
+# source user/iofwd/Kconfig
+
+config HAS_IOMEM
+	bool
+	default "y"
+
+config HAS_IOPORT
+	bool
+	default "y"
+
+config SMP
+	bool
+	default "y"
+
+config ACPI
+	bool
+	default "y"
+
+config ARM_PSCI_FW
+	bool
+	default "y"
+
+endmenu
+
+source "arch/riscv64/boot/Kconfig"
+source "arch/riscv64/Kconfig.debug"
+
+source "drivers/Kconfig"
+
+# TODO This might be painful later
+#source "linux/arch/arm64/Kconfig"
