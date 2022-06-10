@@ -13,7 +13,7 @@ int
 arch_task_init_tls(struct task_struct   * task, 
 		   const struct pt_regs * parent_regs)
 {
-	return do_arch_prctl(task, ARCH_SET_TLS, parent_regs->user_regs.regs[5]);
+	return do_arch_prctl(task, ARCH_SET_TLS, parent_regs->tp);
 }
 
 int
@@ -37,21 +37,21 @@ arch_task_create(
 	/* Initialize GPRs */
 	if (start_state->use_args) {
 		/* Pass C-style arguments to new task */
-		regs->regs[0] = start_state->arg[0];
-		regs->regs[1] = start_state->arg[1];
-		regs->regs[2] = start_state->arg[2];
-		regs->regs[3] = start_state->arg[3];
+		regs->a0 = start_state->arg[0];
+		regs->a1 = start_state->arg[1];
+		regs->a2 = start_state->arg[2];
+		regs->a3 = start_state->arg[3];
 	} else if (is_clone) {
 		*regs = *parent_regs;
-		regs->regs[0] = 0;  /* set child's clone() return value to 0 */
+		regs->a0 = 0;  /* set child's clone() return value to 0 */
 	} else {
 		/* Zero all registers */
 		memset(regs, 0, sizeof(regs));
 	}
 
-	task->arch.thread.cpu_context.sp0    = (kaddr_t)(regs + 1);    /* kstack top */
-	task->arch.thread.cpu_context.sp     = (kaddr_t)regs;          /* kstack ptr */
-	task->arch.thread.cpu_context.usersp = start_state->stack_ptr; /* ustack ptr */
+	task->arch.thread.kern_sp = (kaddr_t)(regs + 1);    /* kstack top */
+//task->arch.thread.cpu_context.kern_sp = (kaddr_t)regs;          /* kstack ptr */
+	task->arch.thread.user_sp = start_state->stack_ptr; /* ustack ptr */
 
 	/* Mark this as a new-task... arch_context_switch() checks this flag */
 	task->arch.flags = TF_NEW_TASK_MASK;
@@ -65,13 +65,13 @@ arch_task_create(
 	/* Initialize register state */
 	if (start_state->aspace_id == KERNEL_ASPACE_ID) {
 		regs->sp     = (vaddr_t)task + TASK_SIZE;
-		regs->pstate = 5;
+		regs->status = SR_PP | SR_PIE;
 	} else {
 		regs->sp     = start_state->stack_ptr;
-		regs->pstate = 0;
+		regs->status = 0;
 	}
 //	regs->eflags = (1 << 9);  /* enable interrupts */
-	regs->pc    = is_clone ? parent_regs->pc : start_state->entry_point;
+	regs->epc    = is_clone ? parent_regs->epc : start_state->entry_point;
 
 	return 0;
 }

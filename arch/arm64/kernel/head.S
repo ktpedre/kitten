@@ -247,7 +247,7 @@
  * Initial memory map attributes.
  */
 #ifndef CONFIG_SMP
-#define PTE_FLAGS	PTE_TYPE_PAGE | PTE_AF
+#define PTE_FLAGS	PTE_TYPE_PAGE | PnnTE_AF
 #define PMD_FLAGS	PMD_TYPE_SECT | PMD_SECT_AF
 #else
 #define PTE_FLAGS	PTE_TYPE_PAGE | PTE_AF | PTE_SHARED

@@ -19,13 +19,13 @@ do_arch_prctl(struct task_struct *task, int code, unsigned long addr)
 		if (addr >= task->arch.addr_limit)
 			return -EPERM; 
 
-		task->arch.thread.tp_value = addr;
+		task->arch.thread.tp = addr;
 
 		break;
 	case ARCH_GET_TLS: { 
 		unsigned long base; 
 
-		base = task->arch.thread.tp_value;
+		base = task->arch.thread.tp;
 		ret = put_user(base, (unsigned long __user *)addr); 
 		break; 
 	}

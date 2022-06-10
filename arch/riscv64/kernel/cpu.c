@@ -7,7 +7,7 @@
 #include <lwk/delay.h>
 #include <arch/processor.h>
 #include <arch/proto.h>
-#include <arch/irqchip.h>
+//#include <arch/irqchip.h>
 #include <arch/tsc.h>
 
 #include <lwk/smp.h>
@@ -38,7 +38,7 @@ static cpumask_t cpu_initialized_map;
 void __init
 pda_init(unsigned int cpu, struct task_struct *task)
 {
-	struct ARM64_pda *pda = cpu_pda(cpu);
+	struct RISCV_pda *pda = cpu_pda(cpu);
 
 	mb();
 	set_tpidr_el1((u64)pda);

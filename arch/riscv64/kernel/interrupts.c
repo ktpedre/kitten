@@ -13,14 +13,15 @@
 #include <lwk/timer.h>
 #include <lwk/show.h>
 #include <lwk/interrupt.h>
+#include <arch/page.h>
 //#include <arch/desc.h>
-#include <arch/extable.h>
-#include <arch/irq_vectors.h>
+//#include <arch/extable.h>
+//#include <arch/irq_vectors.h>
 #include <arch/xcall.h>
 //#include <arch/i387.h>
 #include <arch/io.h>
 #include <arch/proto.h>
-#include <arch/irqchip.h>
+//#include <arch/irqchip.h>
 
 
 idtvec_handler_t irqvec_table[NUM_IRQ_ENTRIES] __aligned(PAGE_SIZE_4KB);
@@ -68,47 +69,47 @@ static inline u64 get_spsr_el1()
 	return spsr;
 }
 
-void
-do_mem_abort(unsigned long    addr, 
-	     unsigned int     esr,
-	     struct pt_regs * regs)
-{
-	u64 mair_el1 = get_mair_el1();
-	u64 spsr_el1 = get_spsr_el1();
-	u64 tpidr_el0 = __mrs(tpidr_el0);
-	void __user * pc = (void __user *)instruction_pointer(regs);
+/* void */
+/* do_mem_abort(unsigned long    addr,  */
+/* 	     unsigned int     esr, */
+/* 	     struct pt_regs * regs) */
+/* { */
+/* 	u64 mair_el1 = get_mair_el1(); */
+/* 	u64 spsr_el1 = get_spsr_el1(); */
+/* 	u64 tpidr_el0 = __mrs(tpidr_el0); */
+/* 	void __user * pc = (void __user *)instruction_pointer(regs); */
 
-	printk("do_mem_abort: addr=%p, esr=%x\n", (void *)addr, esr);
-	printk("MAIR_EL1: %p\n", (void *)mair_el1);
-	printk("SPSR_EL1: %p\n", (void *)spsr_el1);
-	printk("TPIDR_EL0: %p\n", (void *)tpidr_el0);
-	printk("PC: %p [instr : %x]\n", pc, *(uint32_t *)pc);
-	show_registers(regs);
+/* 	printk("do_mem_abort: addr=%p, esr=%x\n", (void *)addr, esr); */
+/* 	printk("MAIR_EL1: %p\n", (void *)mair_el1); */
+/* 	printk("SPSR_EL1: %p\n", (void *)spsr_el1); */
+/* 	printk("TPIDR_EL0: %p\n", (void *)tpidr_el0); */
+/* 	printk("PC: %p [instr : %x]\n", pc, *(uint32_t *)pc); */
+/* 	show_registers(regs); */
 
-	print_pgtable_arm64((void *)addr);
+/* 	print_pgtable_arm64((void *)addr); */
 
 
-	// TODO: Only do the following if we faulted in user mode, else panic
-	struct siginfo s;
-	memset(&s, 0, sizeof(struct siginfo));
-	s.si_signo = SIGSEGV;
-	s.si_errno = 0;
-	s.si_addr  = (void *)addr;
-	s.si_code  = SEGV_ACCERR; // SEGV_MAPERR;
+/* 	// TODO: Only do the following if we faulted in user mode, else panic */
+/* 	struct siginfo s; */
+/* 	memset(&s, 0, sizeof(struct siginfo)); */
+/* 	s.si_signo = SIGSEGV; */
+/* 	s.si_errno = 0; */
+/* 	s.si_addr  = (void *)addr; */
+/* 	s.si_code  = SEGV_ACCERR; // SEGV_MAPERR; */
 
 	
-	int i = sigsend(current->aspace->id, ANY_ID, SIGSEGV, &s);
-	printk(">> PAGE FAULT! Sent signal %d: Addr is %p\n", i, s.si_addr);
+/* 	int i = sigsend(current->aspace->id, ANY_ID, SIGSEGV, &s); */
+/* 	printk(">> PAGE FAULT! Sent signal %d: Addr is %p\n", i, s.si_addr); */
 
 
-	panic("Page faults are a no-no\n");
-}
+/* 	panic("Page faults are a no-no\n"); */
+/* } */
 
 
 void
 handle_irq(struct pt_regs * regs)
 {
-	struct arch_irq irq = irqchip_ack_irq();
+	struct arch_irq irq = {0};//irqchip_ack_irq();
 
 	irqreturn_t ret = IRQ_NONE;
 
@@ -116,15 +117,15 @@ handle_irq(struct pt_regs * regs)
 
 
 
-	if (irq.type == ARCH_IRQ_EXT) {
-		irqvec_table[irq.vector](regs, irq.vector);
-	} else if (irq.type == ARCH_IRQ_IPI) {
-		ipivec_table[irq.vector](regs, irq.vector);
-	} else if (irq.type == ARCH_IRQ_INVALID) {
-		printk("Received Spurious IRQ\n");
-	}
+	/* if (irq.type == ARCH_IRQ_EXT) { */
+	/* 	irqvec_table[irq.vector](regs, irq.vector); */
+	/* } else if (irq.type == ARCH_IRQ_IPI) { */
+	/* 	ipivec_table[irq.vector](regs, irq.vector); */
+	/* } else if (irq.type == ARCH_IRQ_INVALID) { */
+	/* 	printk("Received Spurious IRQ\n"); */
+	/* } */
  	
-	irqchip_do_eoi(irq);
+	/* irqchip_do_eoi(irq); */
 
 
 
@@ -202,8 +203,8 @@ interrupts_init(void)
 	}
 
 
-	set_ipi_handler(LWK_XCALL_FUNCTION_VECTOR,   &arch_xcall_function_interrupt);
-	set_ipi_handler(LWK_XCALL_RESCHEDULE_VECTOR, &arch_xcall_reschedule_interrupt);
+	/* set_ipi_handler(LWK_XCALL_FUNCTION_VECTOR,   &arch_xcall_function_interrupt); */
+	/* set_ipi_handler(LWK_XCALL_RESCHEDULE_VECTOR, &arch_xcall_reschedule_interrupt); */
 
 }
 

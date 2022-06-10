@@ -188,6 +188,8 @@ struct task_struct {
 	struct hlist_head       preempt_notifiers;
 };
 
+unsigned int cpu_id_offset = offsetof(struct task_struct, cpu_id);
+
 
 union task_union {
 	struct task_struct	task_info;

@@ -3,7 +3,8 @@
 #include <lwk/cache.h>
 #include <lwk/errno.h>
 #include <arch/asm-offsets.h>
-#include <arch/vsyscall.h>
+//#include <arch/vsyscall.h>
+#include <arch/syscall.h>
 
 /**
  * This generate prototypes for all system call handlers.
@@ -34,10 +35,10 @@ syscall_not_implemented_silent(void)
 long
 syscall_not_implemented(void)
 {
-	unsigned long syscall_number;
+	unsigned long syscall_number = 0;
 
 	/* On entry to function, syscall # is in %rax register */
-	asm volatile("mov %0, x26" : "=r"(syscall_number));
+	/* asm volatile("mov %0, x26" : "=r"(syscall_number)); */
 
 	printk(KERN_DEBUG "System call not implemented! "
 	                  "(syscall_number=%lu)\n", syscall_number);

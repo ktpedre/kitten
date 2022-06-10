@@ -1,439 +1,350 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * Based on arch/arm/kernel/signal.c
- *
- * Copyright (C) 1995-2009 Russell King
- * Copyright (C) 2012 ARM Ltd.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * Copyright (C) 2009 Sunplus Core Technology Co., Ltd.
+ *  Chen Liqin <liqin.chen@sunplusct.com>
+ *  Lennox Wu <lennox.wu@sunplusct.com>
+ * Copyright (C) 2012 Regents of the University of California
  */
 
-#include <lwk/errno.h>
+//#include <lwk/compat.h>
 #include <lwk/signal.h>
-#include <lwk/aspace.h>
-
 #include <arch/uaccess.h>
-#include <arch/elf.h>
-#include <arch/cacheflush.h>
-#include <arch/unistd.h>
-#include <arch/fpsimd.h>
-#include <arch-generic/signal.h>
+//#include <lwk/syscalls.h>
+//#include <lwk/resume_user_mode.h>
+#include <lwk/linkage.h>
+#include <arch/sigcontext.h>
 
+//#include <arch/ucontext.h>
+//#include <arch/vdso.h>
+//#include <arch/signal32.h>
+//#include <arch/switch_to.h>
+#include <arch/csr.h>
+
+extern u32 __user_rt_sigreturn[2];
+
+#define DEBUG_SIG 0
 
 struct ucontext {
 	unsigned long	  uc_flags;
 	struct ucontext	 *uc_link;
 	stack_t		  uc_stack;
 	sigset_t	  uc_sigmask;
-	/* glibc uses a 1024-bit sigset_t */
+	/* There's some padding here to allow sigset_t to be expanded in the
+	 * future.  Though this is unlikely, other architectures put uc_sigmask
+	 * at the end of this structure and explicitly state it can be
+	 * expanded, so we didn't want to box ourselves in here. */
 	__u8		  __unused[1024 / 8 - sizeof(sigset_t)];
-	/* last for future expansion */
+	/* We can't put uc_sigmask at the end of this structure because we need
+	 * to be able to expand sigcontext in the future.  For example, the
+	 * vector ISA extension will almost certainly add ISA state.  We want
+	 * to ensure all user-visible ISA state can be saved and restored via a
+	 * ucontext, so we're putting this at the end in order to allow for
+	 * infinite extensibility.  Since we know this will be extended and we
+	 * assume sigset_t won't be extended an extreme amount, we're
+	 * prioritizing this. */
 	struct sigcontext uc_mcontext;
 };
-
-/*
- * Do a signal return; undo the signal stack. These are aligned to 128-bit.
- */
 
 struct rt_sigframe {
 	struct siginfo info;
 	struct ucontext uc;
-	u64 fp;
-	u64 lr;
+#ifndef CONFIG_MMU
+	u32 sigreturn_code[2];
+#endif
 };
 
-
-
-
-static int preserve_fpsimd_context(struct fpsimd_context __user *ctx)
+#ifdef CONFIG_FPU
+static long restore_fp_state(struct pt_regs *regs,
+			     union __riscv_fp_state __user *sc_fpregs)
 {
-	struct fpsimd_state *fpsimd = &current->arch.thread.fpsimd_state;
-	int err;
+	long err;
+	struct __riscv_d_ext_state __user *state = &sc_fpregs->d;
+	size_t i;
 
-	/* dump the hardware registers to the fpsimd_state structure */
-	fpsimd_save_state(fpsimd);
+	err = __copy_from_user(&current->thread.fstate, state, sizeof(*state));
+	if (unlikely(err))
+		return err;
 
-	/* copy the FP and status/control registers */
-	err = __copy_to_user(ctx->vregs, fpsimd->vregs, sizeof(fpsimd->vregs));
-	__put_user_error(fpsimd->fpsr, &ctx->fpsr, err);
-	__put_user_error(fpsimd->fpcr, &ctx->fpcr, err);
+	fstate_restore(current, regs);
 
-	/* copy the magic/size information */
-	__put_user_error(FPSIMD_MAGIC, &ctx->head.magic, err);
-	__put_user_error(sizeof(struct fpsimd_context), &ctx->head.size, err);
+	/* We support no other extension state at this time. */
+	for (i = 0; i < ARRAY_SIZE(sc_fpregs->q.reserved); i++) {
+		u32 value;
 
-	return err ? -EFAULT : 0;
-}
-
-static int restore_fpsimd_context(struct fpsimd_context __user *ctx)
-{
-	struct fpsimd_state fpsimd;
-	__u32 magic, size;
-	int err = 0;
-
-	/* check the magic/size information */
-	__get_user_error(magic, &ctx->head.magic, err);
-	__get_user_error(size, &ctx->head.size, err);
-	if (err)
-		return -EFAULT;
-	if (magic != FPSIMD_MAGIC || size != sizeof(struct fpsimd_context))
-		return -EINVAL;
-
-	/* copy the FP and status/control registers */
-	err = __copy_from_user(fpsimd.vregs, ctx->vregs,
-			       sizeof(fpsimd.vregs));
-	__get_user_error(fpsimd.fpsr, &ctx->fpsr, err);
-	__get_user_error(fpsimd.fpcr, &ctx->fpcr, err);
-
-	/* load the hardware registers from the fpsimd_state structure */
-	if (!err) {
-//		preempt_disable();
-		fpsimd_load_state(&fpsimd);
-//		preempt_enable();
+		err = __get_user(value, &sc_fpregs->q.reserved[i]);
+		if (unlikely(err))
+			break;
+		if (value != 0)
+			return -EINVAL;
 	}
-
-	return err ? -EFAULT : 0;
-}
-
-static int restore_sigframe(struct pt_regs *regs,
-			    struct rt_sigframe __user *sf)
-{
-	sigset_t oldset;
-	int i, err;
-	unsigned long irqstate;
-	struct aux_context __user *aux =
-		(struct aux_context __user *)sf->uc.uc_mcontext.__reserved;
-
-	err = __copy_from_user(&oldset, &sf->uc.uc_sigmask, sizeof(oldset));
-	if (err == 0) {
-		spin_lock_irqsave(&current->aspace->lock, irqstate);
-       		current->sigblocked = oldset;
-		spin_unlock_irqrestore(&current->aspace->lock, irqstate);
-	}
-
-	for (i = 0; i < 31; i++)
-		__get_user_error(regs->regs[i], &sf->uc.uc_mcontext.regs[i],
-				 err);
-	__get_user_error(regs->sp, &sf->uc.uc_mcontext.sp, err);
-	__get_user_error(regs->pc, &sf->uc.uc_mcontext.pc, err);
-	__get_user_error(regs->pstate, &sf->uc.uc_mcontext.pstate, err);
-
-	/*
-	 * Avoid sys_rt_sigreturn() restarting.
-	 */
-	regs->syscallno = ~0UL;
-
-	err |= !valid_user_regs(&regs->user_regs);
-
-	if (err == 0)
-		err |= restore_fpsimd_context(&aux->fpsimd);
 
 	return err;
 }
 
-asmlinkage long sys_rt_sigreturn(struct pt_regs *regs)
+static long save_fp_state(struct pt_regs *regs,
+			  union __riscv_fp_state __user *sc_fpregs)
 {
-	struct rt_sigframe __user *frame;
+	long err;
+	struct __riscv_d_ext_state __user *state = &sc_fpregs->d;
+	size_t i;
 
-#if 0
-	/* Always make any pending restarted system calls return -EINTR */
-	current_thread_info()->restart_block.fn = do_no_restart_syscall;
+	fstate_save(current, regs);
+	err = __copy_to_user(state, &current->thread.fstate, sizeof(*state));
+	if (unlikely(err))
+		return err;
+
+	/* We support no other extension state at this time. */
+	for (i = 0; i < ARRAY_SIZE(sc_fpregs->q.reserved); i++) {
+		err = __put_user(0, &sc_fpregs->q.reserved[i]);
+		if (unlikely(err))
+			break;
+	}
+
+	return err;
+}
+#else
+#define save_fp_state(task, regs) (0)
+#define restore_fp_state(task, regs) (0)
 #endif
-	/*
-	 * Since we stacked the signal on a 128-bit boundary, then 'sp' should
-	 * be word aligned here.
-	 */
-	if (regs->sp & 15)
-		goto badframe;
+
+static long restore_sigcontext(struct pt_regs *regs,
+	struct sigcontext __user *sc)
+{
+	long err;
+	/* sc_regs is structured the same as the start of pt_regs */
+	err = __copy_from_user(regs, &sc->sc_regs, sizeof(sc->sc_regs));
+	/* Restore the floating-point state. */
+	if (has_fpu())
+		err |= restore_fp_state(regs, &sc->sc_fpregs);
+	return err;
+}
+
+SYSCALL_DEFINE0(rt_sigreturn)
+{
+	struct pt_regs *regs = current_pt_regs();
+	struct rt_sigframe __user *frame;
+	struct task_struct *task;
+	sigset_t set;
+
+	/* Always make any pending restarted system calls return -EINTR */
+	current->restart_block.fn = do_no_restart_syscall;
 
 	frame = (struct rt_sigframe __user *)regs->sp;
 
-	if (!access_ok(VERIFY_READ, frame, sizeof (*frame)))
+	if (!access_ok(frame, sizeof(*frame)))
 		goto badframe;
 
-	if (restore_sigframe(regs, frame))
+	if (__copy_from_user(&set, &frame->uc.uc_sigmask, sizeof(set)))
 		goto badframe;
 
-#if 0
+	set_current_blocked(&set);
+
+	if (restore_sigcontext(regs, &frame->uc.uc_mcontext))
+		goto badframe;
+
 	if (restore_altstack(&frame->uc.uc_stack))
 		goto badframe;
-#endif
 
-	return regs->regs[0];
+	return regs->a0;
 
 badframe:
-#if 0
-	if (show_unhandled_signals)
-		pr_info_ratelimited("%s[%d]: bad frame in %s: pc=%08llx sp=%08llx\n",
-				    current->comm, task_pid_nr(current), __func__,
-				    regs->pc, regs->sp);
-#endif
-	// force_sig(SIGSEGV, current);
-	printk("GIVE_SIGSEGV\n");
+	task = current;
+	if (show_unhandled_signals) {
+		pr_info_ratelimited(
+			"%s[%d]: bad frame in %s: frame=%p pc=%p sp=%p\n",
+			task->comm, task_pid_nr(task), __func__,
+			frame, (void *)regs->epc, (void *)regs->sp);
+	}
+	force_sig(SIGSEGV);
 	return 0;
 }
 
-static int setup_sigframe(struct rt_sigframe __user *sf,
-			  struct pt_regs *regs, sigset_t *set)
+static long setup_sigcontext(struct rt_sigframe __user *frame,
+	struct pt_regs *regs)
 {
-	int i, err = 0;
-	struct aux_context __user *aux =
-		(struct aux_context __user *)sf->uc.uc_mcontext.__reserved;
-
-	/* set up the stack frame for unwinding */
-	__put_user_error(regs->regs[29], &sf->fp, err);
-	__put_user_error(regs->regs[30], &sf->lr, err);
-
-	for (i = 0; i < 31; i++)
-		__put_user_error(regs->regs[i], &sf->uc.uc_mcontext.regs[i],
-				 err);
-	__put_user_error(regs->sp, &sf->uc.uc_mcontext.sp, err);
-	__put_user_error(regs->pc, &sf->uc.uc_mcontext.pc, err);
-	__put_user_error(regs->pstate, &sf->uc.uc_mcontext.pstate, err);
-
-	__put_user_error(current->arch.thread.fault_address, &sf->uc.uc_mcontext.fault_address, err);
-
-	err |= __copy_to_user(&sf->uc.uc_sigmask, set, sizeof(*set));
-
-	if (err == 0)
-		err |= preserve_fpsimd_context(&aux->fpsimd);
-
-	/* set the "end" magic */
-	__put_user_error(0, &aux->end.magic, err);
-	__put_user_error(0, &aux->end.size, err);
-
+	struct sigcontext __user *sc = &frame->uc.uc_mcontext;
+	long err;
+	/* sc_regs is structured the same as the start of pt_regs */
+	err = __copy_to_user(&sc->sc_regs, regs, sizeof(sc->sc_regs));
+	/* Save the floating-point state. */
+	if (has_fpu())
+		err |= save_fp_state(regs, &sc->sc_fpregs);
 	return err;
 }
 
-static struct rt_sigframe __user *get_sigframe(struct k_sigaction *ka,
-					       struct pt_regs *regs)
+static inline void __user *get_sigframe(struct ksignal *ksig,
+	struct pt_regs *regs, size_t framesize)
 {
-	unsigned long sp, sp_top;
-	struct rt_sigframe __user *frame;
-
-	sp = sp_top = regs->sp;
-
-#if 0
-	/*
-	 * This is the X/Open sanctioned signal stack switching.
-	 */
-	if ((sigact->sa_flags & SA_ONSTACK) && !sas_ss_flags(sp))
-		sp = sp_top = current->sas_ss_sp + current->sas_ss_size;
-#endif
-	sp = (sp - sizeof(struct rt_sigframe)) & ~15;
-	frame = (struct rt_sigframe __user *)sp;
+	unsigned long sp;
+	/* Default to using normal stack */
+	sp = regs->sp;
 
 	/*
-	 * Check that we can actually write to the signal frame.
+	 * If we are on the alternate signal stack and would overflow it, don't.
+	 * Return an always-bogus address instead so we will die with SIGSEGV.
 	 */
-	if (!access_ok(VERIFY_WRITE, frame, sp_top - sp))
-		frame = NULL;
+	if (on_sig_stack(sp) && !likely(on_sig_stack(sp - framesize)))
+		return (void __user __force *)(-1UL);
 
-	return frame;
+	/* This is the X/Open sanctioned signal stack switching. */
+	sp = sigsp(sp, ksig) - framesize;
+
+	/* Align the stack frame. */
+	sp &= ~0xfUL;
+
+	return (void __user *)sp;
 }
 
-static void setup_return(struct pt_regs *regs, struct sigaction * sigact,
-			 void __user *frame, int usig)
-{
-	__sigrestore_t sigtramp;
-
-	regs->regs[0] = usig;
-	regs->sp = (unsigned long)frame;
-	regs->regs[29] = regs->sp + offsetof(struct rt_sigframe, fp);
-	regs->pc = (unsigned long)sigact->sa_handler;
-
-#if 0
-	if (ka->sa.sa_flags & SA_RESTORER)
-		sigtramp = sigact->sa_restorer;
-	else
-		sigtramp = VDSO_SYMBOL(current->mm->context.vdso, sigtramp);
-#else
-	sigtramp = sigact->sa_restorer;
-#endif
-
-
-	regs->regs[30] = (unsigned long)sigtramp;
-}
-
-static int setup_rt_frame(int usig, struct sigaction * sigact, siginfo_t *info,
-			  sigset_t *set, struct pt_regs *regs)
+static int setup_rt_frame(struct ksignal *ksig, sigset_t *set,
+	struct pt_regs *regs)
 {
 	struct rt_sigframe __user *frame;
-	int err = 0;
+	long err = 0;
 
-	frame = get_sigframe(sigact, regs);
-	if (!frame)
-		return 1;
+	frame = get_sigframe(ksig, regs, sizeof(*frame));
+	if (!access_ok(frame, sizeof(*frame)))
+		return -EFAULT;
 
-	__put_user_error(0,    &frame->uc.uc_flags, err);
-	__put_user_error(NULL, &frame->uc.uc_link,  err);
+	err |= copy_siginfo_to_user(&frame->info, &ksig->info);
 
-#if 0
+	/* Create the ucontext. */
+	err |= __put_user(0, &frame->uc.uc_flags);
+	err |= __put_user(NULL, &frame->uc.uc_link);
 	err |= __save_altstack(&frame->uc.uc_stack, regs->sp);
+	err |= setup_sigcontext(frame, regs);
+	err |= __copy_to_user(&frame->uc.uc_sigmask, set, sizeof(*set));
+	if (err)
+		return -EFAULT;
+
+	/* Set up to return from userspace. */
+#ifdef CONFIG_MMU
+	regs->ra = (unsigned long)VDSO_SYMBOL(
+		current->mm->context.vdso, rt_sigreturn);
+#else
+	/*
+	 * For the nommu case we don't have a VDSO.  Instead we push two
+	 * instructions to call the rt_sigreturn syscall onto the user stack.
+	 */
+	if (copy_to_user(&frame->sigreturn_code, __user_rt_sigreturn,
+			 sizeof(frame->sigreturn_code)))
+		return -EFAULT;
+	regs->ra = (unsigned long)&frame->sigreturn_code;
+#endif /* CONFIG_MMU */
+
+	/*
+	 * Set up registers for signal handler.
+	 * Registers that we don't modify keep the value they had from
+	 * user-space at the time we took the signal.
+	 * We always pass siginfo and mcontext, regardless of SA_SIGINFO,
+	 * since some things rely on this (e.g. glibc's debug/segfault.c).
+	 */
+	regs->epc = (unsigned long)ksig->ka.sa.sa_handler;
+	regs->sp = (unsigned long)frame;
+	regs->a0 = ksig->sig;                     /* a0: signal number */
+	regs->a1 = (unsigned long)(&frame->info); /* a1: siginfo pointer */
+	regs->a2 = (unsigned long)(&frame->uc);   /* a2: ucontext pointer */
+
+#if DEBUG_SIG
+	pr_info("SIG deliver (%s:%d): sig=%d pc=%p ra=%p sp=%p\n",
+		current->comm, task_pid_nr(current), ksig->sig,
+		(void *)regs->epc, (void *)regs->ra, frame);
 #endif
-	err |= setup_sigframe(frame, regs, set);
-	if (err == 0) {
-		setup_return(regs, sigact, frame, usig);
-		if (sigact->sa_flags & SA_SIGINFO) {
-			err |= copy_siginfo_to_user(&frame->info, info);
-			regs->regs[1] = (unsigned long)&frame->info;
-			regs->regs[2] = (unsigned long)&frame->uc;
+
+	return 0;
+}
+
+static void handle_signal(struct ksignal *ksig, struct pt_regs *regs)
+{
+	sigset_t *oldset = sigmask_to_save();
+	int ret;
+
+	/* Are we from a system call? */
+	if (regs->cause == EXC_SYSCALL) {
+		/* Avoid additional syscall restarting via ret_from_exception */
+		regs->cause = -1UL;
+		/* If so, check system call restarting.. */
+		switch (regs->a0) {
+		case -ERESTART_RESTARTBLOCK:
+		case -ERESTARTNOHAND:
+			regs->a0 = -EINTR;
+			break;
+
+		case -ERESTARTSYS:
+			if (!(ksig->ka.sa.sa_flags & SA_RESTART)) {
+				regs->a0 = -EINTR;
+				break;
+			}
+			fallthrough;
+		case -ERESTARTNOINTR:
+                        regs->a0 = regs->orig_a0;
+			regs->epc -= 0x4;
+			break;
 		}
 	}
 
-	return err;
+	rseq_signal_deliver(ksig, regs);
+
+	/* Set up the stack frame */
+	if (is_compat_task())
+		ret = compat_setup_rt_frame(ksig, oldset, regs);
+	else
+		ret = setup_rt_frame(ksig, oldset, regs);
+
+	signal_setup_done(ret, ksig, 0);
 }
 
-static void setup_restart_syscall(struct pt_regs *regs)
+static void do_signal(struct pt_regs *regs)
 {
+	struct ksignal ksig;
 
-	regs->regs[8] = __NR_restart_syscall;
-}
-
-/*
- * OK, we're invoking a handler
- */
-static void handle_signal(unsigned long sig, struct sigaction *sigact,
-			  siginfo_t *info, struct pt_regs *regs)
-{
-	struct task_struct *tsk = current;
-	sigset_t *oldset = &current->sigblocked;
-	int usig = sig;
-	int ret;
-
-	/*
-	 * Set up the stack frame
-	 */
-
-	ret = setup_rt_frame(usig, sigact, info, oldset, regs);
-
-
-	/*
-	 * Check that the resulting registers are actually sane.
-	 */
-	ret |= !valid_user_regs(&regs->user_regs);
-
-	if (ret != 0) {
-//		force_sigsegv(sig, tsk);
-		printk("Force_sigsegv (Not implemented)\n");
+	if (get_signal(&ksig)) {
+		/* Actually deliver the signal */
+		handle_signal(&ksig, regs);
 		return;
 	}
 
-#if 0
-	/*
-	 * Fast forward the stepping logic so we step into the signal
-	 * handler.
-	 */
-	user_fastforward_single_step(tsk);
-#endif
+	/* Did we come from a system call? */
+	if (regs->cause == EXC_SYSCALL) {
+		/* Avoid additional syscall restarting via ret_from_exception */
+		regs->cause = -1UL;
 
-#if 0
-	signal_delivered(sig, info, sigact, regs, 0);
-#endif
-}
-
-/*
- * Note that 'init' is a special process: it doesn't get signals it doesn't
- * want to handle. Thus you cannot kill init even with a SIGKILL even by
- * mistake.
- *
- * Note that we go through the signals twice: once to check the signals that
- * the kernel can handle, and then we build all the user-level signal handling
- * stack-frames in one go after that.
- */
-static void do_signal(struct pt_regs *regs)
-{
-	unsigned long continue_addr = 0, restart_addr = 0;
-	struct sigaction sigact;
-	siginfo_t info;
-	int signr, retval = 0;
-	int syscall = (int)regs->syscallno;
-
-	/*
-	 * If we were from a system call, check for system call restarting...
-	 */
-	if (syscall >= 0) {
-		continue_addr = regs->pc;
-		restart_addr = continue_addr - (compat_thumb_mode(regs) ? 2 : 4);
-		retval = regs->regs[0];
-
-		/*
-		 * Avoid additional syscall restarting via ret_to_user.
-		 */
-		regs->syscallno = ~0UL;
-
-		/*
-		 * Prepare for system call restart. We do this here so that a
-		 * debugger will see the already changed PC.
-		 */
-		switch (retval) {
+		/* Restart the system call - no handlers present */
+		switch (regs->a0) {
 		case -ERESTARTNOHAND:
 		case -ERESTARTSYS:
 		case -ERESTARTNOINTR:
+                        regs->a0 = regs->orig_a0;
+			regs->epc -= 0x4;
+			break;
 		case -ERESTART_RESTARTBLOCK:
-			regs->regs[0] = regs->orig_x0;
-			regs->pc = restart_addr;
+                        regs->a0 = regs->orig_a0;
+			regs->a7 = __NR_restart_syscall;
+			regs->epc -= 0x4;
 			break;
 		}
 	}
 
 	/*
-	 * Get the signal to deliver. When running under ptrace, at this point
-	 * the debugger may change all of our registers.
+	 * If there is no signal to deliver, we just put the saved
+	 * sigmask back.
 	 */
-	signr = sigdequeue(&info, &sigact);
-	if (signr > 0) {
-		/*
-		 * Depending on the signal settings, we may need to revert the
-		 * decision to restart the system call, but skip this if a
-		 * debugger has chosen to restart at a different PC.
-		 */
-		if (regs->pc == restart_addr &&
-		    (retval == -ERESTARTNOHAND ||
-		     retval == -ERESTART_RESTARTBLOCK ||
-		     (retval == -ERESTARTSYS &&
-		      !(sigact.sa_flags & SA_RESTART)))) {
-			regs->regs[0] = -EINTR;
-			regs->pc = continue_addr;
-		}
-
-		handle_signal(signr, &sigact, &info, regs);
-		return;
-	}
-
-#if 0
-	/*
-	 * Handle restarting a different system call. As above, if a debugger
-	 * has chosen to restart at a different PC, ignore the restart.
-	 */
-	if (syscall >= 0 && regs->pc == restart_addr) {
-		if (retval == -ERESTART_RESTARTBLOCK)
-			setup_restart_syscall(regs);
-		user_rewind_single_step(current);
-	}
 	restore_saved_sigmask();
-#endif
-	return;
 }
 
-asmlinkage void do_notify_resume(struct pt_regs *regs,
-				 unsigned int thread_flags)
+/*
+ * notification of userspace execution resumption
+ * - triggered by the _TIF_WORK_MASK flags
+ */
+asmlinkage __visible void do_notify_resume(struct pt_regs *regs,
+					   unsigned long thread_info_flags)
 {
-	if (thread_flags & _TIF_SIGPENDING)
+	if (thread_info_flags & _TIF_UPROBE)
+		uprobe_notify_resume(regs);
+
+	/* Handle pending signal delivery */
+	if (thread_info_flags & (_TIF_SIGPENDING | _TIF_NOTIFY_SIGNAL))
 		do_signal(regs);
 
-#if 0
-	if (thread_flags & _TIF_NOTIFY_RESUME) {
-		clear_thread_flag(TIF_NOTIFY_RESUME);
-	}
-#endif
+	if (thread_info_flags & _TIF_NOTIFY_RESUME)
+		resume_user_mode_work(regs);
 }

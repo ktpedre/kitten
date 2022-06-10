@@ -135,26 +135,27 @@ start_kernel()
 	 * Boot all of the other CPUs in the system, one at a time.
 	 */
 	printk(KERN_INFO "Number of CPUs detected: %d\n", num_cpus());
-	for_each_cpu_mask(cpu, cpu_present_map) {
-		/* The bootstrap CPU (that's us) is already booted. */
-		if (cpu == 0) {
-			cpu_set(cpu, cpu_online_map);
-			continue;
-		}
+	/* NMG Do this later */
+	/* for_each_cpu_mask(cpu, cpu_present_map) { */
+	/* 	/\* The bootstrap CPU (that's us) is already booted. *\/ */
+	/* 	if (cpu == 0) { */
+	/* 		cpu_set(cpu, cpu_online_map); */
+	/* 		continue; */
+	/* 	} */
 
-		printk(KERN_DEBUG "Booting CPU %u.\n", cpu);
-		arch_boot_cpu(cpu);
+	/* 	printk(KERN_DEBUG "Booting CPU %u.\n", cpu); */
+	/* 	arch_boot_cpu(cpu); */
 
-		/* Wait for ACK that CPU has booted (5 seconds max). */
-		for (timeout = 0; timeout < 50000; timeout++) {
-			if (cpu_isset(cpu, cpu_online_map))
-				break;
-			udelay(100);
-		}
+	/* 	/\* Wait for ACK that CPU has booted (5 seconds max). *\/ */
+	/* 	for (timeout = 0; timeout < 50000; timeout++) { */
+	/* 		if (cpu_isset(cpu, cpu_online_map)) */
+	/* 			break; */
+	/* 		udelay(100); */
+	/* 	} */
 
-		if (!cpu_isset(cpu, cpu_online_map))
-			panic("Failed to boot CPU %d.\n", cpu);
-	}
+	/* 	if (!cpu_isset(cpu, cpu_online_map)) */
+	/* 		panic("Failed to boot CPU %d.\n", cpu); */
+	/* } */
 
 	workq_init();
 

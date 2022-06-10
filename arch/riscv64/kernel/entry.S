@@ -29,19 +29,19 @@ ENTRY(handle_exception)
 
 _restore_kernel_tpsp:
 	csrr tp, CSR_SCRATCH
-	REG_S sp, TASK_TI_KERNEL_SP(tp)
+	REG_S sp, TASK_THREAD_KERNEL_SP(tp)
 
 #ifdef CONFIG_VMAP_STACK
 	addi sp, sp, -(PT_SIZE_ON_STACK)
 	srli sp, sp, THREAD_SHIFT
 	andi sp, sp, 0x1
 	bnez sp, handle_kernel_stack_overflow
-	REG_L sp, TASK_TI_KERNEL_SP(tp)
+	REG_L sp, TASK_THREAD_KERNEL_SP(tp)
 #endif
 
 _save_context:
-	REG_S sp, TASK_TI_USER_SP(tp)
-	REG_L sp, TASK_TI_KERNEL_SP(tp)
+	REG_S sp, TASK_THREAD_USER_SP(tp)
+	REG_L sp, TASK_THREAD_KERNEL_SP(tp)
 	addi sp, sp, -(PT_SIZE_ON_STACK)
 	REG_S x1,  PT_RA(sp)
 	REG_S x3,  PT_GP(sp)
@@ -82,7 +82,7 @@ _save_context:
 	 */
 	li t0, SR_SUM | SR_FS
 
-	REG_L s0, TASK_TI_USER_SP(tp)
+	REG_L s0, TASK_THREAD_USER_SP(tp)
 	csrrc s1, CSR_STATUS, t0
 	csrr s2, CSR_EPC
 	csrr s3, CSR_TVAL
@@ -196,7 +196,7 @@ handle_syscall:
 	addi s2, s2, 0x4
 	REG_S s2, PT_EPC(sp)
 	/* Trace syscalls, but only if requested by the user. */
-	REG_L t0, TASK_TI_FLAGS(tp)
+	REG_L t0, TASK_THREAD_FLAGS(tp)
 	andi t0, t0, _TIF_SYSCALL_WORK
 	bnez t0, handle_syscall_trace_enter
 check_syscall_nr:
@@ -244,7 +244,7 @@ ret_from_syscall_rejected:
 	call rseq_syscall
 #endif
 	/* Trace syscalls, but only if requested by the user. */
-	REG_L t0, TASK_TI_FLAGS(tp)
+	REG_L t0, TASK_THREAD_FLAGS(tp)
 	andi t0, t0, _TIF_SYSCALL_WORK
 	bnez t0, handle_syscall_trace_exit
 
@@ -265,7 +265,7 @@ ret_from_exception:
 
 resume_userspace:
 	/* Interrupts must be disabled here so flags are checked atomically */
-	REG_L s0, TASK_TI_FLAGS(tp) /* current_thread_info->flags */
+	REG_L s0, TASK_THREAD_FLAGS(tp) /* current_thread_info->flags */
 	andi s1, s0, _TIF_WORK_MASK
 	bnez s1, work_pending
 
@@ -275,7 +275,7 @@ resume_userspace:
 
 	/* Save unwound kernel stack pointer in thread_info */
 	addi s0, sp, PT_SIZE_ON_STACK
-	REG_S s0, TASK_TI_KERNEL_SP(tp)
+	REG_S s0, TASK_THREAD_KERNEL_SP(tp)
 
 	/*
 	 * Save TP into the scratch register , so we can find the kernel data
@@ -359,9 +359,9 @@ restore_all:
 
 //#if IS_ENABLED(CONFIG_PREEMPTION)
 resume_kernel:
-	REG_L s0, TASK_TI_PREEMPT_COUNT(tp)
+	REG_L s0, TASK_THREAD_PREEMPT_COUNT(tp)
 	bnez s0, restore_all
-	REG_L s0, TASK_TI_FLAGS(tp)
+	REG_L s0, TASK_THREAD_FLAGS(tp)
 	andi s0, s0, _TIF_NEED_RESCHED
 	beqz s0, restore_all
 	call preempt_schedule_irq
@@ -485,7 +485,7 @@ restore_caller_reg:
 	REG_S x30, PT_T5(sp)
 	REG_S x31, PT_T6(sp)
 
-	REG_L s0, TASK_TI_KERNEL_SP(tp)
+	REG_L s0, TASK_THREAD_KERNEL_SP(tp)
 	csrr s1, CSR_STATUS
 	csrr s2, CSR_EPC
 	csrr s3, CSR_TVAL
@@ -527,13 +527,15 @@ ENDPROC(ret_from_kernel_thread)
  * The value of a0 and a1 must be preserved by this function, as that's how
  * arguments are passed to schedule_tail.
  */
-ENTRY(__switch_to)
+  
+//ENTRY(__switch_to)
+ENTRY(arch_context_switch)
 	/* Save context into prev->thread */
 	li    a4,  TASK_THREAD_RA
 	add   a3, a0, a4
 	add   a4, a1, a4
 	REG_S ra,  TASK_THREAD_RA_RA(a3)
-	REG_S sp,  TASK_THREAD_SP_RA(a3)
+	REG_S sp,  TASK_THREAD_USER_SP_RA(a3)
 	REG_S s0,  TASK_THREAD_S0_RA(a3)
 	REG_S s1,  TASK_THREAD_S1_RA(a3)
 	REG_S s2,  TASK_THREAD_S2_RA(a3)
@@ -546,9 +548,18 @@ ENTRY(__switch_to)
 	REG_S s9,  TASK_THREAD_S9_RA(a3)
 	REG_S s10, TASK_THREAD_S10_RA(a3)
 	REG_S s11, TASK_THREAD_S11_RA(a3)
+
+  /* NMG Need to call some __arch_context_switch?
+  ARM64 code:
+    - update tls
+    - update the PDA
+    - update FPU stuff
+  */
+  call __arch_context_switch
+  
 	/* Restore context from next->thread */
 	REG_L ra,  TASK_THREAD_RA_RA(a4)
-	REG_L sp,  TASK_THREAD_SP_RA(a4)
+	REG_L sp,  TASK_THREAD_USER_SP_RA(a4)
 	REG_L s0,  TASK_THREAD_S0_RA(a4)
 	REG_L s1,  TASK_THREAD_S1_RA(a4)
 	REG_L s2,  TASK_THREAD_S2_RA(a4)
@@ -564,7 +575,8 @@ ENTRY(__switch_to)
 	/* The offset of thread_info in task_struct is zero. */
 	move tp, a1
 	ret
-ENDPROC(__switch_to)
+//ENDPROC(__switch_to)
+ENDPROC(arch_context_switch)
 
 #ifndef CONFIG_MMU
 #define do_page_fault do_trap_unknown

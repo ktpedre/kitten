@@ -14,27 +14,28 @@
 static void
 __arch_show_kstack(kaddr_t rbp)
 {
-#ifndef CONFIG_FRAME_POINTER
-	printk( "Unable to generate stack trace "
-		"(recompile with CONFIG_FRAME_POINTER)\n" );
-	return;
-#endif
 
-	if (rbp == 0)
-		asm("mov %0, x30\n" : "=r" (rbp));
+/* #ifndef CONFIG_FRAME_POINTER */
+/* 	printk( "Unable to generate stack trace " */
+/* 		"(recompile with CONFIG_FRAME_POINTER)\n" ); */
+/* 	return; */
+/* #endif */
 
-	int max_depth = 16;
-	printk(KERN_DEBUG "  Stack trace from RBP %016lx\n", rbp);
+/* 	if (rbp == 0) */
+/* 		asm("move %0, x30\n" : "=r" (rbp)); */
 
-	while ((rbp >= PAGE_OFFSET) && max_depth--) {
-		kaddr_t sym_addr = ((kaddr_t *)rbp)[1];
-		char sym_name[KSYM_SYMBOL_LEN];
+/* 	int max_depth = 16; */
+/* 	printk(KERN_DEBUG "  Stack trace from RBP %016lx\n", rbp); */
 
-		kallsyms_sprint_symbol(sym_name, sym_addr);
-		printk(KERN_DEBUG "    [<%016lx>] %s\n", sym_addr, sym_name);
+/* 	while ((rbp >= PAGE_OFFSET) && max_depth--) { */
+/* 		kaddr_t sym_addr = ((kaddr_t *)rbp)[1]; */
+/* 		char sym_name[KSYM_SYMBOL_LEN]; */
 
-		rbp = *((kaddr_t *)rbp);
-	}
+/* 		kallsyms_sprint_symbol(sym_name, sym_addr); */
+/* 		printk(KERN_DEBUG "    [<%016lx>] %s\n", sym_addr, sym_name); */
+
+/* 		rbp = *((kaddr_t *)rbp); */
+/* 	} */
 }
 
 
@@ -58,7 +59,7 @@ void
 arch_show_registers(struct pt_regs * regs)
 {
 
-	bool user_fault = (regs->pc < PAGE_OFFSET);
+	bool user_fault = (regs->epc < PAGE_OFFSET);
 	char namebuf[128];
 
 	printk("Task ID: %d   Task Name: %s   UTS_RELEASE: %s\n",
@@ -68,32 +69,31 @@ arch_show_registers(struct pt_regs * regs)
 	);
 
 
-	printk("PC:     %016lx (%s)\n", regs->pc, 
+	printk("PC:     %016lx (%s)\n", regs->epc,
 		       (user_fault) ? "user-context"
-             			  : kallsyms_lookup(regs->pc, NULL, NULL,  namebuf));
+             			  : kallsyms_lookup(regs->epc, NULL, NULL,  namebuf));
 	printk("SP:     %016lx\n", regs->sp);
-	printk("PSTATE: %016lx\n", regs->pstate);
+	printk("PSTATE: %016lx\n", regs->status);
 
 
+	printk("RA: %016lx SP: %016lx GP: %016lx TP: %016lx\n", 
+		regs->ra, regs->sp, regs->gp, regs->tp);
+	printk("T0: %016lx T1: %016lx T2: %016lx S0: %016lx\n", 
+		regs->t0, regs->t1, regs->t2, regs->s0);
+	printk("S1: %016lx A0: %016lx A1: %016lx A2: %016lx\n", 
+		regs->s1, regs->a0, regs->a1, regs->a2);
+	printk("A3: %016lx A4: %016lx A5: %016lx A6: %016lx\n", 
+		regs->a3, regs->a4, regs->a5, regs->a6);
+	printk("A7: %016lx S2: %016lx S3: %016lx S4: %016lx\n", 
+		regs->a7, regs->s2, regs->s3, regs->s4);
+	printk("S5: %016lx S6: %016lx S7: %016lx S8: %016lx\n", 
+		regs->s5, regs->s6, regs->s7, regs->s8);
+	printk("S9: %016lx S10: %016lx S11: %016lx T3: %016lx\n", 
+		regs->s9, regs->s10, regs->s11, regs->t3);
+	printk("T4: %016lx T5: %016lx T6: \n",//%016lx X31: %016lx\n", 
+		regs->t4, regs->t5, regs->t6);
 
-	printk("X00: %016lx X01: %016lx X02: %016lx X03: %016lx\n", 
-		regs->regs[0], regs->regs[1], regs->regs[2], regs->regs[3]);
-	printk("X04: %016lx X05: %016lx X06: %016lx X07: %016lx\n", 
-		regs->regs[4], regs->regs[5], regs->regs[6], regs->regs[7]);
-	printk("X08: %016lx X09: %016lx X10: %016lx X11: %016lx\n", 
-		regs->regs[8], regs->regs[9], regs->regs[10], regs->regs[11]);
-	printk("X12: %016lx X13: %016lx X14: %016lx X15: %016lx\n", 
-		regs->regs[12], regs->regs[13], regs->regs[14], regs->regs[15]);
-	printk("X16: %016lx X17: %016lx X18: %016lx X19: %016lx\n", 
-		regs->regs[16], regs->regs[17], regs->regs[18], regs->regs[19]);
-	printk("X20: %016lx X21: %016lx X22: %016lx X23: %016lx\n", 
-		regs->regs[20], regs->regs[21], regs->regs[22], regs->regs[23]);
-	printk("X24: %016lx X25: %016lx X26: %016lx X27: %016lx\n", 
-		regs->regs[24], regs->regs[25], regs->regs[26], regs->regs[27]);
-	printk("X28: %016lx X29: %016lx X30: %016lx X31: %016lx\n", 
-		regs->regs[28], regs->regs[29], regs->regs[30], regs->regs[31]);
-
-	printk("orig_x0: %016lx, syscallno: %016lx\n", regs->orig_x0, regs->syscallno);
+	printk("orig_x0: %016lx, cause: %016lx\n", regs->orig_a0, regs->cause);
 
 
 	if (!user_fault)

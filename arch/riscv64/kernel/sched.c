@@ -1,7 +1,7 @@
 #include <lwk/kernel.h>
 #include <lwk/smp.h>
 #include <lwk/task.h>
-#include <arch/fpsimd.h>
+//#include <arch/fpsimd.h>
 
 struct task_struct *
 __arch_context_switch(struct task_struct *prev_p, struct task_struct *next_p)
@@ -11,28 +11,28 @@ __arch_context_switch(struct task_struct *prev_p, struct task_struct *next_p)
 	id_t cpu = this_cpu;
 
 
-	/* Load the TPIDR_EL0 for User TLS */
-	{
-		prev->tp_value = __mrs(tpidr_el0);
-		__msr(tpidr_el0, next->tp_value);
-	}
+	/* /\* Load the TPIDR_EL0 for User TLS *\/ */
+	/* { */
+	/* 	prev->tp_value = __mrs(tpidr_el0); */
+	/* 	__msr(tpidr_el0, next->tp_value); */
+	/* } */
 
-	/* Update the CPU's PDA (per-CPU data area) */
-	prev->cpu_context.usersp = read_pda(oldsp);
-	write_pda(oldsp, (next->cpu_context.usersp));
-	write_pda(pcurrent, next_p);
-	write_pda(kernelstack, (vaddr_t)next_p + TASK_SIZE - PDA_STACKOFFSET);
+	/* /\* Update the CPU's PDA (per-CPU data area) *\/ */
+	/* prev->cpu_context.usersp = read_pda(oldsp); */
+	/* write_pda(oldsp, (next->cpu_context.usersp)); */
+	/* write_pda(pcurrent, next_p); */
+	/* write_pda(kernelstack, (vaddr_t)next_p + TASK_SIZE - PDA_STACKOFFSET); */
 
-	/* save and restore floating-point state */
-	{
-		struct fpsimd_state * next_fpsimd = &next->fpsimd_state;
-		struct fpsimd_state * prev_fpsimd = &prev->fpsimd_state;
+	/* /\* save and restore floating-point state *\/ */
+	/* { */
+	/* 	struct fpsimd_state * next_fpsimd = &next->fpsimd_state; */
+	/* 	struct fpsimd_state * prev_fpsimd = &prev->fpsimd_state; */
 
-		fpsimd_save_state(prev_fpsimd);
-		fpsimd_load_state(next_fpsimd);
-	}
+	/* 	fpsimd_save_state(prev_fpsimd); */
+	/* 	fpsimd_load_state(next_fpsimd); */
+	/* } */
 
-	return prev_p;
+	/* return prev_p; */
 }
 
 void

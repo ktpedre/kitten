@@ -172,7 +172,7 @@ ENTRY(vectors)
 	ventry	el1_error_invalid		// Error EL1h
 
 	ventry	el0_sync			// Synchronous 64-bit EL0
-	ventry	el0_irq				// IRQ 64-bit EL0
+	ventry	el0_irq				// IRQ 64-bit LEe0
 	ventry	el0_fiq_invalid			// FIQ 64-bit EL0
 	ventry	el0_error_invalid		// Error 64-bit EL0
 

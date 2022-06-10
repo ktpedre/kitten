@@ -15,7 +15,7 @@
 #include <arch/pgtable.h>
 #include <arch/mce.h>
 #include <arch/of_fdt.h>
-#include <arch/memory.h>
+//#include <arch/memory.h>
 #include <arch/memblock.h>
 //#include <arch/cputype.h>
 
