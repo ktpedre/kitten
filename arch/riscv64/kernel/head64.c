@@ -45,13 +45,13 @@ char x86_boot_params[BOOT_PARAM_SIZE] __initdata = {0,};
  * Array of pointers to each CPU's per-processor data area.
  * The array is indexed by CPU ID.
  */
-struct ARM64_pda *_cpu_pda[NR_CPUS] __read_mostly;
+struct RISCV_pda *_cpu_pda[NR_CPUS] __read_mostly;
 
 /**
  * Array of per-processor data area structures, one per CPU.
  * The array is indexed by CPU ID.
  */
-struct ARM64_pda boot_cpu_pda[NR_CPUS] __cacheline_aligned;
+struct RISCV_pda boot_cpu_pda[NR_CPUS] __cacheline_aligned;
 
 /**
  * This unmaps virtual addresses [0,512GB) by clearing the first entry in the
@@ -180,11 +180,8 @@ early_fdt_setup(phys_addr_t dt_phys)
 
 
 void __init
-arm64_start_kernel( void ) {
-	phys_addr_t ttbr1;
-	struct tcr_el1 tcr;
+riscv_start_kernel( void ) {
 	int32_t i;
-
 
 	memset(__bss_start, 0,
 	      (unsigned long) __bss_stop - (unsigned long) __bss_start);
@@ -194,7 +191,6 @@ arm64_start_kernel( void ) {
 	early_printk("memstart_addr: %p\n", memstart_addr);
 
 	early_fdt_setup(fdt_start);
-
 
 	for (i = 0; i < NR_CPUS; i++)
 		cpu_pda(i) = &boot_cpu_pda[i];

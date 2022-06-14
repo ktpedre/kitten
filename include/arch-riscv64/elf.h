@@ -101,7 +101,7 @@ typedef struct user_i387_struct elf_fpregset_t;
    the loader.  We need to make sure that it is out of the way of the program
    that it will "exec", and that there is sufficient room for the brk.  */
 
-#define ELF_ET_DYN_BASE         (2 * TASK_SIZE / 3)
+//#define ELF_ET_DYN_BASE         (2 * TASK_SIZE / 3)
 
 /* regs is struct pt_regs, pr_reg is elf_gregset_t (which is
    now struct_user_regs, they are different). Assumes current is the process

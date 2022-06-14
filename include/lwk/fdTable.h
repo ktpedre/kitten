@@ -4,7 +4,9 @@
 // Maximum files opened at one time
 #define MAX_FILES       32
 
+#include <lwk/kmem.h>
 #include <lwk/spinlock.h>
+
 
 struct file;
 struct fdTable {

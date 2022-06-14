@@ -1,386 +1,239 @@
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Based on arch/arm/kernel/traps.c
- *
- * Copyright (C) 1995-2009 Russell King
- * Copyright (C) 2012 ARM Ltd.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * Copyright (C) 2012 Regents of the University of California
  */
 
-#include <lwk/signal.h>
-//#include <lwk/personality.h>
-#include <lwk/kallsyms.h>
-#include <lwk/spinlock.h>
-//#include <lwk/uaccess.h>
-//#include <lwk/hardirq.h>
-//#include <lwk/kdebug.h>
-//#include <lwk/module.h>
-//#include <lwk/kexec.h>
-#include <lwk/delay.h>
+#include <lwk/cpu.h>
+#include <lwk/kernel.h>
 #include <lwk/init.h>
 #include <lwk/sched.h>
-#include <arch/syscalls.h>
+//#include <lwk/sched/debug.h>
+//#include <lwk/sched/signal.h>
+#include <lwk/signal.h>
+//#include <lwk/kdebug.h>
+//#include <lwk/uaccess.h>
+//#include <lwk/kprobes.h>
+//include <lwk/mm.h>
+//#include <lwk/module.h>
+//#include <lwk/irq.h>
 
-#include <arch/atomic.h>
+//#include <arch/arch-prototypes.h>
+#include <arch/bug.h>
+																								\
+#include <arch/processor.h>
 #include <arch/ptrace.h>
-//#include <arch/debug-monitors.h>
-//#include <arch/traps.h>
-//#include <arch/stacktrace.h>
-#include <arch/exception.h>
-//#include <arch/system_misc.h>
-
-static const char *handler[]= {
-	"Synchronous Abort",
-	"IRQ",
-	"FIQ",
-	"Error"
-};
+#include <arch/csr.h>
 
 int show_unhandled_signals = 1;
 
-/*
- * Dump out the contents of some memory nicely...
- */
-static void dump_mem(const char *lvl, const char *str, unsigned long bottom,
-		     unsigned long top)
+static DEFINE_SPINLOCK(die_lock);
+
+void die(struct pt_regs *regs, const char *str)
 {
-	unsigned long first;
-	//mm_segment_t fs;
-	int i;
-
-	/*
-	 * We need to switch to kernel mode so that we can use __get_user
-	 * to safely read from kernel space.  Note that we now dump the
-	 * code first, just in case the backtrace kills us.
-	 */
-	//fs = get_fs();
-	//set_fs(KERNEL_DS);
-
-	printk("%s%s(0x%016lx to 0x%016lx)\n", lvl, str, bottom, top);
-
-	for (first = bottom & ~31; first < top; first += 32) {
-		unsigned long p;
-		char str[sizeof(" 12345678") * 8 + 1];
-
-		memset(str, ' ', sizeof(str));
-		str[sizeof(str) - 1] = '\0';
-
-		for (p = first, i = 0; i < 8 && p < top; i++, p += 4) {
-			if (p >= bottom && p < top) {
-				unsigned int val;
-				if (__get_user(val, (unsigned int *)p) == 0)
-					sprintf(str + i * 9, " %08x", val);
-				else
-					sprintf(str + i * 9, " ????????");
-			}
-		}
-		printk("%s%04lx:%s\n", lvl, first & 0xffff, str);
-	}
-
-	//set_fs(fs);
-}
-
-static void dump_backtrace_entry(unsigned long where, unsigned long stack)
-{
-	print_ip_sym(where);
-	if (in_exception_text(where))
-		dump_mem("", "Exception stack", stack,
-			 stack + sizeof(struct pt_regs));
-}
-
-static void dump_instr(const char *lvl, struct pt_regs *regs)
-{
-	unsigned long addr = instruction_pointer(regs);
-	unsigned int exception = 0;
-
-#if 0
-	char str[sizeof("00000000 ") * 5 + 2 + 1], *p = str;
-	int i;
-
-	/*
-	 * We need to switch to kernel mode so that we can use __get_user
-	 * to safely read from kernel space.  Note that we now dump the
-	 * code first, just in case the backtrace kills us.
-	 */
-	//fs = get_fs();
-	//set_fs(KERNEL_DS);
-
-	for (i = -4; i < 1; i++) {
-		unsigned int val, bad;
-
-		//bad = __get_user(val, &((u32 *)addr)[i]);
-
-		if (!bad)
-			p += sprintf(p, i == 0 ? "(%08x) " : "%08x ", val);
-		else {
-			p += sprintf(p, "bad PC value");
-			break;
-		}
-	}
-	printk("%sCode: %s\n", lvl, str);
-#endif
-	asm volatile("mrs %0, ESR_EL1\n":"=r"(exception));
-	printk("EC : 0x%x\n",exception >> 26);
-	printk("ISS: 0x%x\n",exception & ((-1u) >> 7));
-	printk("PC: %08x\n",addr);
-
-}
-
-static void dump_backtrace(struct pt_regs *regs, struct task_struct *tsk)
-{
-	asm volatile("b . \n");
-#if 0
-
-	//struct stackframe frame;
-	const register unsigned long current_sp asm ("sp");
-
-	pr_debug("%s(regs = %p tsk = %p)\n", __func__, regs, tsk);
-
-	if (!tsk)
-		tsk = current;
-
-	if (regs) {
-//		/frame.fp = regs->regs[29];
-//		/frame.sp = regs->sp;
-//		/frame.pc = regs->pc;
-	} else if (tsk == current) {
-		//frame.fp = (unsigned long)__builtin_frame_address(0);
-		//frame.sp = current_sp;
-		//frame.pc = (unsigned long)dump_backtrace;
-	} else {
-		/*
-		 * task blocked in __switch_to
-		 */
-		//frame.fp = thread_saved_fp(tsk);
-//		/frame.sp = thread_saved_sp(tsk);
-		//frame.pc = thread_saved_pc(tsk);
-	}
-
-	printk("Call trace:\n");
-	while (1) {
-		unsigned long where;// = frame.pc;
-		int ret;
-
-		//ret = unwind_frame(&frame);
-		if (ret < 0)
-			break;
-//		/dump_backtrace_entry(where, frame.sp);
-	}
-#endif
-}
-
-void show_stack(struct task_struct *tsk, unsigned long *sp)
-{
-	dump_backtrace(NULL, tsk);
-	barrier();
-}
-
-#ifdef CONFIG_PREEMPT
-#define S_PREEMPT " PREEMPT"
-#else
-#define S_PREEMPT ""
-#endif
-#ifdef CONFIG_SMP
-#define S_SMP " SMP"
-#else
-#define S_SMP ""
-#endif
-
-static int __die(const char *str, int err, struct thread_info *thread,
-		 struct pt_regs *regs)
-{
-	//struct task_struct *tsk = thread->task;
 	static int die_counter;
 	int ret;
 
-	pr_emerg("Internal error: %s: %x [#%d]" S_PREEMPT S_SMP "\n",
-		 str, err, ++die_counter);
+	asm volatile("j . \n");
 
-	/* trap and error numbers are mostly meaningless on ARM */
-	//ret = notify_die(DIE_OOPS, str, regs, err, 0, SIGSEGV);
-	//if (ret == NOTIFY_STOP)
-		//return ret;
+	/* oops_enter(); */
 
-	//print_modules();
-	//__show_regs(regs);
-	//pr_emerg("Process %.*s (pid: %d, stack limit = 0x%p)\n",
-		// TASK_COMM_LEN, tsk->comm, task_pid_nr(tsk), thread + 1);
-#if 0
-	if (!user_mode(regs) || in_interrupt()) {
-		//dump_mem(KERN_EMERG, "Stack: ", regs->sp,
-			// THREAD_SIZE + (unsigned long)task_stack_page(tsk));
-//		/dump_backtrace(regs, tsk);
-		dump_instr(KERN_EMERG, regs);
+	/* spin_lock_irq(&die_lock); */
+	/* console_verbose(); */
+	/* bust_spinlocks(1); */
+
+	/* pr_emerg("%s [#%d]\n", str, ++die_counter); */
+	/* /\* print_modules(); *\/ */
+	/* /\* show_regs(regs); *\/ */
+
+	/* /\* ret = notify_die(DIE_OOPS, str, regs, 0, regs->cause, SIGSEGV); *\/ */
+
+	/* bust_spinlocks(0); */
+	/* /\* add_taint(TAINT_DIE, LOCKDEP_NOW_UNRELIABLE); *\/ */
+	/* spin_unlock_irq(&die_lock); */
+	/* oops_exit(); */
+
+	/* if (in_interrupt()) */
+	/* 	panic("Fatal exception in interrupt"); */
+	/* /\* if (panic_on_oops) *\/ */
+	/* /\* 	panic("Fatal exception"); *\/ */
+	/* /\* if (ret != NOTIFY_STOP) *\/ */
+	/* /\* 	make_task_dead(SIGSEGV); *\/ */
+}
+
+void do_trap(struct pt_regs *regs, int signo, int code, unsigned long addr)
+{
+	struct task_struct *tsk = current;
+
+	if (show_unhandled_signals && unhandled_signal(tsk, signo)
+	    && printk_ratelimit()) {
+		pr_info("%s[%d]: unhandled signal %d code 0x%x at 0x" REG_FMT,
+			tsk->comm, task_pid_nr(tsk), signo, code, addr);
+		print_vma_addr(KERN_CONT " in ", instruction_pointer(regs));
+		pr_cont("\n");
+		__show_regs(regs);
 	}
-#endif
-	return ret;
+
+	force_sig_fault(signo, code, (void __user *)addr);
 }
 
-//static DEFINE_RAW_SPINLOCK(die_lock);
-static DEFINE_SPINLOCK(die_lock);
-
-/*
- * This function is protected against re-entrancy.
- */
-void die(const char *str, struct pt_regs *regs, int err)
+static void do_trap_error(struct pt_regs *regs, int signo, int code,
+	unsigned long addr, const char *str)
 {
-	asm volatile("b . \n");
-#if 0
-	struct thread_info *thread = current_thread_info();
-	int ret;
+	current->arch.thread.bad_cause = regs->cause;
 
-	oops_enter();
-
-	raw_spin_lock_irq(&die_lock);
-	console_verbose();
-	bust_spinlocks(1);
-	ret = __die(str, err, thread, regs);
-
-	//if (regs && kexec_should_crash(thread->task))
-		//crash_kexec(regs);
-
-	bust_spinlocks(0);
-	//add_taint(TAINT_DIE, LOCKDEP_NOW_UNRELIABLE);
-	raw_spin_unlock_irq(&die_lock);
-	oops_exit();
-
-	if (in_interrupt())
-		panic("Fatal exception in interrupt");
-	//if (panic_on_oops)
-//		panic("Fatal exception");
-	//if (ret != NOTIFY_STOP)
-		//do_exit(SIGSEGV);
-#endif
-}
-
-void arm64_notify_die(const char *str, struct pt_regs *regs,
-		      struct siginfo *info, int err)
-{
-	asm volatile("b . \n");
-#if 0
-
-	if (user_mode(regs))
-		force_sig_info(info->si_signo, info, current);
-	else
-		die(str, regs, err);
-#endif
-}
-
-asmlinkage void __exception do_undefinstr(struct pt_regs *regs)
-{
-
-
-	siginfo_t info;
-	void __user *pc = (void __user *)instruction_pointer(regs);
-
-	/* check for AArch32 breakpoint instructions */
-	//if (!aarch32_break_handler(regs))
-//		return;
-
-	//if (show_unhandled_signals && unhandled_signal(current, SIGILL) &&
-	    //printk_ratelimit()) {
-		//pr_info("%s[%d]: undefined instruction: pc=%p\n",
-//			current->comm, task_pid_nr(current), pc);
-		dump_instr(KERN_INFO, regs);
-//	}
-
-	info.si_signo = SIGILL;
-	info.si_errno = 0;
-	info.si_code  = ILL_ILLOPC;
-	info.si_addr  = pc;
-
-	printk("Undefined Instruction at %p [instr : %x]\n", pc, *(uint32_t *)pc);
-
-	show_registers(regs);
-	panic("Oops - undefined instruction");
-	arm64_notify_die("Oops - undefined instruction", regs, &info, 0);
-}
-
-long compat_arm_syscall(struct pt_regs *regs);
-
-asmlinkage long do_ni_syscall(struct pt_regs *regs)
-{
-	asm volatile("b . \n");
-#if 0
-
-#ifdef CONFIG_COMPAT
-	long ret;
-	if (is_compat_task()) {
-		ret = compat_arm_syscall(regs);
-		if (ret != -ENOSYS)
-			return ret;
+	if (user_mode(regs)) {
+		do_trap(regs, signo, code, addr);
+	} else {
+		if (!fixup_exception(regs))
+			die(regs, str);
 	}
+}
+
+/* #if defined(CONFIG_XIP_KERNEL) && defined(CONFIG_RISCV_ALTERNATIVE) */
+/* #define __trap_section		__section(".xip.traps") */
+/* #else */
+#define __trap_section
+/* #endif */
+#define DO_ERROR_INFO(name, signo, code, str)				\
+asmlinkage __visible __trap_section void name(struct pt_regs *regs)	\
+{									\
+	do_trap_error(regs, signo, code, regs->epc, "Oops - " str);	\
+}
+
+DO_ERROR_INFO(do_trap_unknown,
+	SIGILL, ILL_ILLTRP, "unknown exception");
+DO_ERROR_INFO(do_trap_insn_misaligned,
+	SIGBUS, BUS_ADRALN, "instruction address misaligned");
+DO_ERROR_INFO(do_trap_insn_fault,
+	SIGSEGV, SEGV_ACCERR, "instruction access fault");
+DO_ERROR_INFO(do_trap_insn_illegal,
+	SIGILL, ILL_ILLOPC, "illegal instruction");
+DO_ERROR_INFO(do_trap_load_fault,
+	SIGSEGV, SEGV_ACCERR, "load access fault");
+#ifndef CONFIG_RISCV_M_MODE
+DO_ERROR_INFO(do_trap_load_misaligned,
+	SIGBUS, BUS_ADRALN, "Oops - load address misaligned");
+DO_ERROR_INFO(do_trap_store_misaligned,
+	SIGBUS, BUS_ADRALN, "Oops - store (or AMO) address misaligned");
+#else
+int handle_misaligned_load(struct pt_regs *regs);
+int handle_misaligned_store(struct pt_regs *regs);
+
+asmlinkage void __trap_section do_trap_load_misaligned(struct pt_regs *regs)
+{
+	if (!handle_misaligned_load(regs))
+		return;
+	do_trap_error(regs, SIGBUS, BUS_ADRALN, regs->epc,
+		      "Oops - load address misaligned");
+}
+
+asmlinkage void __trap_section do_trap_store_misaligned(struct pt_regs *regs)
+{
+	if (!handle_misaligned_store(regs))
+		return;
+	do_trap_error(regs, SIGBUS, BUS_ADRALN, regs->epc,
+		      "Oops - store (or AMO) address misaligned");
+}
 #endif
+DO_ERROR_INFO(do_trap_store_fault,
+	SIGSEGV, SEGV_ACCERR, "store (or AMO) access fault");
+DO_ERROR_INFO(do_trap_ecall_u,
+	SIGILL, ILL_ILLTRP, "environment call from U-mode");
+DO_ERROR_INFO(do_trap_ecall_s,
+	SIGILL, ILL_ILLTRP, "environment call from S-mode");
+DO_ERROR_INFO(do_trap_ecall_m,
+	SIGILL, ILL_ILLTRP, "environment call from M-mode");
 
-	if (show_unhandled_signals && printk_ratelimit()) {
-		pr_info("%s[%d]: syscall %d\n", current->comm,
-			task_pid_nr(current), (int)regs->syscallno);
-		dump_instr("", regs);
-		if (user_mode(regs))
-			__show_regs(regs);
-	}
-#endif
-	return syscall_not_implemented();
-}
-
-/*
- * bad_mode handles the impossible case in the exception vector.
- */
-asmlinkage void bad_mode(struct pt_regs *regs, int reason, unsigned int esr)
+static inline unsigned long get_break_insn_length(unsigned long pc)
 {
+	bug_insn_t insn;
 
-	printk("Bad Mode (reason=%x) (esr=%x)\n", reason, esr);
+	if (get_kernel_nofault(insn, (bug_insn_t *)pc))
+		return 0;
 
-	show_registers(regs);
-	panic("Oops - undefined instruction");
-
-
-	asm volatile("b . \n");
-#if 0
-
-	siginfo_t info;
-	void __user *pc = (void __user *)instruction_pointer(regs);
-	console_verbose();
-
-	pr_crit("Bad mode in %s handler detected, code 0x%08x\n",
-		handler[reason], esr);
-	__show_regs(regs);
-
-	info.si_signo = SIGILL;
-	info.si_errno = 0;
-	info.si_code  = ILL_ILLOPC;
-	info.si_addr  = pc;
-
-	arm64_notify_die("Oops - bad mode", regs, &info, 0);
-#endif
+	return GET_INSN_LENGTH(insn);
 }
 
-void __pte_error(const char *file, int line, unsigned long val)
+asmlinkage __visible __trap_section void do_trap_break(struct pt_regs *regs)
 {
-	printk("%s:%d: bad pte %016lx.\n", file, line, val);
-}
+	asm volatile("j . \n");
+/* #ifdef CONFIG_KPROBES */
+/* 	if (kprobe_single_step_handler(regs)) */
+/* 		return; */
 
-void __pmd_error(const char *file, int line, unsigned long val)
-{
-	printk("%s:%d: bad pmd %016lx.\n", file, line, val);
-}
+/* 	if (kprobe_breakpoint_handler(regs)) */
+/* 		return; */
+/* #endif */
+/* #ifdef CONFIG_UPROBES */
+/* 	if (uprobe_single_step_handler(regs)) */
+/* 		return; */
 
-void __pgd_error(const char *file, int line, unsigned long val)
-{
-	printk("%s:%d: bad pgd %016lx.\n", file, line, val);
-}
+/* 	if (uprobe_breakpoint_handler(regs)) */
+/* 		return; */
+/* #endif */
+/* 	current->arch.thread.bad_cause = regs->cause; */
 
-void __init trap_init(void)
-{
-	return;
+/* 	if (user_mode(regs)) */
+/* 		force_sig_fault(SIGTRAP, TRAP_BRKPT, (void __user *)regs->epc); */
+/* #ifdef CONFIG_KGDB */
+/* 	else if (notify_die(DIE_TRAP, "EBREAK", regs, 0, regs->cause, SIGTRAP) */
+/* 								== NOTIFY_STOP) */
+/* 		return; */
+/* #endif */
+/* 	else if (report_bug(regs->epc, regs) == 1) */
+/* 		regs->epc += get_break_insn_length(regs->epc); */
+/* 	else */
+/* 		die(regs, "Kernel BUG"); */
 }
+NOKPROBE_SYMBOL(do_trap_break);
+
+/* #ifdef CONFIG_GENERIC_BUG */
+/* int is_valid_bugaddr(unsigned long pc) */
+/* { */
+/* 	bug_insn_t insn; */
+
+/* 	if (pc < VMALLOC_START) */
+/* 		return 0; */
+/* 	if (get_kernel_nofault(insn, (bug_insn_t *)pc)) */
+/* 		return 0; */
+/* 	if ((insn & __INSN_LENGTH_MASK) == __INSN_LENGTH_32) */
+/* 		return (insn == __BUG_INSN_32); */
+/* 	else */
+/* 		return ((insn & __COMPRESSED_INSN_MASK) == __BUG_INSN_16); */
+/* } */
+/* #endif /\* CONFIG_GENERIC_BUG *\/ */
+
+/* #ifdef CONFIG_VMAP_STACK */
+/* static DEFINE_PER_CPU(unsigned long [OVERFLOW_STACK_SIZE/sizeof(long)], */
+/* 		overflow_stack)__aligned(16); */
+/* /\* */
+/*  * shadow stack, handled_ kernel_ stack_ overflow(in kernel/entry.S) is used */
+/*  * to get per-cpu overflow stack(get_overflow_stack). */
+/*  *\/ */
+/* long shadow_stack[SHADOW_OVERFLOW_STACK_SIZE/sizeof(long)]; */
+/* asmlinkage unsigned long get_overflow_stack(void) */
+/* { */
+/* 	return (unsigned long)this_cpu_ptr(overflow_stack) + */
+/* 		OVERFLOW_STACK_SIZE; */
+/* } */
+
+/* asmlinkage void handle_bad_stack(struct pt_regs *regs) */
+/* { */
+/* 	unsigned long tsk_stk = (unsigned long)current->stack; */
+/* 	unsigned long ovf_stk = (unsigned long)this_cpu_ptr(overflow_stack); */
+
+/* 	console_verbose(); */
+
+/* 	pr_emerg("Insufficient stack space to handle exception!\n"); */
+/* 	pr_emerg("Task stack:     [0x%016lx..0x%016lx]\n", */
+/* 			tsk_stk, tsk_stk + THREAD_SIZE); */
+/* 	pr_emerg("Overflow stack: [0x%016lx..0x%016lx]\n", */
+/* 			ovf_stk, ovf_stk + OVERFLOW_STACK_SIZE); */
+
+/* 	__show_regs(regs); */
+/* 	panic("Kernel stack overflow"); */
+
+/* 	for (;;) */
+/* 		wait_for_interrupt(); */
+/* } */
+/* #endif */

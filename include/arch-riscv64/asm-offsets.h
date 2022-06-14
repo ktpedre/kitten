@@ -144,6 +144,8 @@
 #define TASK_THREAD_FCSR_F0 256 /* offsetof(struct task_struct, arch.thread.fstate.fcsr) - offsetof(struct task_struct, arch.thread.fstate.f[0])	# */
 #define PT_SIZE_ON_STACK 288 /* ALIGN(sizeof(struct pt_regs), STACK_ALIGN)	# */
 #define KERNEL_MAP_VIRT_ADDR 8 /* offsetof(struct kernel_mapping, virt_addr)	# */
+#define SBI_HART_BOOT_TASK_PTR_OFFSET 0 /* offsetof(struct sbi_hart_boot_data, task_ptr)	# */
+#define SBI_HART_BOOT_STACK_PTR_OFFSET 8 /* offsetof(struct sbi_hart_boot_data, stack_ptr)	# */
 #define __NR_syscall_max 534 /* sizeof(syscalls) - 1	# */
 
 #endif

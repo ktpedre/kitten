@@ -27,27 +27,27 @@ struct secondary_data secondary_data;
 asmlinkage void secondary_start_kernel(void)
 {
 
-	early_printk("Hello from secondary startup\n");
+	/* early_printk("Hello from secondary startup\n"); */
 
 
 
-	cpu_init();
+	/* cpu_init(); */
 
 
-	printk("Cpu initialized\n");
-	printk("this_cpu = %d\n", this_cpu);
+	/* printk("Cpu initialized\n"); */
+	/* printk("this_cpu = %d\n", this_cpu); */
 
-	sched_init_runqueue(this_cpu);
-	core_timer_init(this_cpu);
-	cpu_set(this_cpu, cpu_online_map);
+	/* sched_init_runqueue(this_cpu); */
+	/* core_timer_init(this_cpu); */
+	/* cpu_set(this_cpu, cpu_online_map); */
 
-	/*
-	 * Enable external interrupts.
-	 */
-	local_irq_enable();
+	/* /\* */
+	/*  * Enable external interrupts. */
+	/*  *\/ */
+	/* local_irq_enable(); */
 
-	schedule(); /* runs idle_task, since that's the only task
-	             * on the CPU's run queue at this point */
+	/* schedule(); /\* runs idle_task, since that's the only task */
+	/*              * on the CPU's run queue at this point *\/ */
 }
 
 

@@ -68,7 +68,7 @@ task_meas(
 #include <lwk/init.h>
 #include <lwk/list.h>
 #include <lwk/rbtree.h>
-#include <lwk/seqlock.h>
+//#include <lwk/seqlock.h>
 #include <lwk/idspace.h>
 #include <lwk/rlimit.h>
 #include <lwk/time.h>
@@ -187,9 +187,6 @@ struct task_struct {
 	/* List of struct preempt_notifier */
 	struct hlist_head       preempt_notifiers;
 };
-
-unsigned int cpu_id_offset = offsetof(struct task_struct, cpu_id);
-
 
 union task_union {
 	struct task_struct	task_info;

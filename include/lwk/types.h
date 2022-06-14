@@ -1,6 +1,7 @@
 #ifndef _LWK_TYPES_H
 #define _LWK_TYPES_H
 
+#ifndef __ASSEMBLY__
 #ifdef	__KERNEL__
 
 #define BITS_TO_LONGS(bits) \
@@ -177,5 +178,7 @@ struct ustat {
 	char			f_fpack[6];
 };
 #endif
+
+#endif /* ifndef __ASSEMBLY__ */
 
 #endif /* _LWK_TYPES_H */

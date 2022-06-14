@@ -10,6 +10,10 @@ config RISCV
 	bool
 	default y
 
+config 64BIT
+       bool
+       default y
+
 config OUTPUT_FORMAT
         string
         default "elf64-littleriscv" if RISCV64

@@ -52,14 +52,16 @@ void pda_init(unsigned int cpu, struct task_struct *task);
 
 struct task_struct;
 
-extern unsigned int cpu_id_offset;
+id_t get_cpu_id_from_task(struct task_struct*);
 
 static inline u64
 get_this_pda()
 {
 	u64 tp = get_tp();
-	void* ts_vp = tp; /* struct task_struct* */
-	id_t cpu_id = *(id_t*)(ts_vp+cpu_id_offset);
+	struct task_struct* ts = tp; /* struct task_struct* */
+	//id_t cpu_id = ts->cpu_id;
+	id_t cpu_id = get_cpu_id_from_task(ts);
+//	id_t cpu_id = 0;
 	struct RISCV_pda* pda_ptr = _cpu_pda[cpu_id];
 	return (u64)pda_ptr;
 }

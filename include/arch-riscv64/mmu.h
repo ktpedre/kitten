@@ -16,6 +16,8 @@
 #ifndef __ASM_MMU_H
 #define __ASM_MMU_H
 
+#include <lwk/seqlock.h>
+
 typedef struct {
 	unsigned int id;
 	raw_spinlock_t id_lock;

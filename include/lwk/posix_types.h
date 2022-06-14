@@ -18,6 +18,9 @@
  * Those macros may have been defined in <gnu/types.h>. But we always
  * use the ones here. 
  */
+
+#ifndef __ASSEMBLY__
+
 #undef __NFDBITS
 #define __NFDBITS	(8 * sizeof(unsigned long))
 
@@ -47,5 +50,7 @@ typedef int __kernel_key_t;
 typedef int __kernel_mqd_t;
 
 #include <arch/posix_types.h>
+
+#endif
 
 #endif /* _LWK_POSIX_TYPES_H */

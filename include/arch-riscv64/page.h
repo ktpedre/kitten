@@ -63,7 +63,7 @@
 
 #define TASK_ORDER 1
 #define TASK_SIZE  (PAGE_SIZE << TASK_ORDER)
-#define PAGE_OFFSET		_AC(0xffffffc000000000, UL)
+/* #define PAGE_OFFSET		_AC(0xffffffc000000000, UL) */
 
 #ifndef __ASSEMBLY__
 
@@ -163,17 +163,21 @@ extern phys_addr_t phys_ram_base;
 		linear_mapping_va_to_pa(_x) : kernel_mapping_va_to_pa(_x);	\
 	})
 
-#ifdef CONFIG_DEBUG_VIRTUAL
-extern phys_addr_t __virt_to_phys(unsigned long x);
-extern phys_addr_t __phys_addr_symbol(unsigned long x);
-#else
-#define __virt_to_phys(x)	__va_to_pa_nodebug(x)
-#define __phys_addr_symbol(x)	__va_to_pa_nodebug(x)
-#endif /* CONFIG_DEBUG_VIRTUAL */
+extern phys_addr_t memstart_addr;
+#define PHYS_OFFSET             (memstart_addr)
+#define __virt_to_phys(x)   (((phys_addr_t)(x) - PAGE_OFFSET + PHYS_OFFSET))
+#define __phys_to_virt(x)   ((unsigned long)((x) - PHYS_OFFSET + PAGE_OFFSET))
+#define __pa(x)         __virt_to_phys((unsigned long)(x))
+#define __va(x)         ((void *)__phys_to_virt((phys_addr_t)(x)))
+#define __pa_symbol(x)	__phys_addr((unsigned long)(x))
+/* NMG Linux defines */
+/* #define __virt_to_phys(x)	__va_to_pa_nodebug(x) */
+/* #define __phys_addr_symbol(x)	__va_to_pa_nodebug(x) */
 
-#define __pa_symbol(x)	__phys_addr_symbol(RELOC_HIDE((unsigned long)(x), 0))
-#define __pa(x)		__virt_to_phys((unsigned long)(x))
-#define __va(x)		((void *)__pa_to_va_nodebug((phys_addr_t)(x)))
+/* NMG Linux defines */
+/* #define __pa_symbol(x)	__phys_addr_symbol(RELOC_HIDE((unsigned long)(x), 0)) */
+/* #define __pa(x)		__virt_to_phys((unsigned long)(x)) */
+/* #define __va(x)		((void *)__pa_to_va_nodebug((phys_addr_t)(x))) */
 
 #define phys_to_pfn(phys)	(PFN_DOWN(phys))
 #define pfn_to_phys(pfn)	(PFN_PHYS(pfn))

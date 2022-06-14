@@ -1,34 +1,90 @@
-#ifndef __ARCH_BUG_H
-#define __ARCH_BUG_H
-
-#include <lwk/stringify.h>
-
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Tell the user there is some problem.  The exception handler decodes 
- * this frame.
+ * Copyright (C) 2012 Regents of the University of California
  */
-struct bug_frame {
-	unsigned char ud2[2];
-	unsigned char push;
-	signed int filename;
-	unsigned char ret;
-	unsigned short line;
-} __attribute__((packed));
 
-/* We turn the bug frame into valid instructions to not confuse
-   the disassembler. Thanks to Jan Beulich & Suresh Siddha
-   for nice instruction selection.
-   The magic numbers generate mov $64bitimm,%eax ; ret $offset. */
-#define BUG() 								\
-		panic("Bug %d %s\n",__LINE__,__FILE__)
+#ifndef _ASM_RISCV_BUG_H
+#define _ASM_RISCV_BUG_H
 
+#include <lwk/compiler.h>
+#include <lwk/const.h>
+#include <lwk/types.h>
 
-#if 0
-asm volatile(							\
-	"ud2 ; pushq $%c1 ; ret $%c0" :: 				\
-		     "i"(__LINE__), "i" (__FILE__))
+#include <arch/asm.h>
+
+#define __INSN_LENGTH_MASK  _UL(0x3)
+#define __INSN_LENGTH_32    _UL(0x3)
+#define __COMPRESSED_INSN_MASK	_UL(0xffff)
+
+#define __BUG_INSN_32	_UL(0x00100073) /* ebreak */
+#define __BUG_INSN_16	_UL(0x9002) /* c.ebreak */
+
+#define GET_INSN_LENGTH(insn)						\
+({									\
+	unsigned long __len;						\
+	__len = ((insn & __INSN_LENGTH_MASK) == __INSN_LENGTH_32) ?	\
+		4UL : 2UL;						\
+	__len;								\
+})
+
+typedef u32 bug_insn_t;
+
+#ifdef CONFIG_GENERIC_BUG_RELATIVE_POINTERS
+#define __BUG_ENTRY_ADDR	RISCV_INT " 1b - ."
+#define __BUG_ENTRY_FILE	RISCV_INT " %0 - ."
+#else
+#define __BUG_ENTRY_ADDR	RISCV_PTR " 1b"
+#define __BUG_ENTRY_FILE	RISCV_PTR " %0"
 #endif
-void out_of_line_bug(void);
 
-#include <arch-generic/bug.h>
+#ifdef CONFIG_DEBUG_BUGVERBOSE
+#define __BUG_ENTRY			\
+	__BUG_ENTRY_ADDR "\n\t"		\
+	__BUG_ENTRY_FILE "\n\t"		\
+	RISCV_SHORT " %1\n\t"		\
+	RISCV_SHORT " %2"
+#else
+#define __BUG_ENTRY			\
+	__BUG_ENTRY_ADDR "\n\t"		\
+	RISCV_SHORT " %2"
 #endif
+
+#ifdef CONFIG_GENERIC_BUG
+#define __BUG_FLAGS(flags)					\
+do {								\
+	__asm__ __volatile__ (					\
+		"1:\n\t"					\
+			"ebreak\n"				\
+			".pushsection __bug_table,\"aw\"\n\t"	\
+		"2:\n\t"					\
+			__BUG_ENTRY "\n\t"			\
+			".org 2b + %3\n\t"                      \
+			".popsection"				\
+		:						\
+		: "i" (__FILE__), "i" (__LINE__),		\
+		  "i" (flags),					\
+		  "i" (sizeof(struct bug_entry)));              \
+} while (0)
+#else /* CONFIG_GENERIC_BUG */
+#define __BUG_FLAGS(flags) do {					\
+	__asm__ __volatile__ ("ebreak\n");			\
+} while (0)
+#endif /* CONFIG_GENERIC_BUG */
+
+#define BUG() do {						\
+	__BUG_FLAGS(0);						\
+	unreachable();						\
+} while (0)
+
+#define __WARN_FLAGS(flags) __BUG_FLAGS(BUGFLAG_WARNING|(flags))
+
+#define HAVE_ARCH_BUG
+
+struct pt_regs;
+struct task_struct;
+
+void __show_regs(struct pt_regs *regs);
+void die(struct pt_regs *regs, const char *str);
+void do_trap(struct pt_regs *regs, int signo, int code, unsigned long addr);
+
+#endif /* _ASM_RISCV_BUG_H */

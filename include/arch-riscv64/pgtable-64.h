@@ -6,9 +6,9 @@
 #ifndef _ASM_RISCV_PGTABLE_64_H
 #define _ASM_RISCV_PGTABLE_64_H
 
-#include <lwk/bits.h>
+#include <arch/pgtable-bits.h>
 #include <lwk/const.h>
-#include <asm/errata_list.h>
+#include <arch/errata_list.h>
 
 extern bool pgtable_l4_enabled;
 extern bool pgtable_l5_enabled;

@@ -1,7 +1,7 @@
 #ifndef __ASM_SYSTEM_H
 #define __ASM_SYSTEM_H
 
-#include <lwk/kernel.h>
+//#include <lwk/kernel.h>
 #include <arch/barrier.h>
 #include <arch/csr.h>
 

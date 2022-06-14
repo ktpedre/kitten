@@ -5,22 +5,24 @@
  * 2022: Adapted for use with Kitten LWK by Nick Gordon <nmgordo@sandia.gov>
  */
 
-#include <asm/asm-offsets.h>
-#include <asm/asm.h>
-#include <linux/init.h>
-#include <linux/linkage.h>
-#include <asm/thread_info.h>
-#include <asm/page.h>
-#include <asm/pgtable.h>
-#include <asm/csr.h>
-#include <asm/cpu_ops_sbi.h>
-#include <asm/hwcap.h>
-#include <asm/image.h>
-#include <asm/xip_fixup.h>
+#include <lwk/linkage.h>
+#include <lwk/init.h>
+
+#include <arch/asm-offsets.h>
+#include <arch/asm.h>
+
+#include <arch/thread_info.h>
+#include <arch/page.h>
+#include <arch/pgtable.h>
+#include <arch/csr.h>
+#include <arch/cpu_ops_sbi.h>
+//#include <arch/hwcap.h>
+#include <arch/image.h>
+//#include <arch/xip_fixup.h>
 #include "efi-header.S"
 
-__HEAD
-ENTRY(_start)
+//__HEAD
+//ENTRY(_start)
 	.text
 	.section .bootstrap.text
 
@@ -69,7 +71,7 @@ pe_head_start:
 #endif
 
 .align 2
-#ifdef CONFIG_MMU
+;; #ifdef CONFIG_MMU
 	.global relocate_enable_mmu
 relocate_enable_mmu:
 	/* Relocate return address */
@@ -124,7 +126,7 @@ relocate_enable_mmu:
 	sfence.vma
 
 	ret
-#endif /* CONFIG_MMU */
+;; #endif /* CONFIG_MMU */
 #ifdef CONFIG_SMP
 	.global secondary_start_sbi
 secondary_start_sbi:
@@ -159,11 +161,11 @@ secondary_start_sbi:
 
 .Lsecondary_start_common:
 
-#ifdef CONFIG_MMU
+;; #ifdef CONFIG_MMU
 	/* Enable virtual memory and relocate to virtual address */
 	la a0, swapper_pg_dir
 	call relocate_enable_mmu
-#endif
+;; #endif
 	call setup_trap_vector
 	tail smp_callin
 #endif /* CONFIG_SMP */
@@ -187,7 +189,7 @@ setup_trap_vector:
 	wfi
 	j .Lsecondary_park
 
-END(_start)
+//END(_start)
 
 ENTRY(_start_kernel)
 	/* Mask all interrupts */
@@ -224,18 +226,18 @@ clear_bss_done:
 	REG_S a0, (a2)
 
 	/* Initialize page table and relocate to virtual addresses */
-	la sp, init_thread_union + THREAD_SIZE
+	la sp, bootstrap_task_union + TASK_SIZE // -16 NMG:??? //init_thread_union + THREAD_SIZE
 	mv a0, s1
 	call setup_vm
-#ifdef CONFIG_MMU
+;; #ifdef CONFIG_MMU
 	la a0, early_pg_dir
 	call relocate_enable_mmu
-#endif /* CONFIG_MMU */
+;; #endif /* CONFIG_MMU */
 
 	call setup_trap_vector
 	/* Restore C environment */
 	la tp, init_task
-	la sp, init_thread_union + THREAD_SIZE
+	la sp, bootstrap_task_union + TASK_SIZE
 
 	/* Start the kernel */
 	call soc_early_init

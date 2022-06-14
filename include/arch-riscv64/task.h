@@ -17,7 +17,7 @@
 #ifndef __ASSEMBLY__
 
 
-#include <arch/pda.h>
+//#include <arch/pda.h>
 #include <arch/page_table.h>
 
 

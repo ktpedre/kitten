@@ -12,7 +12,7 @@
 // #include <asm/kvm_host.h>
 // #include <asm/thread_info.h>
 // #include <asm/ptrace.h>
-// #include <asm/cpu_ops_sbi.h>
+#include <arch/cpu_ops_sbi.h>
 // #include <asm/suspend.h>
 
 
@@ -325,8 +325,10 @@ void asm_offsets(void)
 	DEFINE(PT_SIZE_ON_STACK, ALIGN(sizeof(struct pt_regs), STACK_ALIGN));
 
 	OFFSET(KERNEL_MAP_VIRT_ADDR, kernel_mapping, virt_addr);
-	/* OFFSET(SBI_HART_BOOT_TASK_PTR_OFFSET, sbi_hart_boot_data, task_ptr); */
-	/* OFFSET(SBI_HART_BOOT_STACK_PTR_OFFSET, sbi_hart_boot_data, stack_ptr); */
+	
+  /* NMG No idea what this does atm */
+	OFFSET(SBI_HART_BOOT_TASK_PTR_OFFSET, sbi_hart_boot_data, task_ptr);
+	OFFSET(SBI_HART_BOOT_STACK_PTR_OFFSET, sbi_hart_boot_data, stack_ptr);
 
   DEFINE(__NR_syscall_max, sizeof(syscalls) - 1);
 

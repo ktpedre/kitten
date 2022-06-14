@@ -19,10 +19,11 @@ union task_union bootstrap_task_union
 				/* arch independent portion */
 				BOOTSTRAP_TASK(bootstrap_task_union.task_info)
 
-				/* x86_64 specific portion */
-				.arch = {
-					.addr_limit = PAGE_OFFSET
-				}
+				/* NMG: Do this in setup_vm() maybe? */
+				/* /\* x86_64 specific portion *\/ */
+				/* .arch = { */
+				/* 	.addr_limit = PAGE_OFFSET */
+				/* } */
 			}
 		};
 

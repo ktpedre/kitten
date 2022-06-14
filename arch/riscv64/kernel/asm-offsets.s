@@ -70,7 +70,7 @@
 	.globl	asm_offsets
 	.type	asm_offsets, @function
 asm_offsets:
-.LFB245:
+.LFB255:
 	.file 1 "arch/riscv64/kernel/asm-offsets.c"
 	.loc 1 30 1
 	.cfi_startproc
@@ -770,13 +770,23 @@ asm_offsets:
 	
 ->KERNEL_MAP_VIRT_ADDR 8 offsetof(struct kernel_mapping, virt_addr)	#
 # 0 "" 2
-	.loc 1 331 3
+	.loc 1 330 2
+# 330 "arch/riscv64/kernel/asm-offsets.c" 1
+	
+->SBI_HART_BOOT_TASK_PTR_OFFSET 0 offsetof(struct sbi_hart_boot_data, task_ptr)	#
+# 0 "" 2
+	.loc 1 331 2
 # 331 "arch/riscv64/kernel/asm-offsets.c" 1
+	
+->SBI_HART_BOOT_STACK_PTR_OFFSET 8 offsetof(struct sbi_hart_boot_data, stack_ptr)	#
+# 0 "" 2
+	.loc 1 333 3
+# 333 "arch/riscv64/kernel/asm-offsets.c" 1
 	
 ->__NR_syscall_max 534 sizeof(syscalls) - 1	#
 # 0 "" 2
-# arch/riscv64/kernel/asm-offsets.c:334: }
-	.loc 1 334 1 is_stmt 0
+# arch/riscv64/kernel/asm-offsets.c:336: }
+	.loc 1 336 1 is_stmt 0
 #NO_APP
 	ld	s0,8(sp)		#,
 	.cfi_restore 8
@@ -785,15 +795,8 @@ asm_offsets:
 	.cfi_def_cfa_offset 0
 	jr	ra		#
 	.cfi_endproc
-.LFE245:
+.LFE255:
 	.size	asm_offsets, .-asm_offsets
-	.globl	cpu_id_offset
-	.section	.sdata,"aw"
-	.align	2
-	.type	cpu_id_offset, @object
-	.size	cpu_id_offset, 4
-cpu_id_offset:
-	.word	112
 	.text
 .Letext0:
 	.file 2 "include/arch/types.h"
@@ -803,15 +806,14 @@ cpu_id_offset:
 	.file 6 "include/arch/uapi_ptrace.h"
 	.file 7 "include/arch/processor.h"
 	.file 8 "include/lwk/list.h"
-	.file 9 "include/lwk/task.h"
-	.file 10 "include/arch/signal.h"
-	.file 11 "include/lwk/signal.h"
-	.file 12 "include/arch/task.h"
+	.file 9 "include/arch/signal.h"
+	.file 10 "include/lwk/signal.h"
+	.file 11 "include/arch/task.h"
+	.file 12 "include/lwk/task.h"
 	.file 13 "include/arch/current.h"
-	.file 14 "include/arch/pda.h"
 	.section	.debug_info,"",@progbits
 .Ldebug_info0:
-	.4byte	0x703
+	.4byte	0x6e5
 	.2byte	0x4
 	.4byte	.Ldebug_abbrev0
 	.byte	0x8
@@ -885,13 +887,13 @@ cpu_id_offset:
 	.byte	0x5
 	.4byte	.LASF12
 	.byte	0x3
-	.byte	0x72
+	.byte	0x73
 	.byte	0x11
 	.4byte	0x75
 	.byte	0x5
 	.4byte	.LASF13
 	.byte	0x3
-	.byte	0x83
+	.byte	0x84
 	.byte	0x11
 	.4byte	0xac
 	.byte	0x2
@@ -1107,295 +1109,284 @@ cpu_id_offset:
 	.byte	0x4
 	.byte	0x8
 	.4byte	0x238
-	.byte	0xa
-	.4byte	.LASF34
-	.2byte	0x2a8
-	.byte	0x9
-	.byte	0x6c
-	.byte	0x8
-	.4byte	0x3b6
-	.byte	0xb
-	.string	"id"
-	.byte	0x9
-	.byte	0x6d
-	.byte	0x9
-	.4byte	0xb3
-	.byte	0
-	.byte	0x7
-	.4byte	.LASF35
-	.byte	0x9
-	.byte	0x6e
-	.byte	0xc
-	.4byte	0xb3
-	.byte	0x4
-	.byte	0x7
-	.4byte	.LASF36
-	.byte	0x9
-	.byte	0x70
-	.byte	0x9
-	.4byte	0xf6
-	.byte	0x8
-	.byte	0x7
-	.4byte	.LASF37
-	.byte	0x9
-	.byte	0x72
 	.byte	0xf
-	.4byte	0x46c
-	.byte	0x28
-	.byte	0xb
-	.string	"uid"
-	.byte	0x9
-	.byte	0x74
-	.byte	0x9
-	.4byte	0xb3
-	.byte	0x2c
-	.byte	0xb
-	.string	"gid"
-	.byte	0x9
-	.byte	0x75
-	.byte	0x9
-	.4byte	0xb3
-	.byte	0x30
-	.byte	0x7
-	.4byte	.LASF38
-	.byte	0x9
-	.byte	0x77
-	.byte	0x13
-	.4byte	0x3c1
-	.byte	0x38
-	.byte	0x7
-	.4byte	.LASF39
-	.byte	0x9
-	.byte	0x78
-	.byte	0x13
-	.4byte	0x1c2
-	.byte	0x40
-	.byte	0x7
-	.4byte	.LASF40
-	.byte	0x9
-	.byte	0x7a
-	.byte	0x14
-	.4byte	0x3f6
-	.byte	0x50
-	.byte	0x7
-	.4byte	.LASF41
-	.byte	0x9
-	.byte	0x7b
-	.byte	0xc
-	.4byte	0x3ea
-	.byte	0x68
-	.byte	0x7
-	.4byte	.LASF42
-	.byte	0x9
-	.byte	0x7d
-	.byte	0x9
-	.4byte	0xb3
-	.byte	0x70
-	.byte	0x7
-	.4byte	.LASF43
-	.byte	0x9
-	.byte	0x7e
-	.byte	0xd
-	.4byte	0xea
-	.byte	0x78
-	.byte	0x7
-	.4byte	.LASF44
-	.byte	0x9
-	.byte	0x7f
-	.byte	0x9
-	.4byte	0xb3
-	.byte	0x80
-	.byte	0x7
-	.4byte	.LASF45
-	.byte	0x9
-	.byte	0x82
-	.byte	0x10
-	.4byte	0x493
-	.byte	0x88
-	.byte	0x7
-	.4byte	.LASF46
-	.byte	0x9
-	.byte	0x83
-	.byte	0x10
-	.4byte	0x493
-	.byte	0x90
-	.byte	0x7
-	.4byte	.LASF47
-	.byte	0x9
-	.byte	0x85
-	.byte	0x11
-	.4byte	0x29
-	.byte	0x98
-	.byte	0x7
-	.4byte	.LASF48
-	.byte	0x9
-	.byte	0x86
-	.byte	0xc
-	.4byte	0x94
-	.byte	0xa0
-	.byte	0x7
-	.4byte	.LASF49
-	.byte	0x9
-	.byte	0x87
-	.byte	0xb
-	.4byte	0x3ea
-	.byte	0xa8
-	.byte	0x7
-	.4byte	.LASF50
-	.byte	0x9
-	.byte	0x89
 	.byte	0x8
-	.4byte	0x30
-	.byte	0xb0
-	.byte	0x7
-	.4byte	.LASF51
 	.byte	0x9
-	.byte	0x8b
-	.byte	0x13
-	.4byte	0x41e
-	.byte	0xb8
-	.byte	0xc
-	.4byte	.LASF52
-	.byte	0x9
-	.byte	0x8c
-	.byte	0x13
-	.4byte	0x49e
-	.2byte	0x260
-	.byte	0xc
-	.4byte	.LASF53
-	.byte	0x9
-	.byte	0x8d
-	.byte	0x13
-	.4byte	0x1c2
-	.2byte	0x268
-	.byte	0xf
-	.string	"rr"
-	.byte	0x9
-	.byte	0x90
-	.byte	0x4
-	.4byte	0x478
-	.2byte	0x278
-	.byte	0xc
-	.4byte	.LASF54
-	.byte	0x9
-	.byte	0xb6
-	.byte	0x9
-	.4byte	0xa0
-	.2byte	0x288
-	.byte	0xc
-	.4byte	.LASF55
-	.byte	0x9
-	.byte	0xb8
-	.byte	0xb
-	.4byte	0x45
-	.2byte	0x290
-	.byte	0xf
-	.string	"mm"
-	.byte	0x9
-	.byte	0xb9
-	.byte	0x13
-	.4byte	0x3c1
-	.2byte	0x298
-	.byte	0xc
-	.4byte	.LASF56
-	.byte	0x9
-	.byte	0xbc
-	.byte	0x1a
-	.4byte	0x1f0
-	.2byte	0x2a0
-	.byte	0
-	.byte	0x4
-	.byte	0x8
-	.4byte	0x244
-	.byte	0x10
-	.4byte	.LASF38
-	.byte	0x4
-	.byte	0x8
-	.4byte	0x3bc
-	.byte	0x11
-	.4byte	.LASF73
-	.byte	0xe
-	.byte	0x37
-	.byte	0x15
-	.4byte	0x37
-	.byte	0x12
-	.byte	0x8
-	.byte	0xa
 	.byte	0x45
 	.byte	0x9
-	.4byte	0x3ea
+	.4byte	0x25b
 	.byte	0x7
-	.4byte	.LASF57
-	.byte	0xa
+	.4byte	.LASF34
+	.byte	0x9
 	.byte	0x46
 	.byte	0x10
 	.4byte	0xda
 	.byte	0
 	.byte	0
 	.byte	0x5
-	.4byte	.LASF58
-	.byte	0xa
+	.4byte	.LASF35
+	.byte	0x9
 	.byte	0x47
 	.byte	0x3
-	.4byte	0x3d3
+	.4byte	0x244
 	.byte	0x6
-	.4byte	.LASF40
+	.4byte	.LASF36
 	.byte	0x18
-	.byte	0xb
+	.byte	0xa
 	.byte	0xc
 	.byte	0x8
-	.4byte	0x41e
+	.4byte	0x28f
 	.byte	0x7
-	.4byte	.LASF59
-	.byte	0xb
+	.4byte	.LASF37
+	.byte	0xa
 	.byte	0xd
 	.byte	0x13
 	.4byte	0x1c2
 	.byte	0
 	.byte	0x7
-	.4byte	.LASF60
-	.byte	0xb
+	.4byte	.LASF38
+	.byte	0xa
 	.byte	0xe
 	.byte	0xd
-	.4byte	0x3ea
+	.4byte	0x25b
 	.byte	0x10
 	.byte	0
 	.byte	0xa
-	.4byte	.LASF61
+	.4byte	.LASF39
 	.2byte	0x1a8
-	.byte	0xc
+	.byte	0xb
 	.byte	0x1e
 	.byte	0x8
-	.4byte	0x454
+	.4byte	0x2c5
 	.byte	0x7
-	.4byte	.LASF48
-	.byte	0xc
+	.4byte	.LASF40
+	.byte	0xb
 	.byte	0x1f
 	.byte	0xc
 	.4byte	0x94
 	.byte	0
 	.byte	0x7
-	.4byte	.LASF62
-	.byte	0xc
+	.4byte	.LASF41
+	.byte	0xb
 	.byte	0x20
 	.byte	0x11
 	.4byte	0x29
 	.byte	0x8
 	.byte	0x7
-	.4byte	.LASF63
-	.byte	0xc
+	.4byte	.LASF42
+	.byte	0xb
 	.byte	0x21
 	.byte	0x18
 	.4byte	0x13e
 	.byte	0x10
 	.byte	0
+	.byte	0xa
+	.4byte	.LASF43
+	.2byte	0x2a8
+	.byte	0xc
+	.byte	0x6c
+	.byte	0x8
+	.4byte	0x437
+	.byte	0xb
+	.string	"id"
+	.byte	0xc
+	.byte	0x6d
+	.byte	0x9
+	.4byte	0xb3
+	.byte	0
+	.byte	0x7
+	.4byte	.LASF44
+	.byte	0xc
+	.byte	0x6e
+	.byte	0xc
+	.4byte	0xb3
+	.byte	0x4
+	.byte	0x7
+	.4byte	.LASF45
+	.byte	0xc
+	.byte	0x70
+	.byte	0x9
+	.4byte	0xf6
+	.byte	0x8
+	.byte	0x7
+	.4byte	.LASF46
+	.byte	0xc
+	.byte	0x72
+	.byte	0xf
+	.4byte	0x455
+	.byte	0x28
+	.byte	0xb
+	.string	"uid"
+	.byte	0xc
+	.byte	0x74
+	.byte	0x9
+	.4byte	0xb3
+	.byte	0x2c
+	.byte	0xb
+	.string	"gid"
+	.byte	0xc
+	.byte	0x75
+	.byte	0x9
+	.4byte	0xb3
+	.byte	0x30
+	.byte	0x7
+	.4byte	.LASF47
+	.byte	0xc
+	.byte	0x77
 	.byte	0x13
+	.4byte	0x481
+	.byte	0x38
+	.byte	0x7
+	.4byte	.LASF48
+	.byte	0xc
+	.byte	0x78
+	.byte	0x13
+	.4byte	0x1c2
+	.byte	0x40
+	.byte	0x7
+	.4byte	.LASF36
+	.byte	0xc
+	.byte	0x7a
+	.byte	0x14
+	.4byte	0x267
+	.byte	0x50
+	.byte	0x7
+	.4byte	.LASF49
+	.byte	0xc
+	.byte	0x7b
+	.byte	0xc
+	.4byte	0x25b
+	.byte	0x68
+	.byte	0x7
+	.4byte	.LASF50
+	.byte	0xc
+	.byte	0x7d
+	.byte	0x9
+	.4byte	0xb3
+	.byte	0x70
+	.byte	0x7
+	.4byte	.LASF51
+	.byte	0xc
+	.byte	0x7e
+	.byte	0xd
+	.4byte	0xea
+	.byte	0x78
+	.byte	0x7
+	.4byte	.LASF52
+	.byte	0xc
+	.byte	0x7f
+	.byte	0x9
+	.4byte	0xb3
+	.byte	0x80
+	.byte	0x7
+	.4byte	.LASF53
+	.byte	0xc
+	.byte	0x82
+	.byte	0x10
+	.4byte	0x487
+	.byte	0x88
+	.byte	0x7
+	.4byte	.LASF54
+	.byte	0xc
+	.byte	0x83
+	.byte	0x10
+	.4byte	0x487
+	.byte	0x90
+	.byte	0x7
+	.4byte	.LASF55
+	.byte	0xc
+	.byte	0x85
+	.byte	0x11
+	.4byte	0x29
+	.byte	0x98
+	.byte	0x7
+	.4byte	.LASF40
+	.byte	0xc
+	.byte	0x86
+	.byte	0xc
+	.4byte	0x94
+	.byte	0xa0
+	.byte	0x7
+	.4byte	.LASF56
+	.byte	0xc
+	.byte	0x87
+	.byte	0xb
+	.4byte	0x25b
+	.byte	0xa8
+	.byte	0x7
+	.4byte	.LASF57
+	.byte	0xc
+	.byte	0x89
+	.byte	0x8
+	.4byte	0x30
+	.byte	0xb0
+	.byte	0x7
+	.4byte	.LASF58
+	.byte	0xc
+	.byte	0x8b
+	.byte	0x13
+	.4byte	0x28f
+	.byte	0xb8
+	.byte	0xc
+	.4byte	.LASF59
+	.byte	0xc
+	.byte	0x8c
+	.byte	0x13
+	.4byte	0x492
+	.2byte	0x260
+	.byte	0xc
+	.4byte	.LASF60
+	.byte	0xc
+	.byte	0x8d
+	.byte	0x13
+	.4byte	0x1c2
+	.2byte	0x268
+	.byte	0x10
+	.string	"rr"
+	.byte	0xc
+	.byte	0x90
+	.byte	0x4
+	.4byte	0x461
+	.2byte	0x278
+	.byte	0xc
+	.4byte	.LASF61
+	.byte	0xc
+	.byte	0xb6
+	.byte	0x9
+	.4byte	0xa0
+	.2byte	0x288
+	.byte	0xc
+	.4byte	.LASF62
+	.byte	0xc
+	.byte	0xb8
+	.byte	0xb
+	.4byte	0x45
+	.2byte	0x290
+	.byte	0x10
+	.string	"mm"
+	.byte	0xc
+	.byte	0xb9
+	.byte	0x13
+	.4byte	0x481
+	.2byte	0x298
+	.byte	0xc
+	.4byte	.LASF63
+	.byte	0xc
+	.byte	0xbc
+	.byte	0x1a
+	.4byte	0x1f0
+	.2byte	0x2a0
+	.byte	0
+	.byte	0x11
 	.4byte	.LASF64
 	.byte	0xd
 	.byte	0x14
 	.byte	0x1e
-	.4byte	0x3b6
-	.byte	0x13
+	.4byte	0x443
+	.byte	0x4
+	.byte	0x8
+	.4byte	0x2c5
+	.byte	0x11
 	.4byte	.LASF65
 	.byte	0xd
 	.byte	0x24
@@ -1403,54 +1394,51 @@ cpu_id_offset:
 	.4byte	0x29
 	.byte	0x5
 	.4byte	.LASF66
-	.byte	0x9
+	.byte	0xc
 	.byte	0x5f
 	.byte	0x16
 	.4byte	0x37
 	.byte	0x6
 	.4byte	.LASF67
 	.byte	0x10
-	.byte	0x9
+	.byte	0xc
 	.byte	0x8e
 	.byte	0x9
-	.4byte	0x493
+	.4byte	0x47c
 	.byte	0x7
 	.4byte	.LASF68
-	.byte	0x9
+	.byte	0xc
 	.byte	0x8f
 	.byte	0x14
 	.4byte	0x1c2
 	.byte	0
 	.byte	0
+	.byte	0x12
+	.4byte	.LASF47
+	.byte	0x4
+	.byte	0x8
+	.4byte	0x47c
 	.byte	0x4
 	.byte	0x8
 	.4byte	0x30
-	.byte	0x10
-	.4byte	.LASF52
+	.byte	0x12
+	.4byte	.LASF59
 	.byte	0x4
 	.byte	0x8
-	.4byte	0x499
-	.byte	0x14
-	.4byte	0x3c7
-	.byte	0x9
-	.byte	0xbf
-	.byte	0xe
-	.byte	0x9
-	.byte	0x3
-	.8byte	cpu_id_offset
+	.4byte	0x48d
 	.byte	0x8
 	.4byte	0x4b
-	.4byte	0x4c7
-	.byte	0x15
+	.4byte	0x4a9
+	.byte	0x13
 	.4byte	0x29
 	.2byte	0x216
 	.byte	0
-	.byte	0x16
+	.byte	0x14
 	.4byte	.LASF69
 	.byte	0x1
 	.byte	0x17
 	.byte	0xd
-	.4byte	0x4b6
+	.4byte	0x498
 	.2byte	0x217
 	.byte	0x1
 	.byte	0x1
@@ -1987,13 +1975,13 @@ cpu_id_offset:
 	.byte	0x1
 	.byte	0x1
 	.byte	0x1
-	.byte	0x17
-	.4byte	.LASF74
+	.byte	0x15
+	.4byte	.LASF73
 	.byte	0x1
 	.byte	0x1d
 	.byte	0x6
-	.8byte	.LFB245
-	.8byte	.LFE245-.LFB245
+	.8byte	.LFB255
+	.8byte	.LFE255-.LFB255
 	.byte	0x1
 	.byte	0x9c
 	.byte	0
@@ -2202,6 +2190,21 @@ cpu_id_offset:
 	.byte	0
 	.byte	0
 	.byte	0xf
+	.byte	0x13
+	.byte	0x1
+	.byte	0xb
+	.byte	0xb
+	.byte	0x3a
+	.byte	0xb
+	.byte	0x3b
+	.byte	0xb
+	.byte	0x39
+	.byte	0xb
+	.byte	0x1
+	.byte	0x13
+	.byte	0
+	.byte	0
+	.byte	0x10
 	.byte	0xd
 	.byte	0
 	.byte	0x3
@@ -2216,15 +2219,6 @@ cpu_id_offset:
 	.byte	0x13
 	.byte	0x38
 	.byte	0x5
-	.byte	0
-	.byte	0
-	.byte	0x10
-	.byte	0x13
-	.byte	0
-	.byte	0x3
-	.byte	0xe
-	.byte	0x3c
-	.byte	0x19
 	.byte	0
 	.byte	0
 	.byte	0x11
@@ -2242,58 +2236,18 @@ cpu_id_offset:
 	.byte	0x13
 	.byte	0x3f
 	.byte	0x19
-	.byte	0x3c
-	.byte	0x19
 	.byte	0
 	.byte	0
 	.byte	0x12
 	.byte	0x13
-	.byte	0x1
-	.byte	0xb
-	.byte	0xb
-	.byte	0x3a
-	.byte	0xb
-	.byte	0x3b
-	.byte	0xb
-	.byte	0x39
-	.byte	0xb
-	.byte	0x1
-	.byte	0x13
-	.byte	0
-	.byte	0
-	.byte	0x13
-	.byte	0x34
 	.byte	0
 	.byte	0x3
 	.byte	0xe
-	.byte	0x3a
-	.byte	0xb
-	.byte	0x3b
-	.byte	0xb
-	.byte	0x39
-	.byte	0xb
-	.byte	0x49
-	.byte	0x13
-	.byte	0x3f
+	.byte	0x3c
 	.byte	0x19
 	.byte	0
 	.byte	0
-	.byte	0x14
-	.byte	0x34
-	.byte	0
-	.byte	0x47
 	.byte	0x13
-	.byte	0x3a
-	.byte	0xb
-	.byte	0x3b
-	.byte	0xb
-	.byte	0x39
-	.byte	0xb
-	.byte	0x2
-	.byte	0x18
-	.byte	0
-	.byte	0
-	.byte	0x15
 	.byte	0x21
 	.byte	0
 	.byte	0x49
@@ -2302,7 +2256,7 @@ cpu_id_offset:
 	.byte	0x5
 	.byte	0
 	.byte	0
-	.byte	0x16
+	.byte	0x14
 	.byte	0x34
 	.byte	0
 	.byte	0x3
@@ -2319,7 +2273,7 @@ cpu_id_offset:
 	.byte	0x3
 	.byte	0
 	.byte	0
-	.byte	0x17
+	.byte	0x15
 	.byte	0x2e
 	.byte	0
 	.byte	0x3f
@@ -2353,64 +2307,62 @@ cpu_id_offset:
 	.byte	0
 	.2byte	0
 	.2byte	0
-	.8byte	.LFB245
-	.8byte	.LFE245-.LFB245
+	.8byte	.LFB255
+	.8byte	.LFE255-.LFB255
 	.8byte	0
 	.8byte	0
 	.section	.debug_ranges,"",@progbits
 .Ldebug_ranges0:
-	.8byte	.LFB245
-	.8byte	.LFE245
+	.8byte	.LFB255
+	.8byte	.LFE255
 	.8byte	0
 	.8byte	0
 	.section	.debug_line,"",@progbits
 .Ldebug_line0:
 	.section	.debug_str,"MS",@progbits,1
-.LASF55:
+.LASF62:
 	.string	"comm"
-.LASF73:
-	.string	"cpu_id_offset"
 .LASF13:
 	.string	"bool"
 .LASF10:
 	.string	"__u64"
-.LASF50:
+.LASF57:
 	.string	"exit_status"
-.LASF37:
+.LASF46:
 	.string	"state"
 .LASF8:
 	.string	"short int"
-.LASF43:
+.LASF51:
 	.string	"cpu_mask"
 .LASF15:
 	.string	"id_t"
-.LASF34:
+.LASF43:
 	.string	"task_struct"
 .LASF16:
 	.string	"cpumask_t"
 .LASF4:
 	.string	"long long int"
-.LASF52:
+.LASF59:
 	.string	"fdTable"
-.LASF60:
+.LASF38:
 	.string	"sigset"
-.LASF42:
+.LASF50:
 	.string	"cpu_id"
 .LASF24:
 	.string	"preempt_count"
-.LASF56:
+.LASF63:
 	.string	"preempt_notifiers"
 .LASF9:
 	.string	"__u32"
-.LASF57:
+.LASF34:
 	.string	"bitmap"
 .LASF32:
 	.string	"hlist_node"
-.LASF40:
+.LASF36:
 	.string	"sigpending"
-.LASF35:
-	.string	"rank"
 .LASF44:
+	.string	"rank"
+.LASF52:
 	.string	"cpu_target_id"
 .LASF72:
 	.string	"/tmp/home/kitten"
@@ -2420,15 +2372,15 @@ cpu_id_offset:
 	.string	"sched_link"
 .LASF2:
 	.string	"long int"
-.LASF47:
+.LASF55:
 	.string	"ptrace"
 .LASF30:
 	.string	"hlist_head"
-.LASF45:
+.LASF53:
 	.string	"set_child_tid"
-.LASF51:
+.LASF58:
 	.string	"arch"
-.LASF49:
+.LASF56:
 	.string	"saved_sigmask"
 .LASF7:
 	.string	"unsigned char"
@@ -2438,7 +2390,7 @@ cpu_id_offset:
 	.string	"kern_sp"
 .LASF6:
 	.string	"signed char"
-.LASF48:
+.LASF40:
 	.string	"flags"
 .LASF11:
 	.string	"long long unsigned int"
@@ -2446,13 +2398,13 @@ cpu_id_offset:
 	.string	"uint32_t"
 .LASF1:
 	.string	"unsigned int"
-.LASF61:
+.LASF39:
 	.string	"arch_task"
 .LASF33:
 	.string	"pprev"
-.LASF41:
+.LASF49:
 	.string	"sigblocked"
-.LASF63:
+.LASF42:
 	.string	"thread"
 .LASF5:
 	.string	"short unsigned int"
@@ -2469,11 +2421,11 @@ cpu_id_offset:
 	.string	"fstate"
 .LASF71:
 	.string	"arch/riscv64/kernel/asm-offsets.c"
-.LASF59:
+.LASF37:
 	.string	"list"
 .LASF14:
 	.string	"_Bool"
-.LASF36:
+.LASF45:
 	.string	"name"
 .LASF69:
 	.string	"syscalls"
@@ -2481,31 +2433,31 @@ cpu_id_offset:
 	.string	"task_rr"
 .LASF0:
 	.string	"long unsigned int"
-.LASF58:
+.LASF35:
 	.string	"sigset_t"
-.LASF39:
+.LASF48:
 	.string	"aspace_link"
 .LASF23:
 	.string	"user_sp"
 .LASF64:
 	.string	"riscv_current_is_tp"
-.LASF62:
+.LASF41:
 	.string	"addr_limit"
 .LASF18:
 	.string	"__riscv_d_ext_state"
-.LASF53:
+.LASF60:
 	.string	"migrate_link"
-.LASF74:
+.LASF73:
 	.string	"asm_offsets"
-.LASF54:
+.LASF61:
 	.string	"sched_irqs_on"
 .LASF20:
 	.string	"fcsr"
 .LASF21:
 	.string	"thread_struct"
-.LASF38:
+.LASF47:
 	.string	"aspace"
-.LASF46:
+.LASF54:
 	.string	"clear_child_tid"
 .LASF29:
 	.string	"prev"
