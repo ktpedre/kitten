@@ -8,8 +8,10 @@
 
 //#include <linux/mmzone.h>
 #include <lwk/sizes.h>
+#include <arch/atomic.h>
+#include <arch/vsyscall.h>
 
-//#include <asm/pgtable-bits.h>
+#include <arch/pgtable-bits.h>
 
 #ifndef CONFIG_MMU
 #define KERNEL_LINK_ADDR	PAGE_OFFSET
@@ -69,29 +71,36 @@
 #define VA_BITS		32
 #endif
 
-#define VMEMMAP_SHIFT \
-	(VA_BITS - PAGE_SHIFT - 1 + STRUCT_PAGE_MAX_SHIFT)
-#define VMEMMAP_SIZE	BIT(VMEMMAP_SHIFT)
-#define VMEMMAP_END	VMALLOC_START
-#define VMEMMAP_START	(VMALLOC_START - VMEMMAP_SIZE)
+/* #define STRUCT_PAGE_MAX_SHIFT	(order_base_2(sizeof(struct page))) */
 
-/*
- * Define vmemmap for pfn_to_page & page_to_pfn calls. Needed if kernel
- * is configured with CONFIG_SPARSEMEM_VMEMMAP enabled.
- */
-#define vmemmap		((struct page *)VMEMMAP_START)
+/* #define VMEMMAP_SHIFT \ */
+/* 	(VA_BITS - PAGE_SHIFT - 1 + STRUCT_PAGE_MAX_SHIFT) */
+/* #define VMEMMAP_SIZE	BIT(VMEMMAP_SHIFT) */
+/* #define VMEMMAP_END	VMALLOC_START */
+/* #define VMEMMAP_START	(VMALLOC_START - VMEMMAP_SIZE) */
 
-#define PCI_IO_SIZE      SZ_16M
-#define PCI_IO_END       VMEMMAP_START
-#define PCI_IO_START     (PCI_IO_END - PCI_IO_SIZE)
+/* /\* */
+/*  * Define vmemmap for pfn_to_page & page_to_pfn calls. Needed if kernel */
+/*  * is configured with CONFIG_SPARSEMEM_VMEMMAP enabled. */
+/*  *\/ */
+/* #define vmemmap		((struct page *)VMEMMAP_START) */
 
-#define FIXADDR_TOP      PCI_IO_START
-#ifdef CONFIG_64BIT
-#define FIXADDR_SIZE     PMD_SIZE
-#else
-#define FIXADDR_SIZE     PGDIR_SIZE
-#endif
-#define FIXADDR_START    (FIXADDR_TOP - FIXADDR_SIZE)
+/* #define PCI_IO_SIZE      SZ_16M */
+/* #define PCI_IO_END       VMEMMAP_START */
+/* #define PCI_IO_START     (PCI_IO_END - PCI_IO_SIZE) */
+
+#define FIXADDR_TOP	(VSYSCALL_END-PAGE_SIZE)
+#define FIXADDR_SIZE	(__end_of_fixed_addresses << PAGE_SHIFT)
+#define FIXADDR_START	(FIXADDR_TOP - FIXADDR_SIZE)
+
+
+/* #define FIXADDR_TOP      PCI_IO_START */
+/* #ifdef CONFIG_64BIT */
+/* #define FIXADDR_SIZE     PMD_SIZE */
+/* #else */
+/* #define FIXADDR_SIZE     PGDIR_SIZE */
+/* #endif */
+/* #define FIXADDR_START    (FIXADDR_TOP - FIXADDR_SIZE) */
 
 #endif
 
@@ -424,27 +433,27 @@ static inline pte_t pte_modify(pte_t pte, pgprot_t newprot)
 	pr_err("%s:%d: bad pgd " PTE_FMT ".\n", __FILE__, __LINE__, pgd_val(e))
 
 
-/* Commit new configuration to MMU hardware */
-static inline void update_mmu_cache(struct vm_area_struct *vma,
-	unsigned long address, pte_t *ptep)
-{
-	/*
-	 * The kernel assumes that TLBs don't cache invalid entries, but
-	 * in RISC-V, SFENCE.VMA specifies an ordering constraint, not a
-	 * cache flush; it is necessary even after writing invalid entries.
-	 * Relying on flush_tlb_fix_spurious_fault would suffice, but
-	 * the extra traps reduce performance.  So, eagerly SFENCE.VMA.
-	 */
-	local_flush_tlb_page(address);
-}
+/* /\* Commit new configuration to MMU hardware *\/ */
+/* static inline void update_mmu_cache(struct vm_area_struct *vma, */
+/* 	unsigned long address, pte_t *ptep) */
+/* { */
+/* 	/\* */
+/* 	 * The kernel assumes that TLBs don't cache invalid entries, but */
+/* 	 * in RISC-V, SFENCE.VMA specifies an ordering constraint, not a */
+/* 	 * cache flush; it is necessary even after writing invalid entries. */
+/* 	 * Relying on flush_tlb_fix_spurious_fault would suffice, but */
+/* 	 * the extra traps reduce performance.  So, eagerly SFENCE.VMA. */
+/* 	 *\/ */
+/* 	local_flush_tlb_page(address); */
+/* } */
 
-static inline void update_mmu_cache_pmd(struct vm_area_struct *vma,
-		unsigned long address, pmd_t *pmdp)
-{
-	pte_t *ptep = (pte_t *)pmdp;
+/* static inline void update_mmu_cache_pmd(struct vm_area_struct *vma, */
+/* 		unsigned long address, pmd_t *pmdp) */
+/* { */
+/* 	pte_t *ptep = (pte_t *)pmdp; */
 
-	update_mmu_cache(vma, address, ptep);
-}
+/* 	update_mmu_cache(vma, address, ptep); */
+/* } */
 
 #define __HAVE_ARCH_PTE_SAME
 static inline int pte_same(pte_t pte_a, pte_t pte_b)
@@ -486,19 +495,19 @@ static inline void pte_clear(struct mm_struct *mm,
 	__set_pte_at(mm, addr, ptep, __pte(0));
 }
 
-#define __HAVE_ARCH_PTEP_SET_ACCESS_FLAGS
-static inline int ptep_set_access_flags(struct vm_area_struct *vma,
-					unsigned long address, pte_t *ptep,
-					pte_t entry, int dirty)
-{
-	if (!pte_same(*ptep, entry))
-		set_pte_at(vma->vm_mm, address, ptep, entry);
-	/*
-	 * update_mmu_cache will unconditionally execute, handling both
-	 * the case that the PTE changed and the spurious fault case.
-	 */
-	return true;
-}
+/* #define __HAVE_ARCH_PTEP_SET_ACCESS_FLAGS */
+/* static inline int ptep_set_access_flags(struct vm_area_struct *vma, */
+/* 					unsigned long address, pte_t *ptep, */
+/* 					pte_t entry, int dirty) */
+/* { */
+/* 	if (!pte_same(*ptep, entry)) */
+/* 		set_pte_at(vma->vm_mm, address, ptep, entry); */
+/* 	/\* */
+/* 	 * update_mmu_cache will unconditionally execute, handling both */
+/* 	 * the case that the PTE changed and the spurious fault case. */
+/* 	 *\/ */
+/* 	return true; */
+/* } */
 
 #define __HAVE_ARCH_PTEP_GET_AND_CLEAR
 static inline pte_t ptep_get_and_clear(struct mm_struct *mm,
@@ -697,13 +706,13 @@ static inline int pmd_trans_huge(pmd_t pmd)
 	return pmd_leaf(pmd);
 }
 
-#define __HAVE_ARCH_PMDP_SET_ACCESS_FLAGS
-static inline int pmdp_set_access_flags(struct vm_area_struct *vma,
-					unsigned long address, pmd_t *pmdp,
-					pmd_t entry, int dirty)
-{
-	return ptep_set_access_flags(vma, address, (pte_t *)pmdp, pmd_pte(entry), dirty);
-}
+/* #define __HAVE_ARCH_PMDP_SET_ACCESS_FLAGS */
+/* static inline int pmdp_set_access_flags(struct vm_area_struct *vma, */
+/* 					unsigned long address, pmd_t *pmdp, */
+/* 					pmd_t entry, int dirty) */
+/* { */
+/* 	return ptep_set_access_flags(vma, address, (pte_t *)pmdp, pmd_pte(entry), dirty); */
+/* } */
 
 #define __HAVE_ARCH_PMDP_TEST_AND_CLEAR_YOUNG
 static inline int pmdp_test_and_clear_young(struct vm_area_struct *vma,
@@ -793,22 +802,22 @@ static inline pmd_t pmdp_establish(struct vm_area_struct *vma,
  * "load and store effective addresses, which are 64bits, must have bits
  * 63–48 all equal to bit 47, or else a page-fault exception will occur."
  */
-#ifdef CONFIG_64BIT
-#define TASK_SIZE_64	(PGDIR_SIZE * PTRS_PER_PGD / 2)
-#define TASK_SIZE_MIN	(PGDIR_SIZE_L3 * PTRS_PER_PGD / 2)
+/* #ifdef CONFIG_64BIT */
+/* #define TASK_SIZE_64	(PGDIR_SIZE * PTRS_PER_PGD / 2) */
+/* #define TASK_SIZE_MIN	(PGDIR_SIZE_L3 * PTRS_PER_PGD / 2) */
 
-#ifdef CONFIG_COMPAT
-#define TASK_SIZE_32	(_AC(0x80000000, UL) - PAGE_SIZE)
-#define TASK_SIZE	(test_thread_flag(TIF_32BIT) ? \
-			 TASK_SIZE_32 : TASK_SIZE_64)
-#else
-#define TASK_SIZE	TASK_SIZE_64
-#endif
+/* #ifdef CONFIG_COMPAT */
+/* #define TASK_SIZE_32	(_AC(0x80000000, UL) - PAGE_SIZE) */
+/* #define TASK_SIZE	(test_thread_flag(TIF_32BIT) ? \ */
+/* 			 TASK_SIZE_32 : TASK_SIZE_64) */
+/* #else */
+/* #define TASK_SIZE	TASK_SIZE_64 */
+/* #endif */
 
-#else
-#define TASK_SIZE	FIXADDR_START
-#define TASK_SIZE_MIN	TASK_SIZE
-#endif
+/* #else */
+/* #define TASK_SIZE	FIXADDR_START */
+/* #define TASK_SIZE_MIN	TASK_SIZE */
+/* #endif */
 
 #else /* CONFIG_MMU */
 

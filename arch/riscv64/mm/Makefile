@@ -1,2 +1,4 @@
-obj-y := init.o phys_addr.o aspace.o io.o cache.o mmu.o init_arm64.o flush.o
-#obj-y :=  mmu.o
+CFLAGS_init.o := -mcmodel=medany
+
+obj-y := init.o aspace.o
+# fault.o pageattr.o cacheflush.o context.o tlbflush.o hugetlbpage.o ptdump.o physaddr.o 

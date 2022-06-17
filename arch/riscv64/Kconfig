@@ -115,7 +115,7 @@ config HAS_IOPORT
 
 config SMP
 	bool
-	default "y"
+	default "n"
 
 config ACPI
 	bool
@@ -124,6 +124,15 @@ config ACPI
 config ARM_PSCI_FW
 	bool
 	default "y"
+
+config MMU
+  bool
+  default "y"
+
+config PAGE_OFFSET
+	hex
+	default 0xff60000000000000
+
 
 endmenu
 

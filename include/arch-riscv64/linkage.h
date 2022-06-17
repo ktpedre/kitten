@@ -3,4 +3,6 @@
 
 /* Nothing to see here... */
 
+//union task_union bootstrap_task_union;
+
 #endif

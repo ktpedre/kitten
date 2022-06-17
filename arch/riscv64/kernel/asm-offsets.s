@@ -70,7 +70,7 @@
 	.globl	asm_offsets
 	.type	asm_offsets, @function
 asm_offsets:
-.LFB255:
+.LFB324:
 	.file 1 "arch/riscv64/kernel/asm-offsets.c"
 	.loc 1 30 1
 	.cfi_startproc
@@ -795,7 +795,7 @@ asm_offsets:
 	.cfi_def_cfa_offset 0
 	jr	ra		#
 	.cfi_endproc
-.LFE255:
+.LFE324:
 	.size	asm_offsets, .-asm_offsets
 	.text
 .Letext0:
@@ -1980,8 +1980,8 @@ asm_offsets:
 	.byte	0x1
 	.byte	0x1d
 	.byte	0x6
-	.8byte	.LFB255
-	.8byte	.LFE255-.LFB255
+	.8byte	.LFB324
+	.8byte	.LFE324-.LFB324
 	.byte	0x1
 	.byte	0x9c
 	.byte	0
@@ -2307,14 +2307,14 @@ asm_offsets:
 	.byte	0
 	.2byte	0
 	.2byte	0
-	.8byte	.LFB255
-	.8byte	.LFE255-.LFB255
+	.8byte	.LFB324
+	.8byte	.LFE324-.LFB324
 	.8byte	0
 	.8byte	0
 	.section	.debug_ranges,"",@progbits
 .Ldebug_ranges0:
-	.8byte	.LFB255
-	.8byte	.LFE255
+	.8byte	.LFB324
+	.8byte	.LFE324
 	.8byte	0
 	.8byte	0
 	.section	.debug_line,"",@progbits

@@ -1,6 +1,8 @@
 #ifndef _ASM_X86_64_VSYSCALL_H_
 #define _ASM_X86_64_VSYSCALL_H_
 
+#ifndef __ASSEMBLY__
+
 enum vsyscall_num {
 	__NR_vgettimeofday,
 	__NR_vtime,
@@ -42,5 +44,7 @@ syscall_register(
 );
 
 #endif /* __KERNEL__ */
+
+#endif /* __ASSEMBLY__ */
 
 #endif /* _ASM_X86_64_VSYSCALL_H_ */

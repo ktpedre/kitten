@@ -222,11 +222,11 @@ clear_bss_done:
 	mv s0, a0
 	mv s1, a1
 
-	la a2, boot_cpu_hartid
-	REG_S a0, (a2)
+	;; la a2, boot_cpu_hartid
+	;; REG_S a0, (a2)
 
 	/* Initialize page table and relocate to virtual addresses */
-	la sp, bootstrap_task_union + TASK_SIZE // -16 NMG:??? //init_thread_union + THREAD_SIZE
+  la sp, bootstrap_task_union + TASK_SIZE // -16 NMG:??? //init_thread_union + THREAD_SIZE
 	mv a0, s1
 	call setup_vm
 ;; #ifdef CONFIG_MMU
@@ -236,8 +236,9 @@ clear_bss_done:
 
 	call setup_trap_vector
 	/* Restore C environment */
-	la tp, init_task
+	la tp, bootstrap_task_union
 	la sp, bootstrap_task_union + TASK_SIZE
+//  add sp, sp, TASK_SIZE
 
 	/* Start the kernel */
 	call soc_early_init

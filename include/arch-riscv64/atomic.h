@@ -11,6 +11,8 @@
 #include <arch/cmpxchg.h>
 #include <arch/barrier.h>
 
+#ifndef __ASSEMBLY__
+
 typedef struct {
 	int counter;
 } atomic_t;
@@ -403,5 +405,9 @@ static __always_inline s64 atomic64_dec_if_positive(atomic64_t *v)
 }
 
 #define atomic64_dec_if_positive	atomic64_dec_if_positive
+
+#include <arch-generic/atomic.h>
+
+#endif /* __ASSEMBLY__ */
 
 #endif /* _ASM_RISCV_ATOMIC_H */

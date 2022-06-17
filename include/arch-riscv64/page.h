@@ -16,33 +16,6 @@
 #define PAGE_SIZE	(_AC(1, UL) << PAGE_SHIFT)
 #define PAGE_MASK	(~(PAGE_SIZE - 1))
 
-#define HUGE_MAX_HSTATE		2
-#define HPAGE_SHIFT		PMD_SHIFT
-#define HPAGE_SIZE		(_AC(1, UL) << HPAGE_SHIFT)
-#define HPAGE_MASK              (~(HPAGE_SIZE - 1))
-#define HUGETLB_PAGE_ORDER      (HPAGE_SHIFT - PAGE_SHIFT)
-
-/*
- * PAGE_OFFSET -- the first address of the first page of memory.
- * When not using MMU this corresponds to the first free page in
- * physical memory (aligned on a page boundary).
- */
-/* #ifdef CONFIG_64BIT */
-/* #ifdef CONFIG_MMU */
-#define PAGE_OFFSET		kernel_map.page_offset
-/* #else */
-/* #define PAGE_OFFSET		_AC(CONFIG_PAGE_OFFSET, UL) */
-/* #endif */
-/*
- * By default, CONFIG_PAGE_OFFSET value corresponds to SV48 address space so
- * define the PAGE_OFFSET value for SV39.
- */
-#define PAGE_OFFSET_L4		_AC(0xffffaf8000000000, UL)
-#define PAGE_OFFSET_L3		_AC(0xffffffd800000000, UL)
-/* #else */
-/* #define PAGE_OFFSET		_AC(CONFIG_PAGE_OFFSET, UL) */
-/* #endif /\* CONFIG_64BIT *\/ */
-
 #define PAGE_SHIFT_4KB 		12
 #define PAGE_SHIFT_64KB		16
 #define PAGE_SHIFT_2MB		21
@@ -61,9 +34,40 @@
 #define PAGE_MASK_512MB		(~(PAGE_SIZE_512MB -1))
 #define PAGE_MASK_1GB		(~(PAGE_SIZE_1GB   -1))
 
+
+/* #ifdef CONFIG_64BIT */
+#define HUGE_MAX_HSTATE		2
+/* #else */
+/* #define HUGE_MAX_HSTATE		1 */
+/* #endif */
+#define HPAGE_SHIFT		PMD_SHIFT
+#define HPAGE_SIZE		(_AC(1, UL) << HPAGE_SHIFT)
+#define HPAGE_MASK              (~(HPAGE_SIZE - 1))
+#define HUGETLB_PAGE_ORDER      (HPAGE_SHIFT - PAGE_SHIFT)
+
+/*
+ * PAGE_OFFSET -- the first address of the first page of memory.
+ * When not using MMU this corresponds to the first free page in
+ * physical memory (aligned on a page boundary).
+ */
+/* #ifdef CONFIG_64BIT *\/ */
+/* #ifdef CONFIG_MMU */
+#define PAGE_OFFSET		kernel_map.page_offset
+/* #else */
+/* #define PAGE_OFFSET		_AC(CONFIG_PAGE_OFFSET, UL) */
+/* #endif */
+/*
+ * By default, CONFIG_PAGE_OFFSET value corresponds to SV48 address space so
+ * define the PAGE_OFFSET value for SV39.
+ */
+#define PAGE_OFFSET_L4		_AC(0xffffaf8000000000, UL)
+#define PAGE_OFFSET_L3		_AC(0xffffffd800000000, UL)
+/* #else */
+/* #define PAGE_OFFSET		_AC(CONFIG_PAGE_OFFSET, UL) */
+/* #endif /\* CONFIG_64BIT *\/ */
+
 #define TASK_ORDER 1
 #define TASK_SIZE  (PAGE_SIZE << TASK_ORDER)
-/* #define PAGE_OFFSET		_AC(0xffffffc000000000, UL) */
 
 #ifndef __ASSEMBLY__
 
@@ -143,8 +147,6 @@ extern phys_addr_t phys_ram_base;
 #define linear_mapping_pa_to_va(x)	((void *)((unsigned long)(x) + kernel_map.va_pa_offset))
 #define kernel_mapping_pa_to_va(y)	({						\
 	unsigned long _y = y;								\
-	(IS_ENABLED(CONFIG_XIP_KERNEL) && _y < phys_ram_base) ?					\
-		(void *)((unsigned long)(_y) + kernel_map.va_kernel_xip_pa_offset) :		\
 		(void *)((unsigned long)(_y) + kernel_map.va_kernel_pa_offset + XIP_OFFSET);	\
 	})
 #define __pa_to_va_nodebug(x)		linear_mapping_pa_to_va(x)
@@ -152,8 +154,6 @@ extern phys_addr_t phys_ram_base;
 #define linear_mapping_va_to_pa(x)	((unsigned long)(x) - kernel_map.va_pa_offset)
 #define kernel_mapping_va_to_pa(y) ({						\
 	unsigned long _y = y;							\
-	(IS_ENABLED(CONFIG_XIP_KERNEL) && _y < kernel_map.virt_addr + XIP_OFFSET) ?	\
-		((unsigned long)(_y) - kernel_map.va_kernel_xip_pa_offset) :		\
 		((unsigned long)(_y) - kernel_map.va_kernel_pa_offset - XIP_OFFSET);	\
 	})
 
@@ -163,21 +163,17 @@ extern phys_addr_t phys_ram_base;
 		linear_mapping_va_to_pa(_x) : kernel_mapping_va_to_pa(_x);	\
 	})
 
-extern phys_addr_t memstart_addr;
-#define PHYS_OFFSET             (memstart_addr)
-#define __virt_to_phys(x)   (((phys_addr_t)(x) - PAGE_OFFSET + PHYS_OFFSET))
-#define __phys_to_virt(x)   ((unsigned long)((x) - PHYS_OFFSET + PAGE_OFFSET))
-#define __pa(x)         __virt_to_phys((unsigned long)(x))
-#define __va(x)         ((void *)__phys_to_virt((phys_addr_t)(x)))
-#define __pa_symbol(x)	__phys_addr((unsigned long)(x))
-/* NMG Linux defines */
-/* #define __virt_to_phys(x)	__va_to_pa_nodebug(x) */
-/* #define __phys_addr_symbol(x)	__va_to_pa_nodebug(x) */
+/* #ifdef CONFIG_DEBUG_VIRTUAL */
+/* extern phys_addr_t __virt_to_phys(unsigned long x); */
+/* extern phys_addr_t __phys_addr_symbol(unsigned long x); */
+/* #else */
+#define __virt_to_phys(x)	__va_to_pa_nodebug(x)
+#define __phys_addr_symbol(x)	__va_to_pa_nodebug(x)
+/* #endif /\* CONFIG_DEBUG_VIRTUAL *\/ */
 
-/* NMG Linux defines */
-/* #define __pa_symbol(x)	__phys_addr_symbol(RELOC_HIDE((unsigned long)(x), 0)) */
-/* #define __pa(x)		__virt_to_phys((unsigned long)(x)) */
-/* #define __va(x)		((void *)__pa_to_va_nodebug((phys_addr_t)(x))) */
+#define __pa_symbol(x)	__phys_addr_symbol(RELOC_HIDE((unsigned long)(x), 0))
+#define __pa(x)		__virt_to_phys((unsigned long)(x))
+#define __va(x)		((void *)__pa_to_va_nodebug((phys_addr_t)(x)))
 
 #define phys_to_pfn(phys)	(PFN_DOWN(phys))
 #define pfn_to_phys(pfn)	(PFN_PHYS(pfn))

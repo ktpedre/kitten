@@ -101,17 +101,20 @@ void __init early_init_dt_add_memory_arch(u64 base, u64 size)
 {
 	base &= PAGE_MASK;
 	size &= PAGE_MASK;
-	if (base + size < PHYS_OFFSET) {
-		//pr_warning("Ignoring memory block 0x%llx - 0x%llx\n",
-			//   base, base + size);
-		return;
-	}
-	if (base < PHYS_OFFSET) {
-		//pr_warning("Ignoring memory range 0x%llx - 0x%llx\n",
-			//   base, PHYS_OFFSET);
-		size -= PHYS_OFFSET - base;
-		base = PHYS_OFFSET;
-	}
+	/* NMG We don't know PHYS_OFFSET yet. In riscv it's discovered from
+	 * adding memblocks from the dtb. The base of region 0 *is*
+	 * PHYS_OFFSET */
+	/* if (base + size < PHYS_OFFSET) { */
+	/* 	//pr_warning("Ignoring memory block 0x%llx - 0x%llx\n", */
+	/* 		//   base, base + size); */
+	/* 	return; */
+	/* } */
+	/* if (base < PHYS_OFFSET) { */
+	/* 	//pr_warning("Ignoring memory range 0x%llx - 0x%llx\n", */
+	/* 		//   base, PHYS_OFFSET); */
+	/* 	size -= PHYS_OFFSET - base; */
+	/* 	base = PHYS_OFFSET; */
+	/* } */
 	early_printk("Memblock add %p [size=%d MB]\n", base, size >> 20);
 	memblock_add(base, size);
 }
@@ -188,7 +191,7 @@ riscv_start_kernel( void ) {
 
 
 	early_printk("FDT Located At %p\n", fdt_start);
-	early_printk("memstart_addr: %p\n", memstart_addr);
+//	early_printk("memstart_addr: %p\n", memstart_addr);
 
 	early_fdt_setup(fdt_start);
 

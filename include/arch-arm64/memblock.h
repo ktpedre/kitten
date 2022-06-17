@@ -5,7 +5,6 @@
 #define __KERNEL__
 #ifdef __KERNEL__
 
-
 /*
  * Logical memory blocks.
  *

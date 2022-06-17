@@ -29,7 +29,7 @@ arch_task_create(
 	/*
 	 * Put a pt_regs structure at the top of the new task's kernel stack.
 	 * This is used by the CPU control unit and arch_context_switch()
-	 * to setup the new task's register state. 
+	 * to setup the new task's register state.
  	 */
 	struct pt_regs *regs =
 		((struct pt_regs *)((kaddr_t)task + TASK_SIZE)) - 1;

@@ -9,14 +9,29 @@ extern unsigned long phys_base;
  *       identity mapping of all of physical memory. It will not work for the
  *       fixmap, vmalloc() areas, or any other type of virtual address.
  */
-unsigned long
-__phys_addr(unsigned long virt_addr)
+
+phys_addr_t __virt_to_phys(unsigned long x)
 {
-	/* Handle kernel symbols */
-	printk("memstart %llx\n",memstart_addr);
-	if (virt_addr >= __START_KERNEL_map)
-		return virt_addr - __START_KERNEL_map + PHYS_OFFSET;
-	/* Handle kernel data */
-	return virt_addr - PAGE_OFFSET;
+	/*
+	 * Boundary checking aginst the kernel linear mapping space.
+	 */
+	WARN(!is_linear_mapping(x) && !is_kernel_mapping(x),
+	     "virt_to_phys used for non-linear address: %pK (%pS)\n",
+	     (void *)x, (void *)x);
+
+	return __va_to_pa_nodebug(x);
 }
 
+phys_addr_t __phys_addr_symbol(unsigned long x)
+{
+	unsigned long kernel_start = kernel_map.virt_addr;
+	unsigned long kernel_end = (unsigned long)_end;
+
+	/*
+	 * Boundary checking aginst the kernel image mapping.
+	 * __pa_symbol should only be used on kernel symbol addresses.
+	 */
+	VIRTUAL_BUG_ON(x < kernel_start || x > kernel_end);
+
+	return __va_to_pa_nodebug(x);
+}

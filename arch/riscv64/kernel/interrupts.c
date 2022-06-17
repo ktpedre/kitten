@@ -24,10 +24,10 @@
 //#include <arch/irqchip.h>
 
 
-idtvec_handler_t irqvec_table[NUM_IRQ_ENTRIES] __aligned(PAGE_SIZE_4KB);
+idtvec_handler_t irqvec_table[NUM_IRQ_ENTRIES] __aligned(PAGE_SIZE);
 static DEFINE_SPINLOCK(irqvec_table_lock);
 
-idtvec_handler_t ipivec_table[NUM_IPI_ENTRIES] __aligned(PAGE_SIZE_4KB);
+idtvec_handler_t ipivec_table[NUM_IPI_ENTRIES] __aligned(PAGE_SIZE);
 static DEFINE_SPINLOCK(ipivec_table_lock);
 
 

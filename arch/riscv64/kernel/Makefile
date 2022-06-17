@@ -1,4 +1,4 @@
-extra-y		:= head.o head64.o bootstrap.o vmlwk.lds
+extra-y		:= bootstrap.o head.o head64.o  vmlwk.lds
 EXTRA_FLAGS	:= -traditional -nostdlib -nodefaultlibs -ffreestanding
 
 obj-y		:= setup.o \

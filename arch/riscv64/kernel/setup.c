@@ -51,6 +51,8 @@ uint64_t __initdata init_task_size;
 param(init_task_start, ulong);
 param(init_task_size, ulong);
 
+extern pgd_t early_pg_dir[];
+extern pgd_t trampoline_pg_dir[];
 
 
 
@@ -169,59 +171,61 @@ setup_per_cpu_areas(void)
 	}
 } 
 
-/* static void __init */
-/* memblock_init(void) */
-/* { */
-/* 	u64 * reserve_map; */
-/* 	u64   base; */
-/* 	u64   size; */
+static void __init
+memblock_init(void)
+{
+	u64 * reserve_map;
+	u64   base;
+	u64   size;
 
-/* 	/\* Register the kernel text, kernel data and initrd with memblock *\/ */
-/* 	memblock_reserve(__pa(_text), _end - _text); */
+	/* Register the kernel text, kernel data and initrd with memblock */
+	memblock_reserve(__pa(_text), _end - _text);
 	
 
-/* 	if (initrd_start) { */
-/* 		paddr_t initrd_size = initrd_end - initrd_start; */
+	if (initrd_start) {
+		paddr_t initrd_size = initrd_end - initrd_start;
 
-/* 		memblock_reserve(initrd_start, initrd_size); */
+		memblock_reserve(initrd_start, initrd_size);
 
-/* 	} else { */
-/* 		panic("No initrd (init_task) provided\n"); */
-/* 	} */
+	} else {
+		panic("No initrd (init_task) provided\n");
+	}
 
 
-/* 	/\* */
-/* 	 * Reserve the page tables.  These are already in use, */
-/* 	 * and can only be in node 0. */
-/* 	 *\/ */
+	/*
+	 * Reserve the page tables.  These are already in use,
+	 * and can only be in node 0.
+	 */
 
-/* 	memblock_reserve(__pa(early_pg_dir), SWAPPER_DIR_SIZE); */
-/* 	memblock_reserve(__pa(trampoline_pg_dir), IDMAP_DIR_SIZE); */
+	/* On RISCV these are defined as variables inside init.c and thus
+	 * are in the ELF .*.data section */
+	/* memblock_reserve(__pa(early_pg_dir), SWAPPER_DIR_SIZE); */
+	/* memblock_reserve(__pa(trampoline_pg_dir), IDMAP_DIR_SIZE); */
 
-/* 	/\* Reserve the dtb region *\/ */
-/* 	memblock_reserve(virt_to_phys(initial_boot_params), */
-/* 			 be32_to_cpu(initial_boot_params->totalsize)); */
+	/* Reserve the dtb region */
+	memblock_reserve(virt_to_phys(initial_boot_params),
+			 be32_to_cpu(initial_boot_params->totalsize));
 
-/* 	/\* */
-/* 	 * Process the reserve map.  This will probably overlap the initrd */
-/* 	 * and dtb locations which are already reserved, but overlapping */
-/* 	 * doesn't hurt anything */
-/* 	 *\/ */
-/* 	reserve_map = ((void*)initial_boot_params) + */
-/* 			be32_to_cpu(initial_boot_params->off_mem_rsvmap); */
-/* 	while (1) { */
-/* 		base = be64_to_cpup(reserve_map++); */
-/* 		size = be64_to_cpup(reserve_map++); */
+	/*
+	 * Process the reserve map.  This will probably overlap the initrd
+	 * and dtb locations which are already reserved, but overlapping
+	 * doesn't hurt anything
+	 */
+	reserve_map = ((void*)initial_boot_params) +
+			be32_to_cpu(initial_boot_params->off_mem_rsvmap);
+	while (1) {
+		base = be64_to_cpup(reserve_map++);
+		size = be64_to_cpup(reserve_map++);
 		
-/* 		if (!size) { */
-/* 			break; */
-/* 		} */
+		if (!size) {
+			break;
+		}
 
-/* 		memblock_reserve(base, size); */
-/* 	} */
+		memblock_reserve(base, size);
+	}
 
-/* 	memblock_dump_all(); */
-/* } */
+	memblock_dump_all();
+}
 
 
 static inline int get_family(int cpuid)
@@ -260,7 +264,7 @@ setup_arch(void)
 	}
 
 
-	//memblock_init();
+	memblock_init();
 
 	paging_init();
 
