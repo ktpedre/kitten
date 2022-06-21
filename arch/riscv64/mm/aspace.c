@@ -61,13 +61,13 @@ arch_aspace_destroy(
 		/* Walk and then free the Page Upper Directory */
 		pud = __va(pgd[i].base_paddr << 12);
 		for (j = 0; j < 512; j++) {
-			if (!pud[j].valid || !pud[j].type)
+			if (pud[j].valid == 0 || is_leaf(&pud[j]))
 				continue;
 
 			/* Walk and then free the Page Middle Directory */
 			pmd = __va(pud[j].base_paddr << 12);
 			for (k = 0; k < 512; k++) {
-				if (!pmd[k].valid || !pmd[k].type)
+				if (pmd[k].valid || !pmd[k].type)
 					continue;
 				
 				/* Free the last level Page Table Directory */
@@ -99,9 +99,13 @@ arch_aspace_activate(
 
 	if (aspace->id != BOOTSTRAP_ASPACE_ID) {
 		asm volatile(
-				"dsb #0\n"
-				"msr TTBR0_EL1, %0\n"
-				"isb\n":: "r" (__pa(aspace->arch.pgd)) : "memory");
+			"sfence.vma\n"
+			"csrw satp, %0\n"
+			"fence.i\n"
+			:
+			: "r" (__pa(aspace->arch.pgd))
+			: "memory"
+			);
 	} else {
 		// Nothing to do for the bootstrap aspace
 	}
@@ -126,13 +130,12 @@ alloc_page_table(
 
 	if (!new_table)
 		return NULL;
-	
+
 	if (parent_pte) {
 		xpte_t _pte;
 
 		memset(&_pte, 0, sizeof(_pte));
 		_pte.valid     = 1;
-		_pte.type      = 1;
 
 
 #if 0
@@ -143,7 +146,7 @@ alloc_page_table(
 		_pte.AP1        = 1;
 #endif
 
-		_pte.base_paddr  = __pa(new_table) >> PAGE_SHIFT;
+		_pte.value  = __pa(new_table) >> PAGE_SHIFT;
 
 		*parent_pte = _pte;
 	}
@@ -162,7 +165,7 @@ find_or_create_pte(
 	vmpagesize_t	pagesz
 )
 {
-	struct tcr_el1 tcr = get_tcr_el1();
+	pte_vaddr_t pte_vaddr = { .value = (uint64_t)vaddr };
 
 	xpte_t *pgd = NULL;	/* Page Global Directory: level 1 (root of tree) */
 	xpte_t *pmd = NULL;	/* Page Middle Directory: level 2 */
@@ -174,28 +177,28 @@ find_or_create_pte(
 	xpte_t *pte = NULL;	/* Page Table Directory Entry */
 
 	/* Calculate indices into above directories based on vaddr specified */
-	unsigned int pgd_index =  (vaddr >> 30) & 0x1FF;
-	unsigned int pmd_index =  (vaddr >> 21) & 0x1FF;
-	unsigned int ptd_index =  (vaddr >> 12) & 0x1FF;
+	unsigned int pgd_index =  (pte_vaddr.vpn0 >> 30) & 0x1FF;
+	unsigned int pmd_index =  (pte_vaddr.vpn1 >> 21) & 0x1FF;
+	unsigned int ptd_index =  (pte_vaddr.vpn2 >> 12) & 0x1FF;
 
 
-	/* JRL: These should either be handled OK here, or be moved to initialization time checks */
-	{
-		if ((tcr.t0sz < 25) || (tcr.t0sz > 33)) {
-			panic("Unable to handle this starting level\n");
-		} else if (aspace->arch.pgd == NULL) {
-			panic("Aspace has NULL PGD\n");
-		}
-	}
+	/* /\* JRL: These should either be handled OK here, or be moved to initialization time checks *\/ */
+	/* { */
+	/* 	if ((tcr.t0sz < 25) || (tcr.t0sz > 33)) { */
+	/* 		panic("Unable to handle this starting level\n"); */
+	/* 	} else if (aspace->arch.pgd == NULL) { */
+	/* 		panic("Aspace has NULL PGD\n"); */
+	/* 	} */
+	/* } */
 
 	if (aspace->id == BOOTSTRAP_ASPACE_ID) {
-		u64 msb_mask = ~(0xffffffffffffffff >> tcr.t1sz);
+		u64 msb_mask = ~(0xffffffffffffffff) >> 26;
 
 		if ((vaddr & msb_mask) != msb_mask) {
 			panic("Invalid Bootstrap Address [vaddr=%p]\n", vaddr);
 		}
 	} else {
-		u64 msb_mask = ~(0xffffffffffffffff >> tcr.t0sz);
+		u64 msb_mask = ~(0xffffffffffffffff) >> 26;
 
 		if ((vaddr & msb_mask) != 0) {
 			panic("Invalid Kernel/Use Address [vaddr=%p]\n", vaddr);
@@ -209,8 +212,8 @@ find_or_create_pte(
 		return pge;
 	} else if (!pge->valid && !alloc_page_table(pge)) {
 		return NULL;
-	} else if (!pge->type) {
-		panic("BUG: Can't follow PGD entry, type is Block.");
+	} else if (is_leaf(pge)) {
+		panic("BUG: Can't follow PGD entry, entry is a leaf.");
 	}
 
 	/* Traverse the Page Middle Directory */
@@ -220,8 +223,8 @@ find_or_create_pte(
 		return pme;
 	} else if (!pme->valid && !alloc_page_table(pme)) {
 		return NULL;
-	} else if (!pme->type) {
-		panic("BUG: Can't follow PMD entry, type is Block.");
+	} else if (is_leaf(pme)) {
+		panic("BUG: Can't follow PMD entry, entry is a leaf.");
 	}
 	
 
@@ -275,7 +278,7 @@ find_and_delete_pte(
 	vmpagesize_t	pagesz
 )
 {
-	struct tcr_el1 tcr = get_tcr_el1();
+	pte_vaddr_t pte_vaddr = { .value = (uint64_t)vaddr };
 
 	xpte_t *pgd = NULL;	/* Page Global Directory: level 1 (root of tree) */
 	xpte_t *pmd = NULL;	/* Page Middle Directory: level 2 */
@@ -285,32 +288,29 @@ find_and_delete_pte(
 	xpte_t *pme = NULL;	/* Page Middle Directory Entry */
 	xpte_t *pte = NULL;	/* Page Table Directory Entry */
 
-
 	/* Calculated Assuming a 4KB granule */
-	unsigned int pgd_index = (vaddr >> 30) & 0x1FF;
-	unsigned int pmd_index = (vaddr >> 21) & 0x1FF;
-	unsigned int ptd_index = (vaddr >> 12) & 0x1FF;
-
-
+	unsigned int pgd_index =  (pte_vaddr.vpn0 >> 30) & 0x1FF;
+	unsigned int pmd_index =  (pte_vaddr.vpn1 >> 21) & 0x1FF;
+	unsigned int ptd_index =  (pte_vaddr.vpn2 >> 12) & 0x1FF;
 
 	/* JRL: These should either be handled OK here, or be moved to initialization time checks */
-	{
-		if ((tcr.t0sz < 25) || (tcr.t0sz > 33)) {
-			panic("Unable to handle this starting level\n");
-		} else if (aspace->arch.pgd == NULL) {
-			panic("Aspace has NULL PGD\n");
-		}
+	/* { */
+	/* 	if ((tcr.t0sz < 25) || (tcr.t0sz > 33)) { */
+	/* 		panic("Unable to handle this starting level\n"); */
+	/* 	} else if (aspace->arch.pgd == NULL) { */
+	/* 		panic("Aspace has NULL PGD\n"); */
+	/* 	} */
 
-	}
+	/* } */
 
 	if (aspace->id == BOOTSTRAP_ASPACE_ID) {
-		u64 msb_mask = ~(0xffffffffffffffff >> tcr.t1sz);
+		u64 msb_mask = ~(0xffffffffffffffff) >> 26;
 
 		if ((vaddr & msb_mask) != msb_mask) {
 			panic("Invalid Bootstrap Address [vaddr=%p]\n", vaddr);
 		}
 	} else {
-		u64 msb_mask = ~(0xffffffffffffffff >> tcr.t0sz);
+		u64 msb_mask = ~(0xffffffffffffffff) >> 26;
 
 		if ((vaddr & msb_mask) != 0) {
 			panic("Invalid Kernel/Use Address [vaddr=%p]\n", vaddr);
@@ -324,7 +324,7 @@ find_and_delete_pte(
 	if (!pge->valid) {
 		return;
 	} else if (pagesz == VM_PAGE_1GB) {
-		if (pge->type) {
+		if (!is_leaf(pge)) {
 			panic("BUG: 1GB PTE has child page table attached.\n");
 		}
 
@@ -342,7 +342,7 @@ find_and_delete_pte(
 	if (!pme->valid) {
 		return;
 	} else if (pagesz == VM_PAGE_2MB) {
-		if (pme->type) {
+		if (!is_leaf(pme)) {
 			panic("BUG: 2MB PTE has child page table attached.\n");
 		}
 
@@ -387,58 +387,36 @@ write_pte(
 	vmpagesize_t	pagesz
 )
 {
-	xpte_leaf_t _pte;  
+	pte_paddr_t pte_paddr = { .value = (uint64_t)paddr };
+	xpte_leaf_t _pte;
 	memset(&_pte, 0, sizeof(_pte));
 
 	_pte.valid = 1;
-	_pte.AF    = 1;
-	
-	if (flags & VM_WRITE) {
-		_pte.AP2 = 0;
-	} else {
-		_pte.AP2 = 1;
-	}
+	_pte.write = VM_WRITE;
+	_pte.user  = VM_USER;
+	_pte.global = VM_GLOBAL;
+	_pte.exec = VM_EXEC;
 
-	if (flags & VM_USER) {
-		_pte.AP1 = 1;
-	}
+	/* NMG Not sure how to model nocache/device memory in these page tables. */
+/* 	if (flags & VM_NOCACHE) { */
+/* 		// I'm not really sure this is what we want here.... */
+/* //		_pte.attrIndx = MT_NORMAL_NC; */
+/* 		_pte.attrIndx = MT_DEVICE_nGnRnE; */
+/* 	} else { */
+/* 		_pte.attrIndx = MT_NORMAL; */
+/* 		_pte.SH0 = 1; */
+/* 		_pte.SH1 = 1; */
 
-	if (flags & VM_GLOBAL) {
-		_pte.nG = 0;
-	} else {
-		_pte.nG = 1;
-	}
-
-	if ((flags & VM_EXEC) == 0) {
-		_pte.PXN = 1;
-		_pte.XN  = 1;
-	}
-
-
-	if (flags & VM_NOCACHE) {
-		// I'm not really sure this is what we want here....
-//		_pte.attrIndx = MT_NORMAL_NC;
-		_pte.attrIndx = MT_DEVICE_nGnRnE;
-	} else {
-		_pte.attrIndx = MT_NORMAL;
-		_pte.SH0 = 1;
-		_pte.SH1 = 1;
-
-	}
+/* 	} */
 
 	if (pagesz == VM_PAGE_4KB) {
-		xpte_4KB_t * _pte_4kb = &_pte;
-		_pte_4kb->base_paddr  = paddr >> PAGE_SHIFT_4KB;
-		_pte_4kb->type        = 1;
-	} else if (pagesz == VM_PAGE_2MB) {
-		xpte_2MB_t * _pte_2mb = &_pte;
-		_pte_2mb->base_paddr  = paddr >> PAGE_SHIFT_2MB;
-		_pte_2mb->type        = 0;
-	} else if (pagesz == VM_PAGE_1GB) {
-		xpte_1GB_t * _pte_1gb = &_pte;
-		_pte_1gb->base_paddr  = paddr >> PAGE_SHIFT_1GB;
-		_pte_1gb->type        = 0;
-
+		_pte.ppn0 = pte_paddr.ppn0;
+	}
+	if (pagesz == VM_PAGE_2MB) {
+		_pte.ppn1 = pte_paddr.ppn1;
+	}
+	if (pagesz == VM_PAGE_1GB) {
+		_pte.ppn2 = pte_paddr.ppn2;
 	}
 
 	// printk("Writing PTE [%p]\n", *(u64 *)&_pte);
@@ -566,6 +544,8 @@ extern bool _can_print;
 int
 arch_aspace_virt_to_phys(struct aspace *aspace, vaddr_t vaddr, paddr_t *paddr)
 {
+	pte_vaddr_t pte_vaddr = { .value = (uint64_t)vaddr };
+
 	xpte_t *pgd = NULL;	/* Page Global Directory: level 0 (root of tree) */
 	xpte_t *pud = NULL;	/* Page Upper Directory:  level 1 */
 	xpte_t *pmd = NULL;	/* Page Middle Directory: level 2 */
@@ -578,20 +558,23 @@ arch_aspace_virt_to_phys(struct aspace *aspace, vaddr_t vaddr, paddr_t *paddr)
 
 	paddr_t result; /* The result of the translation */
 
-	/* Calculate indices into above directories based on vaddr specified */
-	unsigned int pgd_index = (vaddr >> 39) & 0x1FF;
-	unsigned int pud_index = (vaddr >> 30) & 0x1FF;
-	unsigned int pmd_index = (vaddr >> 21) & 0x1FF;
-	unsigned int ptd_index = (vaddr >> 12) & 0x1FF;
+	unsigned int pgd_index =  (pte_vaddr.vpn0 >> 30) & 0x1FF;
+	unsigned int pmd_index =  (pte_vaddr.vpn1 >> 21) & 0x1FF;
+	unsigned int ptd_index =  (pte_vaddr.vpn2 >> 12) & 0x1FF;
 
-	struct tcr_el1 tcr = {mrs(TCR_EL1)};
+	struct ssatp satp = { .value = csr_read(CSR_SATP) };
 
-	if ((tcr.t0sz < 25) || (tcr.t0sz > 33)) {
-		panic("Unable to handle this starting level\n");
-	}
+	/* if ((tcr.t0sz < 25) || (tcr.t0sz > 33)) { */
+	/* 	panic("Unable to handle this starting level\n"); */
+	/* } */
 
+	/* NMG Find if any of the upper bits in kernel-mode virtual
+	 * addresses are *NOT* set. Kernel virtual addresses should have the
+	 * upper bits all set to 1. Then, all the bits that must be equal
+	 * should have the same bitness. For Sv39, that's bits 38-63 (26
+	 * bits). The mask we check against is the upper 26 bits set. */
 	if (aspace->id == BOOTSTRAP_ASPACE_ID) {
-		u64 msb_mask = ~(0xffffffffffffffff >> tcr.t1sz);
+		u64 msb_mask = ~(0xffffffffffffffff) >> 26;
 
 		if ((vaddr & msb_mask) != msb_mask) {
 			panic("Invalid Bootstrap Address [vaddr=%p] [msb_mask=%p]\n", vaddr, msb_mask);
@@ -600,10 +583,12 @@ arch_aspace_virt_to_phys(struct aspace *aspace, vaddr_t vaddr, paddr_t *paddr)
 		pud = aspace->arch.pgd;
 
 	} else {
-		u64 msb_mask = ~(0xffffffffffffffff >> tcr.t0sz);
+		u64 msb_mask = ~(0xffffffffffffffff >> 26); /* NMG Get rid of these 26s as magic numbers */
 
+		/* If the vaddr has all the same bits as the mask set, it is a kernel virtual address. */
 		if ((vaddr & msb_mask) == msb_mask) {
 			pud = bootstrap_aspace.arch.pgd;
+		/* If they share no bits, then it is a user virtual address */
 		} else if ((vaddr & msb_mask) == 0) {
 			pud = aspace->arch.pgd;
 		} else {
@@ -612,35 +597,27 @@ arch_aspace_virt_to_phys(struct aspace *aspace, vaddr_t vaddr, paddr_t *paddr)
 	}
 
 
-	if (tcr.tg0 == 0 && tcr.tg1 == 2) {
-		// 4k granule
-		pgd_index = (vaddr >> 39) & 0x1FF;
-		pud_index = (vaddr >> 30) & 0x1FF;
-		pmd_index = (vaddr >> 21) & 0x1FF;
-		ptd_index = (vaddr >> 12) & 0x1FF;
-	} else {
-		printk("Unable to handle non-4k granule sizes\n");
-		goto out;
-	}
+	/* if (tcr.tg0 == 0 && tcr.tg1 == 2) { */
+	/* 	// 4k granule */
+	/* 	pgd_index = (vaddr >> 39) & 0x1FF; */
+	/* 	pud_index = (vaddr >> 30) & 0x1FF; */
+	/* 	pmd_index = (vaddr >> 21) & 0x1FF; */
+	/* 	ptd_index = (vaddr >> 12) & 0x1FF; */
+	/* } else { */
+	/* 	printk("Unable to handle non-4k granule sizes\n"); */
+	/* 	goto out; */
+	/* } */
 
 	/* Traverse the Page Global Directory */
 	if (pgd != NULL) {
 		pge = &pgd[pgd_index];
 		if (!pge->valid)
 			return -ENOENT;
-		pud = __va(pge->base_paddr << 12);
-	}
-	/* Traverse the Page Upper Directory */
-	if (pud != NULL) {
-		pue = &pud[pud_index];
-		if (!pue->valid)
-			return -ENOENT;
-		if (!pue->type) {
-			result = ((uint64_t)(((xpte_1GB_t *)pue)->base_paddr << 30))
-		        				 | (vaddr & 0x3FFFFFFFull);
-			goto out;
+		if (is_leaf(pge)) {
+			result = (xpte_paddr(pge) | (vaddr & (PAGE_SIZE_1GB-1)));
 		}
-		pmd = __va(pue->base_paddr << 12);
+		pmd = __va(xpte_paddr(pge));
+		//pmd = __va(pge->base_paddr << 12);
 	}
 
 	/* Traverse the Page Middle Directory */
@@ -648,20 +625,18 @@ arch_aspace_virt_to_phys(struct aspace *aspace, vaddr_t vaddr, paddr_t *paddr)
 		pme = &pmd[pmd_index];
 		if (!pme->valid)
 			return -ENOENT;
-		if (!pme->type) {
-			result = ((uint64_t)(((xpte_2MB_t *)pme)->base_paddr) << 21)
-		        						 | (vaddr & 0x1FFFFFull);
+		if (is_leaf(pme)) {
+			result = (xpte_paddr(pme) | (vaddr & (PAGE_SIZE_2MB-1)));
 			goto out;
 		}
 	}
 
 	/* Traverse the Page Table Entry Directory */
-	ptd = __va(pme->base_paddr << 12);
+	ptd = __va(xpte_paddr(pte));
 	pte = &ptd[ptd_index];
 	if (!pte->valid)
 		return -ENOENT;
-	result = ((uint64_t)(((xpte_4KB_t *)pte)->base_paddr) << 12)
-	        		 | (vaddr & 0xFFFull);
+	result = (xpte_paddr(pte) | (vaddr & (PAGE_SIZE_4KB-1)));
 
 	out:
 	if (paddr)

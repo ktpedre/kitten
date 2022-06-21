@@ -31,6 +31,25 @@
 struct task_struct;
 struct pt_regs;
 
+struct ssatp {
+	union {
+		uint64_t value;
+		struct {
+			uint64_t pgd_ppn : 44;
+			uint64_t asid : 16;
+			uint64_t mode : 4;
+		};
+	}
+};
+
+typedef enum {
+	BARE = 0,
+	SV39 = 8,
+	SV48 = 9,
+	SV57 = 10,
+	SV64 = 11
+} SSATP_MODE;
+
 /* CPU-specific state of a task */
 struct thread_struct {
 	/* Callee-saved registers */
