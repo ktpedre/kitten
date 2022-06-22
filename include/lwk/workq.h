@@ -4,6 +4,8 @@
 #include <lwk/list.h>
 #include <arch/atomic.h>
 #include <lwk/timer.h>
+#include <lwk/bitops.h>
+#include <lwk/macros.h>
 
 //#undef _KDBG
 //#define _KDBG(fmt,arg...)

@@ -1,65 +1,28 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
-#ifndef __ASM_ASM_EXTABLE_H
-#define __ASM_ASM_EXTABLE_H
+#ifndef _ASM_X86_64_EXTABLE_H
+#define _ASM_X86_64_EXTABLE_H
 
-#define EX_TYPE_NONE			0
-#define EX_TYPE_FIXUP			1
-#define EX_TYPE_BPF			2
-#define EX_TYPE_UACCESS_ERR_ZERO	3
+#include <lwk/ptrace.h>
 
-#ifdef __ASSEMBLY__
+/*
+ * The exception table consists of pairs of addresses: the first is the
+ * address of an instruction that is allowed to fault, and the second is
+ * the address at which the program should continue.  No registers are
+ * modified, so it is entirely up to the continuation code to figure out
+ * what to do.
+ *
+ * The nice thing about this mechanism is that the fixup code is completely
+ * out of line with the main instruction path.  This means when everything
+ * is well, we don't even have to jump over them.  Further, they do not intrude
+ * on our cache or tlb entries.
+ */
+struct exception_table_entry
+{
+        unsigned long insn;	/* Instruction addr that is allowed to fault */
+	unsigned long fixup;	/* Fixup handler address */
+};
 
-#define __ASM_EXTABLE_RAW(insn, fixup, type, data)	\
-	.pushsection	__ex_table, "a";		\
-	.balign		4;				\
-	.long		((insn) - .);			\
-	.long		((fixup) - .);			\
-	.short		(type);				\
-	.short		(data);				\
-	.popsection;
+extern int fixup_exception(struct pt_regs *regs);
 
-	.macro		_asm_extable, insn, fixup
-	__ASM_EXTABLE_RAW(\insn, \fixup, EX_TYPE_FIXUP, 0)
-	.endm
+#define ARCH_HAS_SEARCH_EXTABLE
 
-#else /* __ASSEMBLY__ */
-
-//#include <linux/bits.h>
-//#include <linux/stringify.h>
-#include <arch/gpr-num.h>
-
-#define __ASM_EXTABLE_RAW(insn, fixup, type, data)	\
-	".pushsection	__ex_table, \"a\"\n"		\
-	".balign	4\n"				\
-	".long		((" insn ") - .)\n"		\
-	".long		((" fixup ") - .)\n"		\
-	".short		(" type ")\n"			\
-	".short		(" data ")\n"			\
-	".popsection\n"
-
-#define _ASM_EXTABLE(insn, fixup)	\
-	__ASM_EXTABLE_RAW(#insn, #fixup, __stringify(EX_TYPE_FIXUP), "0")
-
-#define EX_DATA_REG_ERR_SHIFT	0
-#define EX_DATA_REG_ERR		GENMASK(4, 0)
-#define EX_DATA_REG_ZERO_SHIFT	5
-#define EX_DATA_REG_ZERO	GENMASK(9, 5)
-
-#define EX_DATA_REG(reg, gpr)						\
-	"((.L__gpr_num_" #gpr ") << " __stringify(EX_DATA_REG_##reg##_SHIFT) ")"
-
-#define _ASM_EXTABLE_UACCESS_ERR_ZERO(insn, fixup, err, zero)		\
-	__DEFINE_ASM_GPR_NUMS						\
-	__ASM_EXTABLE_RAW(#insn, #fixup, 				\
-			  __stringify(EX_TYPE_UACCESS_ERR_ZERO),	\
-			  "("						\
-			    EX_DATA_REG(ERR, err) " | "			\
-			    EX_DATA_REG(ZERO, zero)			\
-			  ")")
-
-#define _ASM_EXTABLE_UACCESS_ERR(insn, fixup, err)			\
-	_ASM_EXTABLE_UACCESS_ERR_ZERO(insn, fixup, err, zero)
-
-#endif /* __ASSEMBLY__ */
-
-#endif /* __ASM_ASM_EXTABLE_H */
+#endif

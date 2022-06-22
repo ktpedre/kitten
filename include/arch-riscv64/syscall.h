@@ -1,36 +1,5 @@
-#ifndef _RISCV_SYSCALL_H //_ARM64_SYSCALL_H
-#define _RISCV_SYSCALL_H //_ARM64_SYSCALL_H
-
-#ifdef __KERNEL__
-#include <lwk/init.h>
-
-void __init vsyscall_map(void);
-void __init vsyscall_init(void);
-
-
-/**
- * Prototype for system call handler functions.
- */
-typedef long (*syscall_ptr_t)(void);
-
-/** Register a system call.
- *
- * Some system calls are registered at run-time rather than compile
- * time.
- *
- * \note The type signature for handler is generic for any number
- * of arguments and may require a cast.
- *
- * \todo Put this is a non-architecture specific file?
- */
-extern void
-syscall_register(
-	unsigned		nr,
-	syscall_ptr_t		handler
-);
-
-#endif /* __KERNEL__ */
-
+#ifndef _RISCV_SYSCALL_H
+#define _RISCV_SYSCALL_H
 /**
  * There is no way to specify inline assembly constraints for %r10 (arg4),
  * %r8 (arg5), and %r9 (arg6), so the macros below specify the registers
@@ -190,6 +159,4 @@ int name(type1 arg1, type2 arg2, type3 arg3, type4 arg4,	\
 	return status;						\
 }
 
-
-
-#endif /* _RISCV_SYSCALL_H */
+#endif

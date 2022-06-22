@@ -6,18 +6,18 @@
  * Copyright (C) 2012 Regents of the University of California
  */
 
-//#include <lwk/compat.h>
+/*#include <lwk/compat.h>*/
 #include <lwk/signal.h>
 #include <arch/uaccess.h>
-//#include <lwk/syscalls.h>
-//#include <lwk/resume_user_mode.h>
+/*#include <lwk/syscalls.h>*/
+/*#include <lwk/resume_user_mode.h>*/
 #include <lwk/linkage.h>
 #include <arch/sigcontext.h>
 
-//#include <arch/ucontext.h>
-//#include <arch/vdso.h>
-//#include <arch/signal32.h>
-//#include <arch/switch_to.h>
+/*#include <arch/ucontext.h>*/
+/*#include <arch/vdso.h>*/
+/*#include <arch/signal32.h>*/
+/*#include <arch/switch_to.h>*/
 #include <arch/csr.h>
 
 extern u32 __user_rt_sigreturn[2];

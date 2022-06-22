@@ -6,7 +6,7 @@
 #ifndef _ASM_RISCV_PGTABLE_H
 #define _ASM_RISCV_PGTABLE_H
 
-//#include <linux/mmzone.h>
+/* #include <linux/mmzone.h> */
 #include <lwk/sizes.h>
 #include <arch/atomic.h>
 #include <arch/vsyscall.h>
@@ -75,9 +75,9 @@
 
 /* #define VMEMMAP_SHIFT \ */
 /* 	(VA_BITS - PAGE_SHIFT - 1 + STRUCT_PAGE_MAX_SHIFT) */
-/* #define VMEMMAP_SIZE	BIT(VMEMMAP_SHIFT) */
-/* #define VMEMMAP_END	VMALLOC_START */
-/* #define VMEMMAP_START	(VMALLOC_START - VMEMMAP_SIZE) */
+#define VMEMMAP_SIZE	PAGE_SIZE_4KB
+#define VMEMMAP_END	VMALLOC_START
+#define VMEMMAP_START	(VMALLOC_START - VMEMMAP_SIZE)
 
 /* /\* */
 /*  * Define vmemmap for pfn_to_page & page_to_pfn calls. Needed if kernel */
@@ -85,9 +85,9 @@
 /*  *\/ */
 /* #define vmemmap		((struct page *)VMEMMAP_START) */
 
-/* #define PCI_IO_SIZE      SZ_16M */
-/* #define PCI_IO_END       VMEMMAP_START */
-/* #define PCI_IO_START     (PCI_IO_END - PCI_IO_SIZE) */
+#define PCI_IO_SIZE      SZ_16M
+#define PCI_IO_END       VMEMMAP_START
+#define PCI_IO_START     (PCI_IO_END - PCI_IO_SIZE)
 
 #define FIXADDR_TOP	(VSYSCALL_END-PAGE_SIZE)
 #define FIXADDR_SIZE	(__end_of_fixed_addresses << PAGE_SHIFT)

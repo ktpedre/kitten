@@ -8,7 +8,6 @@
 
 	#include <lwk/linkage.h>
 	#include <arch/dwarf2.h>
-	#include <arch/calling.h>			
 	#include <arch/rwlock.h>
 
 #if 0

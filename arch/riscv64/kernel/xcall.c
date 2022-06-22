@@ -3,9 +3,9 @@
 #include <lwk/xcall.h>
 #include <lwk/task.h>
 #include <lwk/smp.h>
-//#include <arch/irq_vectors.h>
+/*#include <arch/irq_vectors.h>*/
 #include <arch/processor.h>
-//#include <arch/irqchip.h>
+/*#include <arch/irqchip.h>*/
 
 /**
  * Used to pass data to and synchronize the CPUs targeted by a cross-call.

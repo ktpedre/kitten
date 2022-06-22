@@ -1,7 +1,7 @@
 #include <lwk/kernel.h>
 #include <lwk/smp.h>
 #include <lwk/task.h>
-//#include <arch/fpsimd.h>
+/*#include <arch/fpsimd.h>*/
 
 struct task_struct *
 __arch_context_switch(struct task_struct *prev_p, struct task_struct *next_p)

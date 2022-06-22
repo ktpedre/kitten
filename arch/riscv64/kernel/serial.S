@@ -1,6 +1,6 @@
 // TODO Brian Needs to have a better location
 #define UART_PHYS_ADDR _AC(CONFIG_SERIAL_PHYS,u)
-//#define UART_PHYS_ADDR _AC(0x1C021000,u)
+/*#define UART_PHYS_ADDR _AC(0x1C021000,u)*/
 #define UART_VIRT_ADDR _AC(0xffffffbffbc15040,ull)
 
   /* JRL: Note this is an infinite loop that doesn't do anything */

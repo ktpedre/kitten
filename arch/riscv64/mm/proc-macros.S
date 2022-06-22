@@ -16,8 +16,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-//#include <asm/asm-offsets.h>
-//#include <asm/thread_info.h>
+/*#include <asm/asm-offsets.h>*/
+/*#include <asm/thread_info.h>*/
 
 /*
  * vma_vm_mm - get mm pointer from vma pointer (vma->vm_mm)

@@ -7,7 +7,7 @@
 #include <lwk/delay.h>
 #include <arch/processor.h>
 #include <arch/proto.h>
-//#include <arch/irqchip.h>
+/*#include <arch/irqchip.h>*/
 #include <arch/tsc.h>
 
 #include <lwk/smp.h>

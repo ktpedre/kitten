@@ -7,17 +7,17 @@
 #include <lwk/kernel.h>
 #include <lwk/init.h>
 #include <lwk/sched.h>
-//#include <lwk/sched/debug.h>
-//#include <lwk/sched/signal.h>
+/*#include <lwk/sched/debug.h>*/
+/*#include <lwk/sched/signal.h>*/
 #include <lwk/signal.h>
-//#include <lwk/kdebug.h>
-//#include <lwk/uaccess.h>
-//#include <lwk/kprobes.h>
+/*#include <lwk/kdebug.h>*/
+/*#include <lwk/uaccess.h>*/
+/*#include <lwk/kprobes.h>*/
 //include <lwk/mm.h>
-//#include <lwk/module.h>
-//#include <lwk/irq.h>
+/*#include <lwk/module.h>*/
+/*#include <lwk/irq.h>*/
 
-//#include <arch/arch-prototypes.h>
+/*#include <arch/arch-prototypes.h>*/
 #include <arch/bug.h>
 																								\
 #include <arch/processor.h>

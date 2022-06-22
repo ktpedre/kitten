@@ -4,7 +4,7 @@
 #include <arch/ptrace.h>
 #include <arch/prctl.h>
 #include <arch/unistd.h>
-//#include <arch/i387.h>
+/*#include <arch/i387.h>*/
 #include <arch/string.h>
 #include <lwk/pmem.h>
 

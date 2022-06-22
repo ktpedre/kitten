@@ -72,17 +72,17 @@
 #define EX_TYPE_BPF			2
 #define EX_TYPE_UACCESS_ERR_ZERO	3
 
-#define __ASM_EXTABLE_RAW(insn, fixup, type, data)	\
-	".pushsection	__ex_table, \"a\"\n"		\
-	".balign	4\n"				\
-	".long		((" insn ") - .)\n"		\
-	".long		((" fixup ") - .)\n"		\
-	".short		(" type ")\n"			\
-	".short		(" data ")\n"			\
-	".popsection\n"
+/* #define __ASM_EXTABLE_RAW(insn, fixup, type, data)	\ */
+/* 	".pushsection	__ex_table, \"a\"\n"		\ */
+/* 	".balign	4\n"				\ */
+/* 	".long		((" insn ") - .)\n"		\ */
+/* 	".long		((" fixup ") - .)\n"		\ */
+/* 	".short		(" type ")\n"			\ */
+/* 	".short		(" data ")\n"			\ */
+/* 	".popsection\n" */
 
-#define _ASM_EXTABLE(insn, fixup)	\
-	__ASM_EXTABLE_RAW(#insn, #fixup, __stringify(EX_TYPE_FIXUP), "0")
+/* #define _ASM_EXTABLE(insn, fixup)	\ */
+/* 	__ASM_EXTABLE_RAW(#insn, #fixup, __stringify(EX_TYPE_FIXUP), "0") */
 
 /* /\* Exception table entry *\/ */
 /* # define _ASM_EXTABLE(from,to) \ */

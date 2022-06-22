@@ -9,15 +9,15 @@
  */
 
 #include <lwk/cpu.h>
-//#include <linux/clockchips.h>
+/*#include <linux/clockchips.h>*/
 #include <lwk/interrupt.h>
-//#include <linux/module.h>
-//#include <linux/profile.h>
+/*#include <linux/module.h>*/
+/*#include <linux/profile.h>*/
 #include <lwk/smp.h>
 #include <lwk/sched.h>
-//#include <linux/seq_file.h>
+/*#include <linux/seq_file.h>*/
 #include <lwk/delay.h>
-//#include <lwk/irq_work.h>
+/*#include <lwk/irq_work.h>*/
 
 #include <arch/sbi.h>
 #include <arch/tlbflush.h>

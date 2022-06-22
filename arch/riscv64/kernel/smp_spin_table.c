@@ -21,7 +21,7 @@
 #include <arch/of.h>
 #include <lwk/smp.h>
 #include <lwk/types.h>
-//#include <lwk/mm.h>
+/*#include <lwk/mm.h>*/
 
 #include <arch/cacheflush.h>
 #include <arch/cpu_ops.h>

@@ -10,14 +10,14 @@
 #include <arch/ptrace.h>
 #include <arch/syscall.h>
 #include <arch/thread_info.h>
-//#include <asm/switch_to.h>
-//#include <linux/audit.h>
-//#include <lwk/compat.h>
+/*#include <asm/switch_to.h>*/
+/*#include <linux/audit.h>*/
+/*#include <lwk/compat.h>*/
 #include <lwk/ptrace.h>
 #include <lwk/elf.h>
-//#include <linux/regset.h>
+/*#include <linux/regset.h>*/
 #include <lwk/sched.h>
-//#include <linux/sched/task_stack.h>
+/*#include <linux/sched/task_stack.h>*/
 
 /* #define CREATE_TRACE_POINTS */
 /* #include <trace/events/syscalls.h> */

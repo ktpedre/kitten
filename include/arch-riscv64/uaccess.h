@@ -23,6 +23,9 @@
 #include <arch/asm.h>
 //#include <asm-generic/access_ok.h>
 
+#define VERIFY_READ 0
+#define VERIFY_WRITE 1
+
 #define __enable_user_access()							\
 	__asm__ __volatile__ ("csrs sstatus, %0" : : "r" (SR_SUM) : "memory")
 #define __disable_user_access()							\

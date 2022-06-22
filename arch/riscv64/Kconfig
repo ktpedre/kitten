@@ -119,7 +119,7 @@ config SMP
 
 config ACPI
 	bool
-	default "y"
+	default "n"
 
 config ARM_PSCI_FW
 	bool

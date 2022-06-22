@@ -18,7 +18,7 @@
 
 #include <arch/of.h>
 
-//#include <arch/cpu.h>
+/*#include <arch/cpu.h>*/
 #include <arch/cputype.h>
 #include <arch/topology.h>
 

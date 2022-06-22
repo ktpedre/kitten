@@ -7,29 +7,29 @@
  */
 
 #include <lwk/init.h>
-//#include <lwk/mm.h>
+/*#include <lwk/mm.h>*/
 #include <arch/memblock.h>
-//#include <lwk/initrd.h>
-//#include <lwk/swap.h>
-//#include <lwk/swiotlb.h>
+/*#include <lwk/initrd.h>*/
+/*#include <lwk/swap.h>*/
+/*#include <lwk/swiotlb.h>*/
 #include <lwk/sizes.h>
 #include <arch/of_fdt.h>
-//#include <lwk/of_reserved_mem.h>
-//#include <lwk/libfdt.h>
-//#include <lwk/set_memory.h>
-//#include <lwk/dma-map-ops.h>
-//#include <lwk/crash_dump.h>
-//#include <lwk/hugetlb.h>
+/*#include <lwk/of_reserved_mem.h>*/
+/*#include <lwk/libfdt.h>*/
+/*#include <lwk/set_memory.h>*/
+/*#include <lwk/dma-map-ops.h>*/
+/*#include <lwk/crash_dump.h>*/
+/*#include <lwk/hugetlb.h>*/
 
 #include <arch/fixmap.h>
 #include <arch/tlbflush.h>
 #include <arch/sections.h>
-//#include <arch/soc.h>
+/*#include <arch/soc.h>*/
 #include <arch/io.h>
-//#include <arch/ptdump.h>
-//#include <arch/numa.h>
+/*#include <arch/ptdump.h>*/
+/*#include <arch/numa.h>*/
 
-//#include "../kernel/head.h"
+/*#include "../kernel/head.h"*/
 
 
 struct kernel_mapping kernel_map __ro_after_init;
@@ -38,7 +38,7 @@ EXPORT_SYMBOL(kernel_map);
 /* #define kernel_map	(*(struct kernel_mapping *)XIP_FIXUP(&kernel_map)) */
 /* #endif */
 
-//#ifdef CONFIG_64BIT
+/*#ifdef CONFIG_64BIT*/
 u64 satp_mode __ro_after_init = SATP_MODE_39;
 /* #else */
 /* u64 satp_mode __ro_after_init = SATP_MODE_32; */

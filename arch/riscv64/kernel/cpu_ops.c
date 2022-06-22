@@ -4,7 +4,7 @@
  */
 
 #include <lwk/errno.h>
-//#include <linux/mm.h>
+/*#include <linux/mm.h>*/
 #include <arch/of.h>
 #include <lwk/string.h>
 #include <lwk/sched.h>
@@ -27,12 +27,12 @@ const struct cpu_operations cpu_ops_spinwait = {
 
 void __init cpu_set_ops(int cpuid)
 {
-//#if IS_ENABLED(CONFIG_RISCV_SBI)
+/*#if IS_ENABLED(CONFIG_RISCV_SBI)*/
 	if (sbi_probe_extension(SBI_EXT_HSM) > 0) {
 		if (!cpuid)
 			pr_info("SBI HSM extension detected\n");
 		cpu_ops[cpuid] = &cpu_ops_sbi;
 	} else
-//#endif
+/*#endif*/
 		cpu_ops[cpuid] = &cpu_ops_spinwait;
 }

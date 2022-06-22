@@ -70,7 +70,7 @@
 	.globl	asm_offsets
 	.type	asm_offsets, @function
 asm_offsets:
-.LFB325:
+.LFB333:
 	.file 1 "arch/riscv64/kernel/asm-offsets.c"
 	.loc 1 30 1
 	.cfi_startproc
@@ -795,7 +795,7 @@ asm_offsets:
 	.cfi_def_cfa_offset 0
 	jr	ra		#
 	.cfi_endproc
-.LFE325:
+.LFE333:
 	.size	asm_offsets, .-asm_offsets
 	.text
 .Letext0:
@@ -1213,7 +1213,7 @@ asm_offsets:
 	.byte	0xc
 	.byte	0x72
 	.byte	0xf
-	.4byte	0x455
+	.4byte	0x460
 	.byte	0x28
 	.byte	0xb
 	.string	"uid"
@@ -1234,7 +1234,7 @@ asm_offsets:
 	.byte	0xc
 	.byte	0x77
 	.byte	0x13
-	.4byte	0x481
+	.4byte	0x45a
 	.byte	0x38
 	.byte	0x7
 	.4byte	.LASF48
@@ -1346,7 +1346,7 @@ asm_offsets:
 	.byte	0xc
 	.byte	0x90
 	.byte	0x4
-	.4byte	0x461
+	.4byte	0x46c
 	.2byte	0x278
 	.byte	0xc
 	.4byte	.LASF61
@@ -1367,7 +1367,7 @@ asm_offsets:
 	.byte	0xc
 	.byte	0xb9
 	.byte	0x13
-	.4byte	0x481
+	.4byte	0x45a
 	.2byte	0x298
 	.byte	0xc
 	.4byte	.LASF63
@@ -1392,6 +1392,11 @@ asm_offsets:
 	.byte	0x24
 	.byte	0x18
 	.4byte	0x29
+	.byte	0x12
+	.4byte	.LASF47
+	.byte	0x4
+	.byte	0x8
+	.4byte	0x455
 	.byte	0x5
 	.4byte	.LASF66
 	.byte	0xc
@@ -1404,7 +1409,7 @@ asm_offsets:
 	.byte	0xc
 	.byte	0x8e
 	.byte	0x9
-	.4byte	0x47c
+	.4byte	0x487
 	.byte	0x7
 	.4byte	.LASF68
 	.byte	0xc
@@ -1413,11 +1418,6 @@ asm_offsets:
 	.4byte	0x1c2
 	.byte	0
 	.byte	0
-	.byte	0x12
-	.4byte	.LASF47
-	.byte	0x4
-	.byte	0x8
-	.4byte	0x47c
 	.byte	0x4
 	.byte	0x8
 	.4byte	0x30
@@ -1980,8 +1980,8 @@ asm_offsets:
 	.byte	0x1
 	.byte	0x1d
 	.byte	0x6
-	.8byte	.LFB325
-	.8byte	.LFE325-.LFB325
+	.8byte	.LFB333
+	.8byte	.LFE333-.LFB333
 	.byte	0x1
 	.byte	0x9c
 	.byte	0
@@ -2307,14 +2307,14 @@ asm_offsets:
 	.byte	0
 	.2byte	0
 	.2byte	0
-	.8byte	.LFB325
-	.8byte	.LFE325-.LFB325
+	.8byte	.LFB333
+	.8byte	.LFE333-.LFB333
 	.8byte	0
 	.8byte	0
 	.section	.debug_ranges,"",@progbits
 .Ldebug_ranges0:
-	.8byte	.LFB325
-	.8byte	.LFE325
+	.8byte	.LFB333
+	.8byte	.LFE333
 	.8byte	0
 	.8byte	0
 	.section	.debug_line,"",@progbits

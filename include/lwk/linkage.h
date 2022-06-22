@@ -27,6 +27,14 @@
 #define ALIGN __ALIGN
 #define ALIGN_STR __ALIGN_STR
 
+#ifndef SYM_FUNC_START
+#define SYM_FUNC_START ENTRY
+#endif
+
+#ifndef SYM_FUNC_END
+#define SYM_FUNC_END ENDPROC
+#endif
+
 #ifndef ENTRY
 #define ENTRY(name) \
   .globl name; \

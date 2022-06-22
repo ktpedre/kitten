@@ -15,7 +15,7 @@
  */
 
 #include <lwk/linkage.h>
-//#include <asm/assembler.h>
+/*#include <asm/assembler.h>*/
 
 /*
  * Copy a buffer from src to dest (alignment handled by the hardware)

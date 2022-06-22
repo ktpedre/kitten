@@ -14,9 +14,9 @@
 #include <arch/asm-offsets.h>
 #include <arch/errata_list.h>
 
-//#if !IS_ENABLED(CONFIG_PREEMPTION)
+/*#if !IS_ENABLED(CONFIG_PREEMPTION)*/
 .set resume_kernel, restore_all
-//#endif
+/*#endif*/
 
 ENTRY(handle_exception)
 	/*
@@ -357,7 +357,7 @@ restore_all:
 	sret
 //;; #endif
 
-//#if IS_ENABLED(CONFIG_PREEMPTION)
+/*#if IS_ENABLED(CONFIG_PREEMPTION)*/
 resume_kernel:
 	REG_L s0, TASK_THREAD_PREEMPT_COUNT(tp)
 	bnez s0, restore_all
@@ -366,7 +366,7 @@ resume_kernel:
 	beqz s0, restore_all
 	call preempt_schedule_irq
 	j restore_all
-//#endif
+/*#endif*/
 
 work_pending:
 	/* Enter slow path for supplementary processing */

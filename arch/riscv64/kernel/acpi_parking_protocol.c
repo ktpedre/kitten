@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include <lwk/acpi.h>
-//#include </mm.h>
+/*#include </mm.h>*/
 #include <lwk/types.h>
 #include <lwk/cpumask.h>
 

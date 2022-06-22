@@ -20,9 +20,9 @@
 #include <lwk/smp.h>
 #include <lwk/delay.h>
 #include <arch/psci.h>
-//#include <linux/mm.h>
+/*#include <linux/mm.h>*/
 
-//#include <uapi/linux/psci.h>
+/*#include <uapi/linux/psci.h>*/
 
 #include <lwk/compiler.h>
 #include <arch/cpu_ops.h>

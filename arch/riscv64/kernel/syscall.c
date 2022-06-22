@@ -3,7 +3,7 @@
 #include <lwk/cache.h>
 #include <lwk/errno.h>
 #include <arch/asm-offsets.h>
-//#include <arch/vsyscall.h>
+#include <arch/vsyscall.h>
 #include <arch/syscall.h>
 
 /**

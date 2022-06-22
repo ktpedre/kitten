@@ -11,13 +11,13 @@
 #include <arch/proto.h>
 #include <arch/mpspec.h>
 #include <arch/pda.h>
-//#include <arch/io_apic.h>
+/*#include <arch/io_apic.h>*/
 #include <arch/pgtable.h>
 #include <arch/mce.h>
 #include <arch/of_fdt.h>
-//#include <arch/memory.h>
+/*#include <arch/memory.h>*/
 #include <arch/memblock.h>
-//#include <arch/cputype.h>
+/*#include <arch/cputype.h>*/
 
 
 /**

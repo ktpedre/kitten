@@ -14,14 +14,14 @@
 #include <lwk/show.h>
 #include <lwk/interrupt.h>
 #include <arch/page.h>
-//#include <arch/desc.h>
-//#include <arch/extable.h>
-//#include <arch/irq_vectors.h>
+/*#include <arch/desc.h>*/
+/*#include <arch/extable.h>*/
+/*#include <arch/irq_vectors.h>*/
 #include <arch/xcall.h>
-//#include <arch/i387.h>
+/*#include <arch/i387.h>*/
 #include <arch/io.h>
 #include <arch/proto.h>
-//#include <arch/irqchip.h>
+/*#include <arch/irqchip.h>*/
 
 
 idtvec_handler_t irqvec_table[NUM_IRQ_ENTRIES] __aligned(PAGE_SIZE);

@@ -16,11 +16,11 @@
 
 #include <lwk/linkage.h>
 
-//#include <asm/alternative.h>
+/*#include <asm/alternative.h>*/
 #include <arch/assembler.h>
 #include <arch/cache.h>
 #include <arch/cpufeature.h>
-//#include <arch/sysreg.h>
+/*#include <arch/sysreg.h>*/
 
 #undef ALTERNATIVE
 

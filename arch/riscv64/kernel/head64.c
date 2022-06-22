@@ -13,7 +13,7 @@
 #include <arch/sections.h>
 #include <arch/pda.h>
 #include <arch/processor.h>
-//#include <arch/desc.h>
+/*#include <arch/desc.h>*/
 #include <arch/proto.h>
 #include <arch/page.h>
 #include <arch/pgtable.h>

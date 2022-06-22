@@ -1,207 +1,135 @@
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (C) 2012 ARM Ltd.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
-#ifndef __ASM_SPINLOCK_H
-#define __ASM_SPINLOCK_H
-
-#include <arch/spinlock_types.h>
-#include <arch/rwlock.h>
-#include <arch/processor.h>
-
-/*
- * Spinlock implementation.
- *
- * The old value is read exclusively and the new one, if unlocked, is written
- * exclusively. In case of failure, the loop is restarted.
- *
- * The memory barriers are implicit with the load-acquire and store-release
- * instructions.
- *
- * Unlocked value: 0
- * Locked value: 1
+ * Copyright (C) 2015 Regents of the University of California
+ * Copyright (C) 2017 SiFive
  */
 
-#define arch_spin_is_locked(x)		((x)->lock != 0)
-#define arch_spin_unlock_wait(lock) \
-	do { while (arch_spin_is_locked(lock)) cpu_relax(); } while (0)
+#ifndef _ASM_RISCV_SPINLOCK_H
+#define _ASM_RISCV_SPINLOCK_H
 
-#define __raw_spin_lock_flags(lock, flags) __raw_spin_lock(lock)
-
-static inline void __raw_spin_lock(raw_spinlock_t *lock)
-{
-	unsigned int tmp;
-	//"	sevl 1:wfe\n"
-
-	asm volatile(
-	"1:	\n"
-	"2:	ldaxr	%w0, %1\n"
-	"	cbnz	%w0, 1b\n"
-	"	stxr	%w0, %w2, %1\n"
-	"	cbnz	%w0, 2b\n"
-	: "=&r" (tmp), "+Q" (lock->slock)
-	: "r" (1)
-	: "cc", "memory");
-}
-
-static inline int __raw_spin_trylock(raw_spinlock_t *lock)
-{
-	unsigned int tmp;
-
-	asm volatile(
-	"2:	ldaxr	%w0, %1\n"
-	"	cbnz	%w0, 1f\n"
-	"	stxr	%w0, %w2, %1\n"
-	"	cbnz	%w0, 2b\n"
-	"1:\n"
-	: "=&r" (tmp), "+Q" (lock->slock)
-	: "r" (1)
-	: "cc", "memory");
-
-	return !tmp;
-}
-
-static inline void __raw_spin_unlock(raw_spinlock_t *lock)
-{
-	asm volatile(
-	"	stlr	%w1, %0\n"
-	: "=Q" (lock->slock) : "r" (0) : "memory");
-}
+#include <lwk/kernel.h>
+#include <arch/current.h>
+#include <arch/fence.h>
 
 /*
- * Write lock implementation.
- *
- * Write locks set bit 31. Unlocking, is done by writing 0 since the lock is
- * exclusively held.
- *
- * The memory barriers are implicit with the load-acquire and store-release
- * instructions.
+ * Simple spin lock operations.  These provide no fairness guarantees.
  */
 
-static inline void __raw_write_lock(raw_rwlock_t *rw)
-{
-	unsigned int tmp;
+/* FIXME: Replace this with a ticket lock, like MIPS. */
 
-	asm volatile(
-	"	sevl\n"
-	"1:	wfe\n"
-	"2:	ldaxr	%w0, %1\n"
-	"	cbnz	%w0, 1b\n"
-	"	stxr	%w0, %w2, %1\n"
-	"	cbnz	%w0, 2b\n"
-	: "=&r" (tmp), "+Q" (rw->lock)
-	: "r" (0x80000000)
-	: "cc", "memory");
+#define arch_spin_is_locked(x)	(READ_ONCE((x)->lock) != 0)
+
+static inline void arch_spin_unlock(raw_spinlock_t *lock)
+{
+	smp_store_release(&lock->lock, 0);
 }
 
-static inline int __raw_write_trylock(raw_rwlock_t *rw)
+static inline int arch_spin_trylock(raw_spinlock_t *lock)
 {
-	unsigned int tmp;
+	int tmp = 1, busy;
 
-	asm volatile(
-	"	ldaxr	%w0, %1\n"
-	"	cbnz	%w0, 1f\n"
-	"	stxr	%w0, %w2, %1\n"
-	"1:\n"
-	: "=&r" (tmp), "+Q" (rw->lock)
-	: "r" (0x80000000)
-	: "cc", "memory");
+	__asm__ __volatile__ (
+		"	amoswap.w %0, %2, %1\n"
+		RISCV_ACQUIRE_BARRIER
+		: "=r" (busy), "+A" (lock->lock)
+		: "r" (tmp)
+		: "memory");
 
-	return !tmp;
+	return !busy;
 }
 
-static inline void __raw_write_unlock(raw_rwlock_t *rw)
+static inline void arch_spin_lock(raw_spinlock_t *lock)
 {
-	asm volatile(
-	"	stlr	%w1, %0\n"
-	: "=Q" (rw->lock) : "r" (0) : "memory");
+	while (1) {
+		if (arch_spin_is_locked(lock))
+			continue;
+
+		if (arch_spin_trylock(lock))
+			break;
+	}
 }
 
-/* write_can_lock - would write_trylock() succeed? */
-#define arch_write_can_lock(x)		((x)->lock == 0)
+/***********************************************************/
 
-/*
- * Read lock implementation.
- *
- * It exclusively loads the lock value, increments it and stores the new value
- * back if positive and the CPU still exclusively owns the location. If the
- * value is negative, the lock is already held.
- *
- * During unlocking there may be multiple active read locks but no write lock.
- *
- * The memory barriers are implicit with the load-acquire and store-release
- * instructions.
- */
-static inline void __raw_read_lock(raw_rwlock_t *rw)
+static inline void arch_read_lock(raw_rwlock_t *lock)
 {
-	unsigned int tmp, tmp2;
+	int tmp;
 
-	asm volatile(
-	"	sevl\n"
-	"1:	wfe\n"
-	"2:	ldaxr	%w0, %2\n"
-	"	add	%w0, %w0, #1\n"
-	"	tbnz	%w0, #31, 1b\n"
-	"	stxr	%w1, %w0, %2\n"
-	"	cbnz	%w1, 2b\n"
-	: "=&r" (tmp), "=&r" (tmp2), "+Q" (rw->lock)
-	:
-	: "cc", "memory");
+	__asm__ __volatile__(
+		"1:	lr.w	%1, %0\n"
+		"	bltz	%1, 1b\n"
+		"	addi	%1, %1, 1\n"
+		"	sc.w	%1, %1, %0\n"
+		"	bnez	%1, 1b\n"
+		RISCV_ACQUIRE_BARRIER
+		: "+A" (lock->lock), "=&r" (tmp)
+		:: "memory");
 }
 
-static inline void __raw_read_unlock(raw_rwlock_t *rw)
+static inline void arch_write_lock(raw_rwlock_t *lock)
 {
-	unsigned int tmp, tmp2;
+	int tmp;
 
-	asm volatile(
-	"1:	ldxr	%w0, %2\n"
-	"	sub	%w0, %w0, #1\n"
-	"	stlxr	%w1, %w0, %2\n"
-	"	cbnz	%w1, 1b\n"
-	: "=&r" (tmp), "=&r" (tmp2), "+Q" (rw->lock)
-	:
-	: "cc", "memory");
+	__asm__ __volatile__(
+		"1:	lr.w	%1, %0\n"
+		"	bnez	%1, 1b\n"
+		"	li	%1, -1\n"
+		"	sc.w	%1, %1, %0\n"
+		"	bnez	%1, 1b\n"
+		RISCV_ACQUIRE_BARRIER
+		: "+A" (lock->lock), "=&r" (tmp)
+		:: "memory");
 }
 
-static inline int __raw_read_trylock(raw_rwlock_t *rw)
+static inline int arch_read_trylock(raw_rwlock_t *lock)
 {
-	unsigned int tmp, tmp2 = 1;
+	int busy;
 
-	asm volatile(
-	"	ldaxr	%w0, %2\n"
-	"	add	%w0, %w0, #1\n"
-	"	tbnz	%w0, #31, 1f\n"
-	"	stxr	%w1, %w0, %2\n"
-	"1:\n"
-	: "=&r" (tmp), "+r" (tmp2), "+Q" (rw->lock)
-	:
-	: "cc", "memory");
+	__asm__ __volatile__(
+		"1:	lr.w	%1, %0\n"
+		"	bltz	%1, 1f\n"
+		"	addi	%1, %1, 1\n"
+		"	sc.w	%1, %1, %0\n"
+		"	bnez	%1, 1b\n"
+		RISCV_ACQUIRE_BARRIER
+		"1:\n"
+		: "+A" (lock->lock), "=&r" (busy)
+		:: "memory");
 
-	return !tmp2;
+	return !busy;
 }
 
-/* read_can_lock - would read_trylock() succeed? */
-#define arch_read_can_lock(x)		((x)->lock < 0x80000000)
+static inline int arch_write_trylock(raw_rwlock_t *lock)
+{
+	int busy;
 
+	__asm__ __volatile__(
+		"1:	lr.w	%1, %0\n"
+		"	bnez	%1, 1f\n"
+		"	li	%1, -1\n"
+		"	sc.w	%1, %1, %0\n"
+		"	bnez	%1, 1b\n"
+		RISCV_ACQUIRE_BARRIER
+		"1:\n"
+		: "+A" (lock->lock), "=&r" (busy)
+		:: "memory");
 
-#define arch_read_lock(lock)               __raw_read_lock(lock)
-#define arch_write_lock(lock)              __raw_write_lock(lock)
-#define arch_read_lock_flags(lock, flags)  __raw_read_lock(lock)
-#define arch_write_lock_flags(lock, flags) __raw_write_lock(lock)
+	return !busy;
+}
 
-#define arch_spin_relax(lock)	cpu_relax()
-#define arch_read_relax(lock)	cpu_relax()
-#define arch_write_relax(lock)	cpu_relax()
+static inline void arch_read_unlock(raw_rwlock_t *lock)
+{
+	__asm__ __volatile__(
+		RISCV_RELEASE_BARRIER
+		"	amoadd.w x0, %1, %0\n"
+		: "+A" (lock->lock)
+		: "r" (-1)
+		: "memory");
+}
 
-#endif /* __ASM_SPINLOCK_H */
+static inline void arch_write_unlock(raw_rwlock_t *lock)
+{
+	smp_store_release(&lock->lock, 0);
+}
+
+#endif /* _ASM_RISCV_SPINLOCK_H */

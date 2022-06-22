@@ -1,186 +1,316 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (C) 2013 ARM Ltd.
- * Copyright (C) 2013 Linaro.
- *
- * This code is based on glibc cortex strings work originally authored by Linaro
- * be found @
- *
- * http://bazaar.launchpad.net/~linaro-toolchain-dev/cortex-strings/trunk/
- * files/head:/src/aarch64/
+ * Copyright (C) 2022 Michael T. Kloos <michael@michaelkloos.com>
  */
 
 #include <lwk/linkage.h>
-#include <arch/assembler.h>
-#include <arch/cache.h>
+#include <arch/asm.h>
+
+SYM_FUNC_START(__memmove)
+//SYM_FUNC_START_WEAK(memmove)
+	/*
+	 * Returns
+	 *   a0 - dest
+	 *
+	 * Parameters
+	 *   a0 - Inclusive first byte of dest
+	 *   a1 - Inclusive first byte of src
+	 *   a2 - Length of copy n
+	 *
+	 * Because the return matches the parameter register a0,
+	 * we will not clobber or modify that register.
+	 *
+	 * Note: This currently only works on little-endian.
+	 * To port to big-endian, reverse the direction of shifts
+	 * in the 2 misaligned fixup copy loops.
+	 */
+
+	/* Return if nothing to do */
+	beq a0, a1, return_from_memmove
+	beqz a2, return_from_memmove
+
+	/*
+	 * Register Uses
+	 *      Forward Copy: a1 - Index counter of src
+	 *      Reverse Copy: a4 - Index counter of src
+	 *      Forward Copy: t3 - Index counter of dest
+	 *      Reverse Copy: t4 - Index counter of dest
+	 *   Both Copy Modes: t5 - Inclusive first multibyte/aligned of dest
+	 *   Both Copy Modes: t6 - Non-Inclusive last multibyte/aligned of dest
+	 *   Both Copy Modes: t0 - Link / Temporary for load-store
+	 *   Both Copy Modes: t1 - Temporary for load-store
+	 *   Both Copy Modes: t2 - Temporary for load-store
+	 *   Both Copy Modes: a5 - dest to src alignment offset
+	 *   Both Copy Modes: a6 - Shift ammount
+	 *   Both Copy Modes: a7 - Inverse Shift ammount
+	 *   Both Copy Modes: a2 - Alternate breakpoint for unrolled loops
+	 */
+
+	/*
+	 * Solve for some register values now.
+	 * Byte copy does not need t5 or t6.
+	 */
+	mv   t3, a0
+	add  t4, a0, a2
+	add  a4, a1, a2
+
+	/*
+	 * Byte copy if copying less than (2 * SZREG) bytes. This can
+	 * cause problems with the bulk copy implementation and is
+	 * small enough not to bother.
+	 */
+	andi t0, a2, -(2 * SZREG)
+	beqz t0, byte_copy
+
+	/*
+	 * Now solve for t5 and t6.
+	 */
+	andi t5, t3, -SZREG
+	andi t6, t4, -SZREG
+	/*
+	 * If dest(Register t3) rounded down to the nearest naturally
+	 * aligned SZREG address, does not equal dest, then add SZREG
+	 * to find the low-bound of SZREG alignment in the dest memory
+	 * region.  Note that this could overshoot the dest memory
+	 * region if n is less than SZREG.  This is one reason why
+	 * we always byte copy if n is less than SZREG.
+	 * Otherwise, dest is already naturally aligned to SZREG.
+	 */
+	beq  t5, t3, 1f
+		addi t5, t5, SZREG
+	1:
+
+	/*
+	 * If the dest and src are co-aligned to SZREG, then there is
+	 * no need for the full rigmarole of a full misaligned fixup copy.
+	 * Instead, do a simpler co-aligned copy.
+	 */
+	xor  t0, a0, a1
+	andi t1, t0, (SZREG - 1)
+	beqz t1, coaligned_copy
+	/* Fall through to misaligned fixup copy */
+
+misaligned_fixup_copy:
+	bltu a1, a0, misaligned_fixup_copy_reverse
+
+misaligned_fixup_copy_forward:
+	jal  t0, byte_copy_until_aligned_forward
+
+	andi a5, a1, (SZREG - 1) /* Find the alignment offset of src (a1) */
+	slli a6, a5, 3 /* Multiply by 8 to convert that to bits to shift */
+	sub  a5, a1, t3 /* Find the difference between src and dest */
+	andi a1, a1, -SZREG /* Align the src pointer */
+	addi a2, t6, SZREG /* The other breakpoint for the unrolled loop*/
+
+	/*
+	 * Compute The Inverse Shift
+	 * a7 = XLEN - a6 = XLEN + -a6
+	 * 2s complement negation to find the negative: -a6 = ~a6 + 1
+	 * Add that to XLEN.  XLEN = SZREG * 8.
+	 */
+	not  a7, a6
+	addi a7, a7, (SZREG * 8 + 1)
+
+	/*
+	 * Fix Misalignment Copy Loop - Forward
+	 * load_val0 = load_ptr[0];
+	 * do {
+	 * 	load_val1 = load_ptr[1];
+	 * 	store_ptr += 2;
+	 * 	store_ptr[0 - 2] = (load_val0 >> {a6}) | (load_val1 << {a7});
+	 *
+	 * 	if (store_ptr == {a2})
+	 * 		break;
+	 *
+	 * 	load_val0 = load_ptr[2];
+	 * 	load_ptr += 2;
+	 * 	store_ptr[1 - 2] = (load_val1 >> {a6}) | (load_val0 << {a7});
+	 *
+	 * } while (store_ptr != store_ptr_end);
+	 * store_ptr = store_ptr_end;
+	 */
+
+	REG_L t0, (0 * SZREG)(a1)
+	1:
+	REG_L t1, (1 * SZREG)(a1)
+	addi  t3, t3, (2 * SZREG)
+	srl   t0, t0, a6
+	sll   t2, t1, a7
+	or    t2, t0, t2
+	REG_S t2, ((0 * SZREG) - (2 * SZREG))(t3)
+
+	beq   t3, a2, 2f
+
+	REG_L t0, (2 * SZREG)(a1)
+	addi  a1, a1, (2 * SZREG)
+	srl   t1, t1, a6
+	sll   t2, t0, a7
+	or    t2, t1, t2
+	REG_S t2, ((1 * SZREG) - (2 * SZREG))(t3)
+
+	bne   t3, t6, 1b
+	2:
+	mv    t3, t6 /* Fix the dest pointer in case the loop was broken */
+
+	add  a1, t3, a5 /* Restore the src pointer */
+	j byte_copy_forward /* Copy any remaining bytes */
+
+misaligned_fixup_copy_reverse:
+	jal  t0, byte_copy_until_aligned_reverse
+
+	andi a5, a4, (SZREG - 1) /* Find the alignment offset of src (a4) */
+	slli a6, a5, 3 /* Multiply by 8 to convert that to bits to shift */
+	sub  a5, a4, t4 /* Find the difference between src and dest */
+	andi a4, a4, -SZREG /* Align the src pointer */
+	addi a2, t5, -SZREG /* The other breakpoint for the unrolled loop*/
+
+	/*
+	 * Compute The Inverse Shift
+	 * a7 = XLEN - a6 = XLEN + -a6
+	 * 2s complement negation to find the negative: -a6 = ~a6 + 1
+	 * Add that to XLEN.  XLEN = SZREG * 8.
+	 */
+	not  a7, a6
+	addi a7, a7, (SZREG * 8 + 1)
+
+	/*
+	 * Fix Misalignment Copy Loop - Reverse
+	 * load_val1 = load_ptr[0];
+	 * do {
+	 * 	load_val0 = load_ptr[-1];
+	 * 	store_ptr -= 2;
+	 * 	store_ptr[1] = (load_val0 >> {a6}) | (load_val1 << {a7});
+	 *
+	 * 	if (store_ptr == {a2})
+	 * 		break;
+	 *
+	 * 	load_val1 = load_ptr[-2];
+	 * 	load_ptr -= 2;
+	 * 	store_ptr[0] = (load_val1 >> {a6}) | (load_val0 << {a7});
+	 *
+	 * } while (store_ptr != store_ptr_end);
+	 * store_ptr = store_ptr_end;
+	 */
+
+	REG_L t1, ( 0 * SZREG)(a4)
+	1:
+	REG_L t0, (-1 * SZREG)(a4)
+	addi  t4, t4, (-2 * SZREG)
+	sll   t1, t1, a7
+	srl   t2, t0, a6
+	or    t2, t1, t2
+	REG_S t2, ( 1 * SZREG)(t4)
+
+	beq   t4, a2, 2f
+
+	REG_L t1, (-2 * SZREG)(a4)
+	addi  a4, a4, (-2 * SZREG)
+	sll   t0, t0, a7
+	srl   t2, t1, a6
+	or    t2, t0, t2
+	REG_S t2, ( 0 * SZREG)(t4)
+
+	bne   t4, t5, 1b
+	2:
+	mv    t4, t5 /* Fix the dest pointer in case the loop was broken */
+
+	add  a4, t4, a5 /* Restore the src pointer */
+	j byte_copy_reverse /* Copy any remaining bytes */
 
 /*
- * Move a buffer from src to test (alignment handled by the hardware).
- * If dest <= src, call memcpy, otherwise copy in reverse order.
- *
- * Parameters:
- *	x0 - dest
- *	x1 - src
- *	x2 - n
- * Returns:
- *	x0 - dest
+ * Simple copy loops for SZREG co-aligned memory locations.
+ * These also make calls to do byte copies for any unaligned
+ * data at their terminations.
  */
-dstin	.req	x0
-src	.req	x1
-count	.req	x2
-tmp1	.req	x3
-tmp1w	.req	w3
-tmp2	.req	x4
-tmp2w	.req	w4
-tmp3	.req	x5
-tmp3w	.req	w5
-dst	.req	x6
+coaligned_copy:
+	bltu a1, a0, coaligned_copy_reverse
 
-A_l	.req	x7
-A_h	.req	x8
-B_l	.req	x9
-B_h	.req	x10
-C_l	.req	x11
-C_h	.req	x12
-D_l	.req	x13
-D_h	.req	x14
+coaligned_copy_forward:
+	jal t0, byte_copy_until_aligned_forward
 
-.text
-ENTRY(memmove)
-	cmp	dstin, src
-	b.lo	memcpy
-	add	tmp1, src, count
-	cmp	dstin, tmp1
-	b.hs	memcpy		/* No overlap.  */
+	1:
+	REG_L t1, ( 0 * SZREG)(a1)
+	addi  a1, a1, SZREG
+	addi  t3, t3, SZREG
+	REG_S t1, (-1 * SZREG)(t3)
+	bne   t3, t6, 1b
 
-	add	dst, dstin, count
-	add	src, src, count
-	cmp	count, #16
-	b.lo	.Ltail15  /*probably non-alignment accesses.*/
+	j byte_copy_forward /* Copy any remaining bytes */
 
-	ands	tmp2, src, #15     /* Bytes to reach alignment.  */
-	b.eq	.LSrcAligned
-	sub	count, count, tmp2
-	/*
-	* process the aligned offset length to make the src aligned firstly.
-	* those extra instructions' cost is acceptable. It also make the
-	* coming accesses are based on aligned address.
-	*/
-	tbz	tmp2, #0, 1f
-	ldrb	tmp1w, [src, #-1]!
-	strb	tmp1w, [dst, #-1]!
-1:
-	tbz	tmp2, #1, 2f
-	ldrh	tmp1w, [src, #-2]!
-	strh	tmp1w, [dst, #-2]!
-2:
-	tbz	tmp2, #2, 3f
-	ldr	tmp1w, [src, #-4]!
-	str	tmp1w, [dst, #-4]!
-3:
-	tbz	tmp2, #3, .LSrcAligned
-	ldr	tmp1, [src, #-8]!
-	str	tmp1, [dst, #-8]!
+coaligned_copy_reverse:
+	jal t0, byte_copy_until_aligned_reverse
 
-.LSrcAligned:
-	cmp	count, #64
-	b.ge	.Lcpy_over64
+	1:
+	REG_L t1, (-1 * SZREG)(a4)
+	addi  a4, a4, -SZREG
+	addi  t4, t4, -SZREG
+	REG_S t1, ( 0 * SZREG)(t4)
+	bne   t4, t5, 1b
 
-	/*
-	* Deal with small copies quickly by dropping straight into the
-	* exit block.
-	*/
-.Ltail63:
-	/*
-	* Copy up to 48 bytes of data. At this point we only need the
-	* bottom 6 bits of count to be accurate.
-	*/
-	ands	tmp1, count, #0x30
-	b.eq	.Ltail15
-	cmp	tmp1w, #0x20
-	b.eq	1f
-	b.lt	2f
-	ldp	A_l, A_h, [src, #-16]!
-	stp	A_l, A_h, [dst, #-16]!
-1:
-	ldp	A_l, A_h, [src, #-16]!
-	stp	A_l, A_h, [dst, #-16]!
-2:
-	ldp	A_l, A_h, [src, #-16]!
-	stp	A_l, A_h, [dst, #-16]!
+	j byte_copy_reverse /* Copy any remaining bytes */
 
-.Ltail15:
-	tbz	count, #3, 1f
-	ldr	tmp1, [src, #-8]!
-	str	tmp1, [dst, #-8]!
-1:
-	tbz	count, #2, 2f
-	ldr	tmp1w, [src, #-4]!
-	str	tmp1w, [dst, #-4]!
-2:
-	tbz	count, #1, 3f
-	ldrh	tmp1w, [src, #-2]!
-	strh	tmp1w, [dst, #-2]!
-3:
-	tbz	count, #0, .Lexitfunc
-	ldrb	tmp1w, [src, #-1]
-	strb	tmp1w, [dst, #-1]
+/*
+ * These are basically sub-functions within the function.  They
+ * are used to byte copy until the dest pointer is in alignment.
+ * At which point, a bulk copy method can be used by the
+ * calling code.  These work on the same registers as the bulk
+ * copy loops.  Therefore, the register values can be picked
+ * up from where they were left and we avoid code duplication
+ * without any overhead except the call in and return jumps.
+ */
+byte_copy_until_aligned_forward:
+	beq  t3, t5, 2f
+	1:
+	lb   t1,  0(a1)
+	addi a1, a1, 1
+	addi t3, t3, 1
+	sb   t1, -1(t3)
+	bne  t3, t5, 1b
+	2:
+	jalr zero, 0x0(t0) /* Return to multibyte copy loop */
 
-.Lexitfunc:
+byte_copy_until_aligned_reverse:
+	beq  t4, t6, 2f
+	1:
+	lb   t1, -1(a4)
+	addi a4, a4, -1
+	addi t4, t4, -1
+	sb   t1,  0(t4)
+	bne  t4, t6, 1b
+	2:
+	jalr zero, 0x0(t0) /* Return to multibyte copy loop */
+
+/*
+ * Simple byte copy loops.
+ * These will byte copy until they reach the end of data to copy.
+ * At that point, they will call to return from memmove.
+ */
+byte_copy:
+	bltu a1, a0, byte_copy_reverse
+
+byte_copy_forward:
+	beq  t3, t4, 2f
+	1:
+	lb   t1,  0(a1)
+	addi a1, a1, 1
+	addi t3, t3, 1
+	sb   t1, -1(t3)
+	bne  t3, t4, 1b
+	2:
 	ret
 
-.Lcpy_over64:
-	subs	count, count, #128
-	b.ge	.Lcpy_body_large
-	/*
-	* Less than 128 bytes to copy, so handle 64 bytes here and then jump
-	* to the tail.
-	*/
-	ldp	A_l, A_h, [src, #-16]
-	stp	A_l, A_h, [dst, #-16]
-	ldp	B_l, B_h, [src, #-32]
-	ldp	C_l, C_h, [src, #-48]
-	stp	B_l, B_h, [dst, #-32]
-	stp	C_l, C_h, [dst, #-48]
-	ldp	D_l, D_h, [src, #-64]!
-	stp	D_l, D_h, [dst, #-64]!
+byte_copy_reverse:
+	beq  t4, t3, 2f
+	1:
+	lb   t1, -1(a4)
+	addi a4, a4, -1
+	addi t4, t4, -1
+	sb   t1,  0(t4)
+	bne  t4, t3, 1b
+	2:
 
-	tst	count, #0x3f
-	b.ne	.Ltail63
+return_from_memmove:
 	ret
 
-	/*
-	* Critical loop. Start at a new cache line boundary. Assuming
-	* 64 bytes per line this ensures the entire loop is in one line.
-	*/
-	.p2align	L1_CACHE_SHIFT
-.Lcpy_body_large:
-	/* pre-load 64 bytes data. */
-	ldp	A_l, A_h, [src, #-16]
-	ldp	B_l, B_h, [src, #-32]
-	ldp	C_l, C_h, [src, #-48]
-	ldp	D_l, D_h, [src, #-64]!
-1:
-	/*
-	* interlace the load of next 64 bytes data block with store of the last
-	* loaded 64 bytes data.
-	*/
-	stp	A_l, A_h, [dst, #-16]
-	ldp	A_l, A_h, [src, #-16]
-	stp	B_l, B_h, [dst, #-32]
-	ldp	B_l, B_h, [src, #-32]
-	stp	C_l, C_h, [dst, #-48]
-	ldp	C_l, C_h, [src, #-48]
-	stp	D_l, D_h, [dst, #-64]!
-	ldp	D_l, D_h, [src, #-64]!
-	subs	count, count, #64
-	b.ge	1b
-	stp	A_l, A_h, [dst, #-16]
-	stp	B_l, B_h, [dst, #-32]
-	stp	C_l, C_h, [dst, #-48]
-	stp	D_l, D_h, [dst, #-64]!
-
-	tst	count, #0x3f
-	b.ne	.Ltail63
-	ret
-ENDPROC(memmove)
+//SYM_FUNC_END(memmove)
+SYM_FUNC_END(__memmove)

@@ -28,7 +28,7 @@
 #include <lwk/bootmem.h>
 
 #include <arch/pgtable.h>
-//#include <arch/io_apic.h>
+/*#include <arch/io_apic.h>*/
 #include <arch/io.h>
 #include <arch/mpspec.h>
 #include <arch/smp.h>

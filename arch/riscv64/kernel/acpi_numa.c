@@ -23,14 +23,14 @@
 #include <lwk/bitmap.h>
 #include <lwk/bootmem.h>
 #include <lwk/kernel.h>
-//#include <linux/mm.h>
+/*#include <linux/mm.h>*/
 #include <lwk/memblock.h>
-//#include <lin/mmzone.h>
+/*#include <lin/mmzone.h>*/
 #include <lwk/module.h>
 #include <lwk/topology.h>
 
 #include <acpi/processor.h>
-//#include <asm/numa.h>
+/*#include <asm/numa.h>*/
 
 static int cpus_in_srat;
 

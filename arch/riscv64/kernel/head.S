@@ -16,9 +16,9 @@
 #include <arch/pgtable.h>
 #include <arch/csr.h>
 #include <arch/cpu_ops_sbi.h>
-//#include <arch/hwcap.h>
+/*#include <arch/hwcap.h>*/
 #include <arch/image.h>
-//#include <arch/xip_fixup.h>
+/*#include <arch/xip_fixup.h>*/
 #include "efi-header.S"
 
 //__HEAD

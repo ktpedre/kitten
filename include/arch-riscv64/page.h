@@ -204,7 +204,7 @@ extern phys_addr_t phys_ram_base;
 
 #define VM_DATA_DEFAULT_FLAGS	VM_DATA_FLAGS_NON_EXEC
 
-//#include <asm-generic/memory_model.h>
-//#include <asm-generic/getorder.h>
+/* //#include <asm-generic/memory_model.h> */
+/* //#include <asm-generic/getorder.h> */
 
 #endif /* _ASM_RISCV_PAGE_H */

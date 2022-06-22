@@ -8,6 +8,8 @@
 #ifndef _ASM_RISCV_ATOMIC_H
 #define _ASM_RISCV_ATOMIC_H
 
+#include <lwk/types.h>
+
 #include <arch/cmpxchg.h>
 #include <arch/barrier.h>
 
