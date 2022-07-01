@@ -9,7 +9,7 @@
 #include <lwk/compiler.h>
 #include <arch/barrier.h>
 // #include <arch/bitsperlong.h>
-
+ 
 //#include <asm-generic/bitops/__ffs.h>
 // #include <arch/ffz.h>
 #include <arch/fls.h>
@@ -21,6 +21,9 @@
 #include <arch-generic/bitops/hweight.h>
 
 #define ffz(x)  __ffs(~(x))
+
+#define BIT_MASK(nr)		(1UL << ((nr) % BITS_PER_LONG))
+#define BIT_WORD(nr)		((nr) / BITS_PER_LONG)
 
 
 #define __AMO(op)	"amo" #op ".d"
@@ -43,6 +46,30 @@
 		: "+A" (addr[BIT_WORD(nr)])			\
 		: "r" (mod(BIT_MASK(nr)))			\
 		: "memory");
+
+/**
+ * sign_extend32 - sign extend a 32-bit value using specified bit as sign-bit
+ * @value: value to sign extend
+ * @index: 0 based bit index (0<=index<32) to sign bit
+ *
+ * This is safe to use for 16- and 8-bit types as well.
+ */
+static inline __s32 sign_extend32(__u32 value, int index)
+{
+	__u8 shift = 31 - index;
+	return (__s32)(value << shift) >> shift;
+}
+
+/**
+ * sign_extend64 - sign extend a 64-bit value using specified bit as sign-bit
+ * @value: value to sign extend
+ * @index: 0 based bit index (0<=index<64) to sign bit
+ */
+static inline __s64 sign_extend64(__u64 value, int index)
+{
+	__u8 shift = 63 - index;
+	return (__s64)(value << shift) >> shift;
+}
 
 #define __test_and_op_bit(op, mod, nr, addr) 			\
 	__test_and_op_bit_ord(op, mod, nr, addr, .aqrl)
@@ -183,11 +210,29 @@ static inline void __clear_bit_unlock(
 	clear_bit_unlock(nr, addr);
 }
 
+/**
+ * test_bit - Determine whether a bit is set
+ * @nr: bit number to test
+ * @addr: Address to start counting from
+ */
+static __always_inline int
+test_bit(unsigned int nr, const volatile unsigned long *addr)
+{
+	return 1UL & (addr[BIT_WORD(nr)] >> (nr & (BITS_PER_LONG-1)));
+}
+
 #undef __test_and_op_bit
 #undef __op_bit
 #undef __NOP
 #undef __NOT
 #undef __AMO
+
+#define __set_bit(nr,addr) \
+	set_bit(nr,addr)
+//void set_bit(int nr, volatile unsigned long *addr);
+
+#define __clear_bit(nr, addr) \
+	clear_bit(nr,addr)
 
 //#include <asm-generic/bitops/non-atomic.h>
 //#include <asm-generic/bitops/le.h>

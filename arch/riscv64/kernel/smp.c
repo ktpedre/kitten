@@ -49,14 +49,14 @@ static struct {
 
 int riscv_hartid_to_cpuid(int hartid)
 {
-	int i;
+	/* int i; */
 
-	for (i = 0; i < NR_CPUS; i++)
-		if (cpuid_to_hartid_map(i) == hartid)
-			return i;
+	/* for (i = 0; i < NR_CPUS; i++) */
+	/* 	if (cpuid_to_hartid_map(i) == hartid) */
+	/* 		return i; */
 
-	pr_err("Couldn't find cpu id for hartid [%d]\n", hartid);
-	return -ENOENT;
+	/* pr_err("Couldn't find cpu id for hartid [%d]\n", hartid); */
+	/* return -ENOENT; */
 }
 
 bool arch_match_cpu_phys_id(int cpu, u64 phys_id)
@@ -72,9 +72,9 @@ int setup_profiling_timer(unsigned int multiplier)
 
 static void ipi_stop(void)
 {
-	set_cpu_online(smp_processor_id(), false);
-	while (1)
-		wait_for_interrupt();
+	/* set_cpu_online(smp_processor_id(), false); */
+	/* while (1) */
+	/* 	wait_for_interrupt(); */
 }
 
 static const struct riscv_ipi_ops *ipi_ops __ro_after_init;
@@ -87,38 +87,38 @@ EXPORT_SYMBOL_GPL(riscv_set_ipi_ops);
 
 void riscv_clear_ipi(void)
 {
-	if (ipi_ops && ipi_ops->ipi_clear)
-		ipi_ops->ipi_clear();
+	/* if (ipi_ops && ipi_ops->ipi_clear) */
+	/* 	ipi_ops->ipi_clear(); */
 
-	csr_clear(CSR_IP, IE_SIE);
+	/* csr_clear(CSR_IP, IE_SIE); */
 }
 EXPORT_SYMBOL_GPL(riscv_clear_ipi);
 
 static void send_ipi_mask(const struct cpumask *mask, enum ipi_message_type op)
 {
-	int cpu;
+	/* int cpu; */
 
-	smp_mb__before_atomic();
-	for_each_cpu(cpu, mask)
-		set_bit(op, &ipi_data[cpu].bits);
-	smp_mb__after_atomic();
+	/* smp_mb__before_atomic(); */
+	/* for_each_cpu(cpu, mask) */
+	/* 	set_bit(op, &ipi_data[cpu].bits); */
+	/* smp_mb__after_atomic(); */
 
-	if (ipi_ops && ipi_ops->ipi_inject)
-		ipi_ops->ipi_inject(mask);
-	else
-		pr_warn("SMP: IPI inject method not available\n");
+	/* if (ipi_ops && ipi_ops->ipi_inject) */
+	/* 	ipi_ops->ipi_inject(mask); */
+	/* else */
+	/* 	pr_warn("SMP: IPI inject method not available\n"); */
 }
 
 static void send_ipi_single(int cpu, enum ipi_message_type op)
 {
-	smp_mb__before_atomic();
-	set_bit(op, &ipi_data[cpu].bits);
-	smp_mb__after_atomic();
+	/* smp_mb__before_atomic(); */
+	/* set_bit(op, &ipi_data[cpu].bits); */
+	/* smp_mb__after_atomic(); */
 
-	if (ipi_ops && ipi_ops->ipi_inject)
-		ipi_ops->ipi_inject(cpumask_of(cpu));
-	else
-		pr_warn("SMP: IPI inject method not available\n");
+	/* if (ipi_ops && ipi_ops->ipi_inject) */
+	/* 	ipi_ops->ipi_inject(cpumask_of(cpu)); */
+	/* else */
+	/* 	pr_warn("SMP: IPI inject method not available\n"); */
 }
 
 #ifdef CONFIG_IRQ_WORK
@@ -130,52 +130,52 @@ void arch_irq_work_raise(void)
 
 void handle_IPI(struct pt_regs *regs)
 {
-	unsigned long *pending_ipis = &ipi_data[smp_processor_id()].bits;
-	unsigned long *stats = ipi_data[smp_processor_id()].stats;
+/* 	unsigned long *pending_ipis = &ipi_data[smp_processor_id()].bits; */
+/* 	unsigned long *stats = ipi_data[smp_processor_id()].stats; */
 
-	riscv_clear_ipi();
+/* 	riscv_clear_ipi(); */
 
-	while (true) {
-		unsigned long ops;
+/* 	while (true) { */
+/* 		unsigned long ops; */
 
-		/* Order bit clearing and data access. */
-		mb();
+/* 		/\* Order bit clearing and data access. *\/ */
+/* 		mb(); */
 
-		ops = xchg(pending_ipis, 0);
-		if (ops == 0)
-			return;
+/* 		ops = xchg(pending_ipis, 0); */
+/* 		if (ops == 0) */
+/* 			return; */
 
-		if (ops & (1 << IPI_RESCHEDULE)) {
-			stats[IPI_RESCHEDULE]++;
-			scheduler_ipi();
-		}
+/* 		if (ops & (1 << IPI_RESCHEDULE)) { */
+/* 			stats[IPI_RESCHEDULE]++; */
+/* 			scheduler_ipi(); */
+/* 		} */
 
-		if (ops & (1 << IPI_CALL_FUNC)) {
-			stats[IPI_CALL_FUNC]++;
-			generic_smp_call_function_interrupt();
-		}
+/* 		if (ops & (1 << IPI_CALL_FUNC)) { */
+/* 			stats[IPI_CALL_FUNC]++; */
+/* 			generic_smp_call_function_interrupt(); */
+/* 		} */
 
-		if (ops & (1 << IPI_CPU_STOP)) {
-			stats[IPI_CPU_STOP]++;
-			ipi_stop();
-		}
+/* 		if (ops & (1 << IPI_CPU_STOP)) { */
+/* 			stats[IPI_CPU_STOP]++; */
+/* 			ipi_stop(); */
+/* 		} */
 
-		if (ops & (1 << IPI_IRQ_WORK)) {
-			stats[IPI_IRQ_WORK]++;
-			irq_work_run();
-		}
+/* 		if (ops & (1 << IPI_IRQ_WORK)) { */
+/* 			stats[IPI_IRQ_WORK]++; */
+/* 			irq_work_run(); */
+/* 		} */
 
-#ifdef CONFIG_GENERIC_CLOCKEVENTS_BROADCAST
-		if (ops & (1 << IPI_TIMER)) {
-			stats[IPI_TIMER]++;
-			tick_receive_broadcast();
-		}
-#endif
-		BUG_ON((ops >> IPI_MAX) != 0);
+/* #ifdef CONFIG_GENERIC_CLOCKEVENTS_BROADCAST */
+/* 		if (ops & (1 << IPI_TIMER)) { */
+/* 			stats[IPI_TIMER]++; */
+/* 			tick_receive_broadcast(); */
+/* 		} */
+/* #endif */
+/* 		BUG_ON((ops >> IPI_MAX) != 0); */
 
-		/* Order data access and bit testing. */
-		mb();
-	}
+/* 		/\* Order data access and bit testing. *\/ */
+/* 		mb(); */
+/* 	} */
 }
 
 static const char * const ipi_names[] = {
@@ -188,15 +188,15 @@ static const char * const ipi_names[] = {
 
 void show_ipi_stats(struct seq_file *p, int prec)
 {
-	unsigned int cpu, i;
+	/* unsigned int cpu, i; */
 
-	for (i = 0; i < IPI_MAX; i++) {
-		seq_printf(p, "%*s%u:%s", prec - 1, "IPI", i,
-			   prec >= 4 ? " " : "");
-		for_each_online_cpu(cpu)
-			seq_printf(p, "%10lu ", ipi_data[cpu].stats[i]);
-		seq_printf(p, " %s\n", ipi_names[i]);
-	}
+	/* for (i = 0; i < IPI_MAX; i++) { */
+	/* 	seq_printf(p, "%*s%u:%s", prec - 1, "IPI", i, */
+	/* 		   prec >= 4 ? " " : ""); */
+	/* 	for_each_online_cpu(cpu) */
+	/* 		seq_printf(p, "%10lu ", ipi_data[cpu].stats[i]); */
+	/* 	seq_printf(p, " %s\n", ipi_names[i]); */
+	/* } */
 }
 
 void arch_send_call_function_ipi_mask(struct cpumask *mask)
@@ -218,27 +218,27 @@ void tick_broadcast(const struct cpumask *mask)
 
 void smp_send_stop(void)
 {
-	unsigned long timeout;
+	/* unsigned long timeout; */
 
-	if (num_online_cpus() > 1) {
-		cpumask_t mask;
+	/* if (num_online_cpus() > 1) { */
+	/* 	cpumask_t mask; */
 
-		cpumask_copy(&mask, cpu_online_mask);
-		cpumask_clear_cpu(smp_processor_id(), &mask);
+	/* 	cpumask_copy(&mask, cpu_online_mask); */
+	/* 	cpumask_clear_cpu(smp_processor_id(), &mask); */
 
-		if (system_state <= SYSTEM_RUNNING)
-			pr_crit("SMP: stopping secondary CPUs\n");
-		send_ipi_mask(&mask, IPI_CPU_STOP);
-	}
+	/* 	if (system_state <= SYSTEM_RUNNING) */
+	/* 		pr_crit("SMP: stopping secondary CPUs\n"); */
+	/* 	send_ipi_mask(&mask, IPI_CPU_STOP); */
+	/* } */
 
-	/* Wait up to one second for other CPUs to stop */
-	timeout = USEC_PER_SEC;
-	while (num_online_cpus() > 1 && timeout--)
-		udelay(1);
+	/* /\* Wait up to one second for other CPUs to stop *\/ */
+	/* timeout = USEC_PER_SEC; */
+	/* while (num_online_cpus() > 1 && timeout--) */
+	/* 	udelay(1); */
 
-	if (num_online_cpus() > 1)
-		pr_warn("SMP: failed to stop secondary CPUs %*pbl\n",
-			   cpumask_pr_args(cpu_online_mask));
+	/* if (num_online_cpus() > 1) */
+	/* 	pr_warn("SMP: failed to stop secondary CPUs %*pbl\n", */
+	/* 		   cpumask_pr_args(cpu_online_mask)); */
 }
 
 void smp_send_reschedule(int cpu)

@@ -43,6 +43,8 @@ void flush_icache_mm(struct mm_struct *mm, bool local);
 
 #endif /* CONFIG_SMP */
 
+#define flush_cache_all() flush_icache_all()
+
 /*
  * Bits in sys_riscv_flush_icache()'s flags argument.
  */

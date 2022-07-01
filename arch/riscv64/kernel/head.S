@@ -21,10 +21,10 @@
 /*#include <arch/xip_fixup.h>*/
 #include "efi-header.S"
 
-//__HEAD
-//ENTRY(_start)
-	.text
+  .text
 	.section .bootstrap.text
+
+ENTRY(_start)
 
   /*
 	 * Image header expected by Linux boot-loaders. The image header data
@@ -189,7 +189,7 @@ setup_trap_vector:
 	wfi
 	j .Lsecondary_park
 
-//END(_start)
+END(_start)
 
 ENTRY(_start_kernel)
 	/* Mask all interrupts */
@@ -241,7 +241,7 @@ clear_bss_done:
 //  add sp, sp, TASK_SIZE
 
 	/* Start the kernel */
-	call soc_early_init
+	;; //call soc_early_init
 	tail start_kernel
 
 END(_start_kernel)

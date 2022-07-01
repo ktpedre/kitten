@@ -7,6 +7,7 @@
 #define _ASM_RISCV_PROCESSOR_H
 
 #include <lwk/const.h>
+#include <arch/system.h>
 
 // #include <vdso/processor.h>
 
@@ -91,6 +92,14 @@ extern void start_thread(struct pt_regs *regs,
 static inline void release_thread(struct task_struct *dead_task)
 {
 }
+/* REP NOP (PAUSE) is a good thing to insert into busy-wait loops. */
+static inline void rep_nop(void)
+{
+	//__asm__ __volatile__("rep;nop": : :"memory");
+}
+
+/* NMG Whatever */
+#define cpu_relax() barrier()
 
 extern unsigned long __get_wchan(struct task_struct *p);
 

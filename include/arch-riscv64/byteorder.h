@@ -27,8 +27,8 @@
 
 /* #endif /\* __GNUC__ *\/ */
 
-/* #define __BYTEORDER_HAS_U64__ */
+#define __BYTEORDER_HAS_U64__
 
-/* #include <lwk/byteorder/little_endian.h> */
+#include <lwk/byteorder/little_endian.h>
 
 #endif /* _X86_64_BYTEORDER_H */

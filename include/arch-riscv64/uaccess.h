@@ -21,7 +21,7 @@
 #include <arch/byteorder.h>
 #include <lwk/extable.h>
 #include <arch/asm.h>
-//#include <asm-generic/access_ok.h>
+#include <arch-generic/access_ok.h>
 
 #define VERIFY_READ 0
 #define VERIFY_WRITE 1
@@ -165,8 +165,8 @@ do {								\
 #define get_user(x, ptr)					\
 ({								\
 	const __typeof__(*(ptr)) __user *__p = (ptr);		\
-	might_fault();						\
-	access_ok(__p, sizeof(*__p)) ?		\
+	/* might_fault();						\ */ \
+	access_ok(VERIFY_READ, __p, sizeof(*__p)) ?		\
 		__get_user((x), __p) :				\
 		((x) = 0, -EFAULT);				\
 })
@@ -281,8 +281,7 @@ do {								\
 #define put_user(x, ptr)					\
 ({								\
 	__typeof__(*(ptr)) __user *__p = (ptr);			\
-	might_fault();						\
-	access_ok(__p, sizeof(*__p)) ?		\
+	access_ok(VERIFY_WRITE, __p, sizeof(*__p)) ?							\
 		__put_user((x), __p) :				\
 		-EFAULT;					\
 })
@@ -292,6 +291,12 @@ unsigned long __must_check __asm_copy_to_user(void __user *to,
 	const void *from, unsigned long n);
 unsigned long __must_check __asm_copy_from_user(void *to,
 	const void __user *from, unsigned long n);
+
+#define copy_from_user   raw_copy_from_user
+#define copy_to_user     raw_copy_to_user
+#define __copy_to_user   raw_copy_to_user
+#define __copy_from_user raw_copy_from_user
+
 
 static inline unsigned long
 raw_copy_from_user(void *to, const void __user *from, unsigned long n)
@@ -315,8 +320,8 @@ unsigned long __must_check __clear_user(void __user *addr, unsigned long n);
 static inline
 unsigned long __must_check clear_user(void __user *to, unsigned long n)
 {
-	might_fault();
-	return access_ok(to, n) ?
+//	might_fault();
+	return access_ok(VERIFY_READ, to, n) ?
 		__clear_user(to, n) : n;
 }
 

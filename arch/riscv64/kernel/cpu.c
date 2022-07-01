@@ -40,9 +40,12 @@ pda_init(unsigned int cpu, struct task_struct *task)
 {
 	struct RISCV_pda *pda = cpu_pda(cpu);
 
-	mb();
-	set_tpidr_el1((u64)pda);
-	mb();
+	/* NMG On RISCV we don't have a register to stick the PDA into.
+	 * Instead we have to always retrieve it from the task_struct.
+	 * There's a faster way to do this, but this is fine for now. */
+	/* mb(); */
+	/* set_tpidr_el1((u64)pda); */
+	/* mb(); */
 
 
 	pda->cpunumber     = cpu;
@@ -118,11 +121,11 @@ cpu_init(void)
 	pda_init(cpu, me);	 /* per-cpu data area */
 
 	identify_cpu();		 /* determine cpu features via CPUID */
-	store_cpu_topology(cpu); /* Update topology map with CPU info */
+	//store_cpu_topology(cpu); /* Update topology map with CPU info */
 
 	//dbg_init();		 /* debug registers */
 	//fpu_init();		 /* floating point unit */
-	irqchip_local_init();    /* Interrupt Controller */
+	//irqchip_local_init();    /* Interrupt Controller */
 	time_init();		 /* detects CPU frequency, udelay(), etc. */
 	barrier();		 /* compiler memory barrier, avoids reordering */
 

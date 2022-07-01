@@ -8,6 +8,7 @@
 #include <arch/pgtable.h>   /* TODO: remove */
 #include <arch/page_table.h>
 #include <arch/tlbflush.h>
+#include <arch/cacheflush.h>
 #include <lwk/bootmem.h>
 
 extern bool bootmem_destoyed;

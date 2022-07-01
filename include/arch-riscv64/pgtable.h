@@ -117,13 +117,13 @@
 #include <arch/tlbflush.h>
 // #include <linux/mm_types.h>
 
-#define __page_val_to_pfn(_val)  (((_val) & _PAGE_PFN_MASK) >> _PAGE_PFN_SHIFT)
-
 #ifdef CONFIG_64BIT
 #include <arch/pgtable-64.h>
 #else
 #include <arch/pgtable-32.h>
 #endif /* CONFIG_64BIT */
+
+#define __page_val_to_pfn(_val)  (((_val) & _PAGE_PFN_MASK) >> _PAGE_PFN_SHIFT)
 
 //#include <linux/page_table_check.h>
 
@@ -476,8 +476,8 @@ void flush_icache_pte(pte_t pte);
 static inline void __set_pte_at(struct mm_struct *mm,
 	unsigned long addr, pte_t *ptep, pte_t pteval)
 {
-	if (pte_present(pteval) && pte_exec(pteval))
-		flush_icache_pte(pteval);
+	/* if (pte_present(pteval) && pte_exec(pteval)) */
+	/* 	flush_icache_pte(pteval); */
 
 	set_pte(ptep, pteval);
 }
@@ -803,7 +803,7 @@ static inline pmd_t pmdp_establish(struct vm_area_struct *vma,
  * 63–48 all equal to bit 47, or else a page-fault exception will occur."
  */
 /* #ifdef CONFIG_64BIT */
-/* #define TASK_SIZE_64	(PGDIR_SIZE * PTRS_PER_PGD / 2) */
+#define USER_TASK_SIZE_64	(PGDIR_SIZE * PTRS_PER_PGD / 2)
 /* #define TASK_SIZE_MIN	(PGDIR_SIZE_L3 * PTRS_PER_PGD / 2) */
 
 /* #ifdef CONFIG_COMPAT */
@@ -811,7 +811,7 @@ static inline pmd_t pmdp_establish(struct vm_area_struct *vma,
 /* #define TASK_SIZE	(test_thread_flag(TIF_32BIT) ? \ */
 /* 			 TASK_SIZE_32 : TASK_SIZE_64) */
 /* #else */
-/* #define TASK_SIZE	TASK_SIZE_64 */
+#define USER_TASK_SIZE	USER_TASK_SIZE_64
 /* #endif */
 
 /* #else */

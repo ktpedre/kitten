@@ -6,8 +6,8 @@
 #include <lwk/linkage.h>
 #include <arch/asm.h>
 
-SYM_FUNC_START(__memmove)
-//SYM_FUNC_START_WEAK(memmove)
+SYM_FUNC_START(memmove)
+/* SYM_FUNC_START_WEAK(memmove) */
 	/*
 	 * Returns
 	 *   a0 - dest
@@ -312,5 +312,5 @@ byte_copy_reverse:
 return_from_memmove:
 	ret
 
-//SYM_FUNC_END(memmove)
-SYM_FUNC_END(__memmove)
+SYM_FUNC_END(memmove)
+/* SYM_FUNC_END(__memmove) */

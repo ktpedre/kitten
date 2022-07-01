@@ -44,7 +44,7 @@ enum memblock_flags {
  */
 
 #include <lwk/init.h>
-//#include <arch/memory.h>
+#include <arch/memory.h>
 
 #define PAGE_ALIGN(addr)	ALIGN(addr, PAGE_SIZE)
 #define INIT_MEMBLOCK_REGIONS	128

@@ -20,7 +20,7 @@ config SERIAL_MM_CONSOLE
 
 config OF
 		bool
-		depends on ARM64
+		depends on ARM64 || RISCV64
 		default y
 
 config OF_EARLY_FLATTREE

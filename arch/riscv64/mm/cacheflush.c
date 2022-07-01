@@ -18,10 +18,10 @@ void flush_icache_all(void)
 {
 	local_flush_icache_all();
 
-	if (IS_ENABLED(CONFIG_RISCV_SBI))
+	/* if (IS_ENABLED(CONFIG_RISCV_SBI)) */
 		sbi_remote_fence_i(NULL);
-	else
-		on_each_cpu(ipi_remote_fence_i, NULL, 1);
+	/* else */
+	/* 	on_each_cpu(ipi_remote_fence_i, NULL, 1); */
 }
 EXPORT_SYMBOL(flush_icache_all);
 
@@ -66,11 +66,12 @@ void flush_icache_mm(struct mm_struct *mm, bool local)
 		 * with flush_icache_deferred().
 		 */
 		smp_mb();
-	} else if (IS_ENABLED(CONFIG_RISCV_SBI)) {
+	} else {/*if (IS_ENABLED(CONFIG_RISCV_SBI)) {*/
 		sbi_remote_fence_i(&others);
-	} else {
-		on_each_cpu_mask(&others, ipi_remote_fence_i, NULL, 1);
-	}
+		}
+	/* } else { */
+	/* 	on_each_cpu_mask(&others, ipi_remote_fence_i, NULL, 1); */
+	/* } */
 
 	preempt_enable();
 }
@@ -78,11 +79,11 @@ void flush_icache_mm(struct mm_struct *mm, bool local)
 #endif /* CONFIG_SMP */
 
 #ifdef CONFIG_MMU
-void flush_icache_pte(pte_t pte)
+void flush_icache_pte()
 {
-	struct page *page = pte_page(pte);
+	/* struct page *page = pte_page(pte); */
 
-	if (!test_and_set_bit(PG_dcache_clean, &page->flags))
-		flush_icache_all();
+	/* if (!test_and_set_bit(PG_dcache_clean, &page->flags)) */
+	/* 	flush_icache_all(); */
 }
 #endif /* CONFIG_MMU */

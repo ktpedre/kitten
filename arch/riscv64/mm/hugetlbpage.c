@@ -16,7 +16,8 @@ bool __init arch_hugetlb_valid_size(unsigned long size)
 {
 	if (size == HPAGE_SIZE)
 		return true;
-	else if (IS_ENABLED(CONFIG_64BIT) && size == PUD_SIZE)
+	/* else if (IS_ENABLED(CONFIG_64BIT) && size == PUD_SIZE) */
+	else if (size == PUD_SIZE)
 		return true;
 	else
 		return false;
@@ -26,7 +27,7 @@ bool __init arch_hugetlb_valid_size(unsigned long size)
 static __init int gigantic_pages_init(void)
 {
 	/* With CONTIG_ALLOC, we can allocate gigantic pages at runtime */
-	if (IS_ENABLED(CONFIG_64BIT))
+	/* if (IS_ENABLED(CONFIG_64BIT)) */
 		hugetlb_add_hstate(PUD_SHIFT - PAGE_SHIFT);
 	return 0;
 }

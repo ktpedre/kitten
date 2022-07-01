@@ -15,6 +15,7 @@
 #include <lwk/bitops.h>
 #include <lwk/pfn.h>
 #include <arch/memblock.h>
+#include <lwk/print.h>
 
 #define printk early_printk
 

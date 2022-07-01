@@ -29,7 +29,7 @@
 
 #define __smp_store_release(p, v)					\
 do {									\
-	compiletime_assert_atomic_type(*p);				\
+	/* compiletime_assert_atomic_type(*p);				\ */ \
 	RISCV_FENCE(rw,w);						\
 	WRITE_ONCE(*p, v);						\
 } while (0)
@@ -37,10 +37,52 @@ do {									\
 #define __smp_load_acquire(p)						\
 ({									\
 	typeof(*p) ___p1 = READ_ONCE(*p);				\
-	compiletime_assert_atomic_type(*p);				\
+	/* compiletime_assert_atomic_type(*p);				\ */ \
 	RISCV_FENCE(r,rw);						\
 	___p1;								\
 })
+
+
+
+#ifndef smp_mb
+#define smp_mb()	barrier()
+#endif
+
+#ifndef smp_rmb
+#define smp_rmb()	barrier()
+#endif
+
+#ifndef smp_wmb
+#define smp_wmb()	barrier()
+#endif
+
+#ifndef smp_read_barrier_depends
+#define smp_read_barrier_depends()	do { } while (0)
+#endif
+
+
+#ifndef smp_store_mb
+#define smp_store_mb(var, value)  __smp_store_mb(var, value)
+#endif
+
+#ifndef smp_mb__before_atomic
+#define smp_mb__before_atomic()	__smp_mb__before_atomic()
+#endif
+
+#ifndef smp_mb__after_atomic
+#define smp_mb__after_atomic()	__smp_mb__after_atomic()
+#endif
+
+#ifndef smp_store_release
+#define smp_store_release(p, v) __smp_store_release(p, v)
+#endif
+
+#ifndef smp_load_acquire
+#define smp_load_acquire(p) __smp_load_acquire(p)
+#endif
+
+#define set_wmb(var, value)     do { var = value; wmb(); } while (0)
+#define set_mb(var, value)	do { var = value; smp_mb(); } while (0)
 
 /*
  * This is a very specific barrier: it's currently only used in two places in

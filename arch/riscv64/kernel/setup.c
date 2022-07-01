@@ -2,7 +2,7 @@
 #include <lwk/init.h>
 #include <lwk/cpuinfo.h>
 #include <lwk/bootmem.h>
-#include <lwk/smp.h>
+//#include <lwk/smp.h>
 #include <lwk/sched.h>
 #include <lwk/acpi.h>
 #include <arch/bootsetup.h>
@@ -18,7 +18,10 @@
 /*#include <arch/memory.h>*/
 #include <arch/memblock.h>
 /*#include <arch/cputype.h>*/
+/* #include <arch/acpi.h> */
+#include <arch/io.h>
 
+unsigned long boot_cpu_hartid;
 
 /**
  * Bitmap of of PTE/PMD entry flags that are supported.
@@ -297,7 +300,7 @@ setup_arch(void)
 	 * Initialize the ACPI subsystem.
 	 */
 	//acpi_init();
-	disable_acpi();
+	//disable_acpi();
 
 
 
@@ -309,6 +312,7 @@ setup_arch(void)
 	 * conflicts... e.g., two devices trying to use the same iomem region.
 	 */
 	init_resources();
+	sbi_init();
 
 
 
@@ -317,7 +321,7 @@ setup_arch(void)
 
 	/* /\* Initialize PSCI interface for SMP operations *\/ */
 	/* if (acpi_disabled) */
-	psci_dt_init();
+	//psci_dt_init();
 	/* else */
 	/* 	psci_acpi_init(); */
 
@@ -325,13 +329,13 @@ setup_arch(void)
 	 * Get the multiprocessor configuration...
 	 * number of CPUs, PCI bus info, APIC info, etc.
 	 */
-	smp_init_boot_cpu();
-	smp_init_cpus();
+//	smp_init_boot_cpu();
+//	smp_init_cpus();
 
 
 
-	smp_prepare_boot_cpu();
-	smp_prepare_cpus(num_possible_cpus());
+//	smp_prepare_boot_cpu();
+//	smp_prepare_cpus(num_possible_cpus());
 
 	/*
  	 * Initialize per-CPU areas, one per CPU.
@@ -352,7 +356,7 @@ setup_arch(void)
 	/*
 	 * Initialize the platform provided Interrupt controller
 	 */
-	irqchip_global_init();
+	//irqchip_global_init();
 
 	/*
 	 * Initialize the virtual system call code/data page.

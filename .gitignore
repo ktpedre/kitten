@@ -68,3 +68,8 @@ include/config
 
 *~
 \#*
+cscope.out
+cscope.files
+#*
+.#*
+*bak

@@ -87,4 +87,6 @@ void __show_regs(struct pt_regs *regs);
 void die(struct pt_regs *regs, const char *str);
 void do_trap(struct pt_regs *regs, int signo, int code, unsigned long addr);
 
+#include <arch-generic/bug.h>
+
 #endif /* _ASM_RISCV_BUG_H */

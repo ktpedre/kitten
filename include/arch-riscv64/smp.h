@@ -22,6 +22,12 @@ struct riscv_ipi_ops {
 	void (*ipi_clear)(void);
 };
 
+extern cpumask_t cpu_present_mask;
+extern cpumask_t cpu_possible_map;
+extern cpumask_t cpu_online_map;
+extern cpumask_t cpu_callout_map;
+extern cpumask_t cpu_initialized;
+
 /*
  * Mapping between linux logical cpu index and hartid.
  */

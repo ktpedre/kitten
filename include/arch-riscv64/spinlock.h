@@ -17,14 +17,14 @@
 
 /* FIXME: Replace this with a ticket lock, like MIPS. */
 
-#define arch_spin_is_locked(x)	(READ_ONCE((x)->lock) != 0)
+#define __raw_spin_is_locked(x)	(READ_ONCE((x)->lock) != 0)
 
-static inline void arch_spin_unlock(raw_spinlock_t *lock)
+static inline void __raw_spin_unlock(raw_spinlock_t *lock)
 {
 	smp_store_release(&lock->lock, 0);
 }
 
-static inline int arch_spin_trylock(raw_spinlock_t *lock)
+static inline int __raw_spin_trylock(raw_spinlock_t *lock)
 {
 	int tmp = 1, busy;
 
@@ -38,20 +38,20 @@ static inline int arch_spin_trylock(raw_spinlock_t *lock)
 	return !busy;
 }
 
-static inline void arch_spin_lock(raw_spinlock_t *lock)
+static inline void __raw_spin_lock(raw_spinlock_t *lock)
 {
 	while (1) {
-		if (arch_spin_is_locked(lock))
+		if (__raw_spin_is_locked(lock))
 			continue;
 
-		if (arch_spin_trylock(lock))
+		if (__raw_spin_trylock(lock))
 			break;
 	}
 }
 
 /***********************************************************/
 
-static inline void arch_read_lock(raw_rwlock_t *lock)
+static inline void __raw_read_lock(raw_rwlock_t *lock)
 {
 	int tmp;
 
@@ -66,7 +66,7 @@ static inline void arch_read_lock(raw_rwlock_t *lock)
 		:: "memory");
 }
 
-static inline void arch_write_lock(raw_rwlock_t *lock)
+static inline void __raw_write_lock(raw_rwlock_t *lock)
 {
 	int tmp;
 
@@ -81,7 +81,7 @@ static inline void arch_write_lock(raw_rwlock_t *lock)
 		:: "memory");
 }
 
-static inline int arch_read_trylock(raw_rwlock_t *lock)
+static inline int __raw_read_trylock(raw_rwlock_t *lock)
 {
 	int busy;
 
@@ -99,7 +99,7 @@ static inline int arch_read_trylock(raw_rwlock_t *lock)
 	return !busy;
 }
 
-static inline int arch_write_trylock(raw_rwlock_t *lock)
+static inline int __raw_write_trylock(raw_rwlock_t *lock)
 {
 	int busy;
 
@@ -117,7 +117,7 @@ static inline int arch_write_trylock(raw_rwlock_t *lock)
 	return !busy;
 }
 
-static inline void arch_read_unlock(raw_rwlock_t *lock)
+static inline void __raw_read_unlock(raw_rwlock_t *lock)
 {
 	__asm__ __volatile__(
 		RISCV_RELEASE_BARRIER
@@ -127,9 +127,25 @@ static inline void arch_read_unlock(raw_rwlock_t *lock)
 		: "memory");
 }
 
-static inline void arch_write_unlock(raw_rwlock_t *lock)
+static inline void __raw_write_unlock(raw_rwlock_t *lock)
 {
 	smp_store_release(&lock->lock, 0);
 }
+
+/* read_can_lock - would read_trylock() succeed? */
+#define arch_read_can_lock(x)		((x)->lock < 0x80000000)
+
+
+#define arch_read_lock(lock)               __raw_read_lock(lock)
+#define arch_write_lock(lock)              __raw_write_lock(lock)
+#define arch_read_lock_flags(lock, flags)  __raw_read_lock(lock)
+#define arch_write_lock_flags(lock, flags) __raw_write_lock(lock)
+
+#define __raw_spin_lock_flags(lock, flags) __raw_spin_lock(lock)
+
+#define arch_spin_relax(lock)	cpu_relax()
+#define arch_read_relax(lock)	cpu_relax()
+#define arch_write_relax(lock)	cpu_relax()
+
 
 #endif /* _ASM_RISCV_SPINLOCK_H */

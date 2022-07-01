@@ -16,6 +16,8 @@
 #define PAGE_SIZE	(_AC(1, UL) << PAGE_SHIFT)
 #define PAGE_MASK	(~(PAGE_SIZE - 1))
 
+#define PHYS_ADDR_MAX (~(phys_addr_t)0)
+
 #define PAGE_SHIFT_4KB 		12
 #define PAGE_SHIFT_64KB		16
 #define PAGE_SHIFT_2MB		21
@@ -142,7 +144,8 @@ extern phys_addr_t phys_ram_base;
 	((x) >= kernel_map.virt_addr && (x) < (kernel_map.virt_addr + kernel_map.size))
 
 #define is_linear_mapping(x)	\
-	((x) >= PAGE_OFFSET && (!IS_ENABLED(CONFIG_64BIT) || (x) < PAGE_OFFSET + KERN_VIRT_SIZE))
+	((x) >= PAGE_OFFSET && ((x) < PAGE_OFFSET + KERN_VIRT_SIZE))
+	/* ((x) >= PAGE_OFFSET && (!IS_ENABLED(CONFIG_64BIT) || (x) < PAGE_OFFSET + KERN_VIRT_SIZE)) */
 
 #define linear_mapping_pa_to_va(x)	((void *)((unsigned long)(x) + kernel_map.va_pa_offset))
 #define kernel_mapping_pa_to_va(y)	({						\

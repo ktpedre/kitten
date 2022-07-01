@@ -435,35 +435,35 @@ static void __init kasan_shallow_populate(void *start, void *end)
 
 void __init kasan_init(void)
 {
-	phys_addr_t p_start, p_end;
-	u64 i;
+	/* phys_addr_t p_start, p_end; */
+	/* u64 i; */
 
-	if (IS_ENABLED(CONFIG_KASAN_VMALLOC))
-		kasan_shallow_populate(
-			(void *)kasan_mem_to_shadow((void *)VMALLOC_START),
-			(void *)kasan_mem_to_shadow((void *)VMALLOC_END));
+	/* if (IS_ENABLED(CONFIG_KASAN_VMALLOC)) */
+	/* 	kasan_shallow_populate( */
+	/* 		(void *)kasan_mem_to_shadow((void *)VMALLOC_START), */
+	/* 		(void *)kasan_mem_to_shadow((void *)VMALLOC_END)); */
 
-	/* Populate the linear mapping */
-	for_each_mem_range(i, &p_start, &p_end) {
-		void *start = (void *)__va(p_start);
-		void *end = (void *)__va(p_end);
+	/* /\* Populate the linear mapping *\/ */
+	/* for_each_mem_range(i, &p_start, &p_end) { */
+	/* 	void *start = (void *)__va(p_start); */
+	/* 	void *end = (void *)__va(p_end); */
 
-		if (start >= end)
-			break;
+	/* 	if (start >= end) */
+	/* 		break; */
 
-		kasan_populate(kasan_mem_to_shadow(start), kasan_mem_to_shadow(end));
-	}
+	/* 	kasan_populate(kasan_mem_to_shadow(start), kasan_mem_to_shadow(end)); */
+	/* } */
 
-	/* Populate kernel, BPF, modules mapping */
-	kasan_populate(kasan_mem_to_shadow((const void *)MODULES_VADDR),
-		       kasan_mem_to_shadow((const void *)MODULES_VADDR + SZ_2G));
+	/* /\* Populate kernel, BPF, modules mapping *\/ */
+	/* kasan_populate(kasan_mem_to_shadow((const void *)MODULES_VADDR), */
+	/* 	       kasan_mem_to_shadow((const void *)MODULES_VADDR + SZ_2G)); */
 
-	for (i = 0; i < PTRS_PER_PTE; i++)
-		set_pte(&kasan_early_shadow_pte[i],
-			mk_pte(virt_to_page(kasan_early_shadow_page),
-			       __pgprot(_PAGE_PRESENT | _PAGE_READ |
-					_PAGE_ACCESSED)));
+	/* for (i = 0; i < PTRS_PER_PTE; i++) */
+	/* 	set_pte(&kasan_early_shadow_pte[i], */
+	/* 		mk_pte(virt_to_page(kasan_early_shadow_page), */
+	/* 		       __pgprot(_PAGE_PRESENT | _PAGE_READ | */
+	/* 				_PAGE_ACCESSED))); */
 
-	memset(kasan_early_shadow_page, KASAN_SHADOW_INIT, PAGE_SIZE);
-	init_task.kasan_depth = 0;
+	/* memset(kasan_early_shadow_page, KASAN_SHADOW_INIT, PAGE_SIZE); */
+	/* init_task.kasan_depth = 0; */
 }

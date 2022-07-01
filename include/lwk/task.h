@@ -74,6 +74,7 @@ task_meas(
 #include <lwk/time.h>
 #include <lwk/signal.h>
 #include <arch/atomic.h>
+#include <arch/pgtable.h>
 #include <arch/page.h>
 #include <arch/processor.h>
 #include <arch/task.h>
