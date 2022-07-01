@@ -277,8 +277,9 @@ static inline pte_t *__init get_pte_virt_early(phys_addr_t pa)
 
 static inline pte_t *__init get_pte_virt_fixmap(phys_addr_t pa)
 {
-	clear_fixmap(FIX_PTE);
-	return (pte_t *)set_fixmap_offset(FIX_PTE, pa);
+	/* clear_fixmap(FIX_PTE); */
+	/* return (pte_t *)set_fixmap_offset(FIX_PTE, pa); */
+	return 0;
 }
 
 static inline pte_t *__init get_pte_virt_late(phys_addr_t pa)
@@ -362,8 +363,9 @@ static pmd_t *__init get_pmd_virt_early(phys_addr_t pa)
 
 static pmd_t *__init get_pmd_virt_fixmap(phys_addr_t pa)
 {
-	clear_fixmap(FIX_PMD);
-	return (pmd_t *)set_fixmap_offset(FIX_PMD, pa);
+/* 	clear_fixmap(FIX_PMD); */
+/* 	return (pmd_t *)set_fixmap_offset(FIX_PMD, pa); */
+	return 0;
 }
 
 static pmd_t *__init get_pmd_virt_late(phys_addr_t pa)
@@ -427,8 +429,9 @@ static pud_t *__init get_pud_virt_early(phys_addr_t pa)
 
 static pud_t *__init get_pud_virt_fixmap(phys_addr_t pa)
 {
-	clear_fixmap(FIX_PUD);
-	return (pud_t *)set_fixmap_offset(FIX_PUD, pa);
+	/* clear_fixmap(FIX_PUD); */
+	/* return (pud_t *)set_fixmap_offset(FIX_PUD, pa); */
+	return 0;
 }
 
 static pud_t *__init get_pud_virt_late(phys_addr_t pa)
@@ -465,8 +468,9 @@ static p4d_t *__init get_p4d_virt_early(phys_addr_t pa)
 
 static p4d_t *__init get_p4d_virt_fixmap(phys_addr_t pa)
 {
-	clear_fixmap(FIX_P4D);
-	return (p4d_t *)set_fixmap_offset(FIX_P4D, pa);
+	/* clear_fixmap(FIX_P4D); */
+	/* return (p4d_t *)set_fixmap_offset(FIX_P4D, pa); */
+	return 0;
 }
 
 static p4d_t *__init get_p4d_virt_late(phys_addr_t pa)

@@ -39,6 +39,13 @@ struct memblock memblock __initdata_memblock = {
 	.current_limit		= MEMBLOCK_ALLOC_ANYWHERE,
 };
 
+/*
+ * keep a pointer to &memblock.memory in the text section to use it in
+ * __next_mem_range() and its helpers.
+ *  For architectures that do not keep memblock data after init, this
+ * pointer will be reset to NULL at memblock_discard()
+ */
+static __refdata struct memblock_type *memblock_memory = &memblock.memory;
 
 /* inline so we don't get a warning when pr_debug is compiled out */
 static __init_memblock const char *
@@ -47,6 +54,7 @@ memblock_type_name(struct memblock_type *type)
 	return ((type == &memblock.memory)   ? "memory"   : 
 	   	(type == &memblock.reserved) ? "reserved" : "unknown");
 }
+
 
 
 /*
@@ -507,6 +515,40 @@ __next_free_mem_range(u64         * idx,
 	*idx = ULLONG_MAX;
 }
 
+static bool should_skip_region(struct memblock_type *type,
+			       struct memblock_region *m,
+			       int nid, int flags)
+{
+	int m_nid = memblock_get_region_node(m);
+
+	/* we never skip regions when iterating memblock.reserved or physmem */
+	if (type != memblock_memory)
+		return false;
+
+	/* only memory regions are associated with nodes, check it */
+	if (nid != NUMA_NO_NODE && nid != m_nid)
+		return true;
+
+	/* /\* skip hotpluggable memory regions if needed *\/ */
+	/* if (movable_node_is_enabled() && memblock_is_hotpluggable(m) && */
+	/*     !(flags & MEMBLOCK_HOTPLUG)) */
+	/* 	return true; */
+
+	/* /\* if we want mirror memory skip non-mirror memory regions *\/ */
+	/* if ((flags & MEMBLOCK_MIRROR) && !memblock_is_mirror(m)) */
+	/* 	return true; */
+
+	/* /\* skip nomap memory unless we were asked for it explicitly *\/ */
+	/* if (!(flags & MEMBLOCK_NOMAP) && memblock_is_nomap(m)) */
+	/* 	return true; */
+
+	/* /\* skip driver-managed memory unless we were asked for it explicitly *\/ */
+	/* if (!(flags & MEMBLOCK_DRIVER_MANAGED) && memblock_is_driver_managed(m)) */
+	/* 	return true; */
+
+	return false;
+}
+
 /**
  * __next_mem_range - next function for for_each_free_mem_range() etc.
  * @idx: pointer to u64 loop variable
@@ -792,6 +834,11 @@ __memblock_alloc_base(phys_addr_t size,
 		      phys_addr_t max_addr)
 {
 	return memblock_alloc_base_nid(size, align, max_addr, MAX_NUMNODES);
+}
+
+phys_addr_t __init memblock_phys_alloc(phys_addr_t size, phys_addr_t align)
+{
+	return memblock_alloc_base(size, align, MEMBLOCK_ALLOC_ACCESSIBLE);
 }
 
 phys_addr_t __init 

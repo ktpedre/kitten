@@ -43,7 +43,7 @@ do_flush_tlb_xcall(void *info)
 void
 flush_tlb(void)
 {
-	xcall_function(cpu_online_map, do_flush_tlb_xcall, NULL, 1);
+	/* xcall_function(cpu_online_map, do_flush_tlb_xcall, NULL, 1); */
 }
 
 
@@ -55,7 +55,7 @@ flush_tlb(void)
 static void
 do_flush_tlb_kernel_xcall(void *info)
 {
-	__flush_tlb_kernel();
+	/* __flush_tlb_kernel(); */
 }
 
 
@@ -65,5 +65,5 @@ do_flush_tlb_kernel_xcall(void *info)
 void
 flush_tlb_kernel(void)
 {
-	xcall_function(cpu_online_map, do_flush_tlb_kernel_xcall, NULL, 1);
+	/* xcall_function(cpu_online_map, do_flush_tlb_kernel_xcall, NULL, 1); */
 }

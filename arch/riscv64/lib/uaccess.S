@@ -184,51 +184,51 @@ ENDPROC(__asm_copy_from_user)
 //EXPORT_SYMBOL(__asm_copy_from_user)
 
 
-ENTRY(__clear_user)
+/* ENTRY(__clear_user) */
 
-	/* Enable access to user memory */
-	li t6, SR_SUM
-	csrs CSR_STATUS, t6
+/* 	/\* Enable access to user memory *\/ */
+/* 	li t6, SR_SUM */
+/* 	csrs CSR_STATUS, t6 */
 
-	add a3, a0, a1
-	addi t0, a0, SZREG-1
-	andi t1, a3, ~(SZREG-1)
-	andi t0, t0, ~(SZREG-1)
-	/*
-	 * a3: terminal address of target region
-	 * t0: lowest doubleword-aligned address in target region
-	 * t1: highest doubleword-aligned address in target region
-	 */
-	bgeu t0, t1, 2f
-	bltu a0, t0, 4f
-1:
-	fixup REG_S, zero, (a0), 11f
-	addi a0, a0, SZREG
-	bltu a0, t1, 1b
-2:
-	bltu a0, a3, 5f
+/* 	add a3, a0, a1 */
+/* 	addi t0, a0, SZREG-1 */
+/* 	andi t1, a3, ~(SZREG-1) */
+/* 	andi t0, t0, ~(SZREG-1) */
+/* 	/\* */
+/* 	 * a3: terminal address of target region */
+/* 	 * t0: lowest doubleword-aligned address in target region */
+/* 	 * t1: highest doubleword-aligned address in target region */
+/* 	 *\/ */
+/* 	bgeu t0, t1, 2f */
+/* 	bltu a0, t0, 4f */
+/* 1: */
+/* 	fixup REG_S, zero, (a0), 11f */
+/* 	addi a0, a0, SZREG */
+/* 	bltu a0, t1, 1b */
+/* 2: */
+/* 	bltu a0, a3, 5f */
 
-3:
-	/* Disable access to user memory */
-	csrc CSR_STATUS, t6
-	li a0, 0
-	ret
-4: /* Edge case: unalignment */
-	fixup sb, zero, (a0), 11f
-	addi a0, a0, 1
-	bltu a0, t0, 4b
-	j 1b
-5: /* Edge case: remainder */
-	fixup sb, zero, (a0), 11f
-	addi a0, a0, 1
-	bltu a0, a3, 5b
-	j 3b
+/* 3: */
+/* 	/\* Disable access to user memory *\/ */
+/* 	csrc CSR_STATUS, t6 */
+/* 	li a0, 0 */
+/* 	ret */
+/* 4: /\* Edge case: unalignment *\/ */
+/* 	fixup sb, zero, (a0), 11f */
+/* 	addi a0, a0, 1 */
+/* 	bltu a0, t0, 4b */
+/* 	j 1b */
+/* 5: /\* Edge case: remainder *\/ */
+/* 	fixup sb, zero, (a0), 11f */
+/* 	addi a0, a0, 1 */
+/* 	bltu a0, a3, 5b */
+/* 	j 3b */
 
-	/* Exception fixup code */
-11:
-	/* Disable access to user memory */
-	csrs CSR_STATUS, t6
-	mv a0, a1
-	ret
-ENDPROC(__clear_user)
+/* 	/\* Exception fixup code *\/ */
+/* 11: */
+/* 	/\* Disable access to user memory *\/ */
+/* 	csrs CSR_STATUS, t6 */
+/* 	mv a0, a1 */
+/* 	ret */
+/* ENDPROC(__clear_user) */
 //EXPORT_SYMBOL(__clear_user)

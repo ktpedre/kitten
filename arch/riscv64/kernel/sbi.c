@@ -14,6 +14,7 @@
 #include <arch/errno.h>
 #include <lwk/cpumask.h>
 #include <lwk/print.h>
+#include <arch/bits.h>
 
 #define __ro_after_init
 
@@ -74,13 +75,13 @@ EXPORT_SYMBOL(sbi_err_map_linux_errno);
 
 static void __sbi_set_timer_v01(uint64_t stime_value)
 {
-	pr_warn("Timer extension is not available in SBI v%lu.%lu\n",
+	printk("Timer extension is not available in SBI v%lu.%lu\n",
 		sbi_major_version(), sbi_minor_version());
 }
 
 static int __sbi_send_ipi_v01(const struct cpumask *cpu_mask)
 {
-	pr_warn("IPI extension is not available in SBI v%lu.%lu\n",
+	printk("IPI extension is not available in SBI v%lu.%lu\n",
 		sbi_major_version(), sbi_minor_version());
 
 	return 0;
@@ -90,7 +91,7 @@ static int __sbi_rfence_v01(int fid, const struct cpumask *cpu_mask,
 			    unsigned long start, unsigned long size,
 			    unsigned long arg4, unsigned long arg5)
 {
-	pr_warn("remote fence extension is not available in SBI v%lu.%lu\n",
+	printk("remote fence extension is not available in SBI v%lu.%lu\n",
 		sbi_major_version(), sbi_minor_version());
 
 	return 0;
@@ -115,7 +116,7 @@ static int __sbi_send_ipi_v02(const struct cpumask *cpu_mask)
 	struct sbiret ret = {0};
 	int result;
 
-	if (!cpu_mask || cpumask_empty(cpu_mask))
+	if (!cpu_mask || cpus_empty(cpu_mask))
 		cpu_mask = &cpu_online_map;
 
 	for_each_cpu_mask(cpuid, *cpu_mask) {
@@ -220,7 +221,7 @@ static int __sbi_rfence_v02(int fid, const struct cpumask *cpu_mask,
 	unsigned long hartid, cpuid, hmask = 0, hbase = 0, htop = 0;
 	int result;
 
-	if (!cpu_mask || cpumask_empty(cpu_mask))
+	if (!cpu_mask || cpus_empty(cpu_mask))
 		cpu_mask = &cpu_online_map;
 
 	for_each_cpu_mask(cpuid, *cpu_mask) {
@@ -416,7 +417,7 @@ static void sbi_srst_reset(unsigned long type, unsigned long reason)
 {
 	sbi_ecall(SBI_EXT_SRST, SBI_EXT_SRST_RESET, type, reason,
 		  0, 0, 0, 0);
-	pr_warn("%s: type=0x%lx reason=0x%lx failed\n",
+	printk("%s: type=0x%lx reason=0x%lx failed\n",
 		__func__, type, reason);
 }
 

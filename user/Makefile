@@ -1,10 +1,10 @@
-CFLAGS=-O2 -Wall -U_FORTIFY_SOURCE -mcmodel=small
+CFLAGS=-O2 -Wall -U_FORTIFY_SOURCE -mcmodel=medlow
 
 # Default to building in the current directory, unless
 # overridden by the calling Makefile or on the command line.
 O=$(shell pwd)
 
-all: liblwk libxpmem hello_world powerinsight smartmap test_app pisces hafnium edf_sched coop_sched
+all: liblwk libxpmem hello_world powerinsight test_app pisces hafnium edf_sched coop_sched
 
 liblwk libxpmem hello_world powerinsight smartmap test_app pisces hafnium edf_sched coop_sched: FORCE
 	@if [ ! -d $O/$@ ]; then mkdir $O/$@; fi
@@ -17,7 +17,7 @@ clean:
 	make O=$O/hello_world -C hello_world clean
 	make O=$O/powerinsight -C powerinsight clean
 	make O=$O/test_app -C test_app clean
-	make O=$O/smartmap -C smartmap clean
+#	make O=$O/smartmap -C smartmap clean
 	make O=$O/pisces -C pisces clean
 	make O=$O/hafnium -C hafnium clean
 	make O=$O/edf_sched -C edf_sched clean

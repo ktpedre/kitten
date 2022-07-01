@@ -64,16 +64,19 @@ void do_trap(struct pt_regs *regs, int signo, int code, unsigned long addr)
 {
 	struct task_struct *tsk = current;
 
-	if (show_unhandled_signals && unhandled_signal(tsk, signo)
-	    && printk_ratelimit()) {
-		pr_info("%s[%d]: unhandled signal %d code 0x%x at 0x" REG_FMT,
-			tsk->comm, task_pid_nr(tsk), signo, code, addr);
-		print_vma_addr(KERN_CONT " in ", instruction_pointer(regs));
-		pr_cont("\n");
-		__show_regs(regs);
-	}
+	asm volatile("j . \n");
 
-	force_sig_fault(signo, code, (void __user *)addr);
+
+	/* if (show_unhandled_signals && unhandled_signal(tsk, signo) */
+	/*     && printk_ratelimit()) { */
+	/* 	pr_info("%s[%d]: unhandled signal %d code 0x%x at 0x" REG_FMT, */
+	/* 		tsk->comm, task_pid_nr(tsk), signo, code, addr); */
+	/* 	print_vma_addr(KERN_CONT " in ", instruction_pointer(regs)); */
+	/* 	pr_cont("\n"); */
+	/* 	__show_regs(regs); */
+	/* } */
+
+	/* force_sig_fault(signo, code, (void __user *)addr); */
 }
 
 static void do_trap_error(struct pt_regs *regs, int signo, int code,
@@ -152,6 +155,11 @@ static inline unsigned long get_break_insn_length(unsigned long pc)
 		return 0;
 
 	return GET_INSN_LENGTH(insn);
+}
+
+asmlinkage __visible __trap_section void do_page_fault(struct pt_regs *regs)
+{
+	asm volatile("j . \n");
 }
 
 asmlinkage __visible __trap_section void do_trap_break(struct pt_regs *regs)

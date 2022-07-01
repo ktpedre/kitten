@@ -5,9 +5,7 @@
 
 typedef unsigned short umode_t;
 
-#ifdef	__aarch64__
 #define BITS_PER_LONG 64
-#endif
 
 /*
  * __xx is ok: it doesn't pollute the POSIX namespace. Use these in the

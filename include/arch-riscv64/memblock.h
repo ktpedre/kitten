@@ -108,6 +108,28 @@ int memblock_reserve(phys_addr_t base,
 
 
 
+#ifdef CONFIG_NUMA
+static inline void memblock_set_region_node(struct memblock_region *r, int nid)
+{
+	r->nid = nid;
+}
+
+static inline int memblock_get_region_node(const struct memblock_region *r)
+{
+	return r->nid;
+}
+#else
+static inline void memblock_set_region_node(struct memblock_region *r, int nid)
+{
+}
+
+static inline int memblock_get_region_node(const struct memblock_region *r)
+{
+	return 0;
+}
+#endif /* CONFIG_NUMA */
+
+
 void __next_mem_pfn_range(int           * idx, 
 			  int             nid, 
 			  unsigned long * out_start_pfn,

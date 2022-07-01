@@ -9,6 +9,7 @@
 #include <arch/pgtable-bits.h>
 #include <lwk/const.h>
 #include <arch/errata_list.h>
+#include <arch/bits.h>
 
 extern bool pgtable_l4_enabled;
 extern bool pgtable_l5_enabled;

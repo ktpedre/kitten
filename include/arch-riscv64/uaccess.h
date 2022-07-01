@@ -297,6 +297,8 @@ unsigned long __must_check __asm_copy_from_user(void *to,
 #define __copy_to_user   raw_copy_to_user
 #define __copy_from_user raw_copy_from_user
 
+#define __copy_to_user_inatomic __copy_to_user
+#define __copy_from_user_inatomic __copy_from_user
 
 static inline unsigned long
 raw_copy_from_user(void *to, const void __user *from, unsigned long n)

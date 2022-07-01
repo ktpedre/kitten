@@ -478,3 +478,10 @@ ENTRY(__user_rt_sigreturn)
 	scall
 END(__user_rt_sigreturn)
 #endif
+
+  /* NMG This is wrong for sure */
+ENTRY(asm_sys_clone)
+	move a3, a4
+	move a4, tp
+	call sys_clone
+END(asm_sys_clone)

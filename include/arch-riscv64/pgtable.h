@@ -6,6 +6,8 @@
 #ifndef _ASM_RISCV_PGTABLE_H
 #define _ASM_RISCV_PGTABLE_H
 
+#include <arch/bits.h>
+
 /* #include <linux/mmzone.h> */
 #include <lwk/sizes.h>
 #include <arch/atomic.h>
@@ -15,7 +17,7 @@
 
 #ifndef CONFIG_MMU
 #define KERNEL_LINK_ADDR	PAGE_OFFSET
-#define KERN_VIRT_SIZE		(UL(-1))
+#define KERN_VIRT_SIZE		(UL(-1)UL)
 #else
 
 #define ADDRESS_SPACE_END	(UL(-1))
@@ -118,12 +120,12 @@
 // #include <linux/mm_types.h>
 
 #ifdef CONFIG_64BIT
+#define __page_val_to_pfn(_val)  (((_val) & _PAGE_PFN_MASK) >> _PAGE_PFN_SHIFT)
+
 #include <arch/pgtable-64.h>
 #else
 #include <arch/pgtable-32.h>
 #endif /* CONFIG_64BIT */
-
-#define __page_val_to_pfn(_val)  (((_val) & _PAGE_PFN_MASK) >> _PAGE_PFN_SHIFT)
 
 //#include <linux/page_table_check.h>
 
@@ -259,6 +261,9 @@ static inline void pmd_clear(pmd_t *pmdp)
 	set_pmd(pmdp, __pmd(0));
 }
 
+
+#define pgd_index(addr) (((addr) >> PGDIR_SHIFT) & (PTRS_PER_PGD - 1))
+
 static inline pgd_t pfn_pgd(unsigned long pfn, pgprot_t prot)
 {
 	unsigned long prot_val = pgprot_val(prot);
@@ -300,6 +305,8 @@ static inline unsigned long pte_pfn(pte_t pte)
 }
 
 #define pte_page(x)     pfn_to_page(pte_pfn(x))
+
+#define pte_index(addr) (((addr) >> PAGE_SHIFT) & (PTRS_PER_PTE - 1))
 
 /* Constructs a page table entry */
 static inline pte_t pfn_pte(unsigned long pfn, pgprot_t prot)

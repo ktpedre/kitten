@@ -76,9 +76,8 @@ struct thread_struct {
 	.sp = sizeof(init_stack) + (long)&init_stack,	\
 }
 
-/* #define task_pt_regs(tsk)						\ */
-/* 	((struct pt_regs *)(task_stack_page(tsk) + THREAD_SIZE		\ */
-/* 			    - ALIGN(sizeof(struct pt_regs), STACK_ALIGN))) */
+#define current_pt_regs()						\
+	(struct pt_regs*)(((struct task_struct*)current)->arch.thread.kern_sp + sizeof(struct pt_regs))
 
 /* #define KSTK_EIP(tsk)		(task_pt_regs(tsk)->epc) */
 /* #define KSTK_ESP(tsk)		(task_pt_regs(tsk)->sp) */

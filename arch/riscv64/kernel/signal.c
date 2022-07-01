@@ -107,6 +107,8 @@ static long save_fp_state(struct pt_regs *regs,
 #define restore_fp_state(task, regs) (0)
 #endif
 
+#define has_fpu() 1
+
 static long restore_sigcontext(struct pt_regs *regs,
 	struct sigcontext __user *sc)
 {
@@ -137,13 +139,15 @@ asmlinkage long sys_rt_sigreturn()
 	if (__copy_from_user(&set, &frame->uc.uc_sigmask, sizeof(set)))
 		goto badframe;
 
-	set_current_blocked(&set);
+	/* NMG Can we do this directly? */
+	current->sigblocked = set;
 
 	if (restore_sigcontext(regs, &frame->uc.uc_mcontext))
 		goto badframe;
 
-	if (restore_altstack(&frame->uc.uc_stack))
-		goto badframe;
+	/* NMG Probably just wrong */
+	/* if (restore_altstack(&frame->uc.uc_stack)) */
+	/* 	goto badframe; */
 
 	return regs->a0;
 
@@ -266,6 +270,14 @@ static int setup_rt_frame(int usig, struct sigaction * sigact, siginfo_t *info,
 	return 0;
 }
 
+static inline sigset_t *sigmask_to_save(void)
+{
+	sigset_t *res = &current->sigblocked;
+	if (&current->saved_sigmask)
+		res = &current->saved_sigmask;
+	return res;
+}
+
 /* static void handle_signal(struct ksignal *ksig, struct pt_regs *regs) */
 static void handle_signal(unsigned long sig, struct sigaction *sigact,
 			  siginfo_t *info, struct pt_regs *regs)
@@ -368,8 +380,8 @@ asmlinkage __visible void do_notify_resume(struct pt_regs *regs,
 					   unsigned long thread_info_flags)
 {
 
-	if (thread_info_flags & _TIF_UPROBE)
-		uprobe_notify_resume(regs);
+	/* if (thread_info_flags & _TIF_UPROBE) */
+	/* 	uprobe_notify_resume(regs); */
 
 	/* Handle pending signal delivery */
 	if (thread_info_flags & _TIF_SIGPENDING) // | _TIF_NOTIFY_SIGNAL))
