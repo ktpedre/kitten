@@ -196,7 +196,7 @@ __putc(char ch) {
 
 #ifndef CONFIG_ARCH_QEMU
 	while (1) {
-		uint8_t ready = *(volatile uint8_t *)(EARLYCON_IOBASE + (CONFIG_SERIAL_PHYS & ((1u << PMD_SHIFT) - 1)) + 20);
+		uint8_t ready = *(volatile uint8_t *)((CONFIG_SERIAL_PHYS & ((1u << PMD_SHIFT) - 1)) + 20);
 		if ((ready & 0x20) != 0) break;
 		asm("":::"memory");
 	}

@@ -29,7 +29,7 @@
 #include <lwk/workq.h>
 #include <lwk/hio.h>
 #include <arch/mce.h>
-
+#include <arch/fixmap.h>
 
 /**
  * Pristine copy of the LWK boot command line.
@@ -77,6 +77,7 @@ start_kernel()
  	 * Initialize the console subsystem.
  	 * printk()'s will be visible after this.
  	 */
+	set_fixmap(FIX_EARLYCON_MEM_BASE, 0x10000000);
 	console_init();
 
 	/*

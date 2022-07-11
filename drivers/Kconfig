@@ -40,7 +40,7 @@ config VM_CONSOLE
 config KEYBOARD
 	bool
 	depends on PC && !PALACIOS
-	default PC
+	default n
 
 config DEVFS
 	bool

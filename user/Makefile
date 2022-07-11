@@ -1,4 +1,4 @@
-CFLAGS=-O2 -Wall -U_FORTIFY_SOURCE -mcmodel=medlow
+CFLAGS=-O2 -Wall -U_FORTIFY_SOURCE -mcmodel=medany
 
 # Default to building in the current directory, unless
 # overridden by the calling Makefile or on the command line.

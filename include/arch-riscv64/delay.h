@@ -9,12 +9,13 @@
 
 extern unsigned long riscv_timebase;
 
-#define udelay udelay
+#define udelay __udelay
 extern void udelay(unsigned long usecs);
 
-#define ndelay ndelay
+#define ndelay __ndelay
 extern void ndelay(unsigned long nsecs);
 
+#define delay __delay
 extern void __delay(unsigned long cycles);
 
 #endif /* _ASM_RISCV_DELAY_H */

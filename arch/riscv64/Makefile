@@ -26,7 +26,7 @@ TEXT_OFFSET := 0x00080000
 export BINARY_ARCH
 export ELF_FORMAT
 
-LDFLAGS		:= -m elf64lriscv_lp64f --whole-archive
+LDFLAGS		:= -melf64lriscv --whole-archive
 OBJCOPYFLAGS	:= -O binary -R .note -R .comment -S
 LDFLAGS_vmlinux :=
 CHECKFLAGS      += -D__RISCV64__ -m64
@@ -59,9 +59,9 @@ cflags-y += $(call cc-option,-funit-at-a-time)
 cflags-y += $(call cc-option,-mno-sse -mno-mmx -mno-sse2 -mno-3dnow,)
 
 
-CFLAGS += $(cflags-y) -DTEXT_OFFSET=$(TEXT_OFFSET) -g
+CFLAGS += $(cflags-y) -DTEXT_OFFSET=$(TEXT_OFFSET) -g -mabi=lp64d -march=rv64imafdc
 
-AFLAGS += $(call as-option,-Wa$(comma)--divide)
+AFLAGS += $(call as-option,-Wa$(comma)--divide) -mabi=lp64d -march=rv64imafdc
 
 AFLAGS += $(aflags-y) -DTEXT_OFFSET=$(TEXT_OFFSET) 
 

@@ -21,6 +21,38 @@
 /*#include <arch/xip_fixup.h>*/
 #include "efi-header.S"
 
+#define UART_PHYS_ADDR 0x10000000
+
+.macro _serial_write_bytes port, val, more:vararg
+    li t1, \port
+
+    li t2, \val
+    REG_S t2, 0(t1)
+
+    .ifnb \more
+    _serial_write_bytes \port, \more
+    .endif
+
+.endm
+  
+.macro _serial_write_str, port:req, byte:req, more:vararg
+    _serial_write_bytes \port, \byte, \more
+
+    li t1, \port
+
+    li t2, 0x0d
+    REG_S t2, 0(t1)
+
+    li t2, 0x0a
+    REG_S t2, 0(t1)
+
+.endm
+  
+.macro serial_write_str, byte, args:vararg
+    _serial_write_str UART_PHYS_ADDR, \byte, \args
+.endm
+
+  
   .text
 	.section .bootstrap.text
 
@@ -41,17 +73,17 @@ ENTRY(_start)
 #else
 	/* jump to start kernel */
 	j _start_kernel
+  .word 0
 	/* reserved */
-	.word 0
 #endif
 	.balign 8
-#if __riscv_xlen == 64
+;; #if __riscv_xlen == 64
 	/* Image load offset(2MB) from start of RAM */
 	.dword 0x200000
-#else
-	/* Image load offset(4MB) from start of RAM */
-	.dword 0x400000
-#endif
+;; #else
+;; 	/* Image load offset(4MB) from start of RAM */
+;; 	.dword 0x400000
+;; #endif
 	/* Effective size of kernel image */
 	.dword _end - _start
 	.dword __HEAD_FLAGS
@@ -103,6 +135,7 @@ relocate_enable_mmu:
 	or a0, a0, a1
 	sfence.vma
 	csrw CSR_SATP, a0
+  fence.i
 .align 2
 1:
 	/* Set trap vector to spin forever to help debug */
@@ -228,6 +261,7 @@ clear_bss_done:
 	/* Initialize page table and relocate to virtual addresses */
   la sp, bootstrap_task_union + TASK_SIZE // -16 NMG:??? //init_thread_union + THREAD_SIZE
 	mv a0, s1
+  serial_write_str 'H', 'I'
 	call setup_vm
 ;; #ifdef CONFIG_MMU
 	la a0, early_pg_dir
@@ -241,6 +275,7 @@ clear_bss_done:
 //  add sp, sp, TASK_SIZE
 
 	/* Start the kernel */
+
 	;; //call soc_early_init
 	tail start_kernel
 

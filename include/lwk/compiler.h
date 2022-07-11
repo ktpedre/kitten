@@ -3,6 +3,8 @@
 
 #ifndef __ASSEMBLY__
 
+#include <arch/types.h>
+
 #ifdef __CHECKER__
 # define __user		__attribute__((noderef, address_space(1)))
 # define __kernel	/* default address space */
@@ -68,6 +70,117 @@ extern void __chk_io_ptr(void __iomem *);
 
 #define likely(x)	__builtin_expect(!!(x), 1)
 #define unlikely(x)	__builtin_expect(!!(x), 0)
+
+
+/*
+ * Prevent the compiler from merging or refetching accesses.  The compiler
+ * is also forbidden from reordering successive instances of ACCESS_ONCE(),
+ * but only when the compiler is aware of some particular ordering.  One way
+ * to make the compiler aware of ordering is to put the two invocations of
+ * ACCESS_ONCE() in different C statements.
+ *
+ * ACCESS_ONCE will only work on scalar types. For union types, ACCESS_ONCE
+ * on a union member will work as long as the size of the member matches the
+ * size of the union and the size is smaller than word size.
+ *
+ * The major use cases of ACCESS_ONCE used to be (1) Mediating communication
+ * between process-level code and irq/NMI handlers, all running on the same CPU,
+ * and (2) Ensuring that the compiler does not  fold, spindle, or otherwise
+ * mutilate accesses that either do not require ordering or that interact
+ * with an explicit memory barrier or atomic instruction that provides the
+ * required ordering.
+ *
+ * If possible use READ_ONCE/ASSIGN_ONCE instead.
+ */
+#define __ACCESS_ONCE(x) ({ \
+	 __maybe_unused typeof(x) __var = (__force typeof(x)) 0; \
+	(volatile typeof(x) *)&(x); })
+#define ACCESS_ONCE(x) (*__ACCESS_ONCE(x))
+
+
+
+/*
+ * Following functions are taken from kernel sources and
+ * break aliasing rules in their original form.
+ *
+ * While kernel is compiled with -fno-strict-aliasing,
+ * perf uses -Wstrict-aliasing=3 which makes build fail
+ * under gcc 4.4.
+ *
+ * Using extra __may_alias__ type to allow aliasing
+ * in this case.
+ */
+typedef u8   __u8_alias_t;
+typedef u16  __u16_alias_t;
+typedef u32  __u32_alias_t;
+typedef u64  __u64_alias_t;
+
+static __always_inline void __read_once_size(const volatile void *p, void *res, int size)
+{
+	switch (size) {
+	case 1: *(__u8_alias_t  *) res = *(volatile __u8_alias_t  *) p; break;
+	case 2: *(__u16_alias_t *) res = *(volatile __u16_alias_t *) p; break;
+	case 4: *(__u32_alias_t *) res = *(volatile __u32_alias_t *) p; break;
+	case 8: *(__u64_alias_t *) res = *(volatile __u64_alias_t *) p; break;
+	default:
+		barrier();
+		__builtin_memcpy((void *)res, (const void *)p, size);
+		barrier();
+	}
+		barrier();
+}
+
+static __always_inline void __write_once_size(volatile void *p, void *res, int size)
+{
+	switch (size) {
+	case 1: *(volatile  __u8_alias_t *) p = *(__u8_alias_t  *) res; break;
+	case 2: *(volatile __u16_alias_t *) p = *(__u16_alias_t *) res; break;
+	case 4: *(volatile __u32_alias_t *) p = *(__u32_alias_t *) res; break;
+	case 8: *(volatile __u64_alias_t *) p = *(__u64_alias_t *) res; break;
+	default:
+		barrier();
+		__builtin_memcpy((void *)p, (const void *)res, size);
+		barrier();
+	}
+		barrier();
+}
+
+/*
+ * Prevent the compiler from merging or refetching reads or writes. The
+ * compiler is also forbidden from reordering successive instances of
+ * READ_ONCE and WRITE_ONCE, but only when the compiler is aware of some
+ * particular ordering. One way to make the compiler aware of ordering is to
+ * put the two invocations of READ_ONCE or WRITE_ONCE in different C
+ * statements.
+ *
+ * These two macros will also work on aggregate data types like structs or
+ * unions. If the size of the accessed data type exceeds the word size of
+ * the machine (e.g., 32 bits or 64 bits) READ_ONCE() and WRITE_ONCE() will
+ * fall back to memcpy and print a compile-time warning.
+ *
+ * Their two major use cases are: (1) Mediating communication between
+ * process-level code and irq/NMI handlers, all running on the same CPU,
+ * and (2) Ensuring that the compiler does not fold, spindle, or otherwise
+ * mutilate accesses that either do not require ordering or that interact
+ * with an explicit memory barrier or atomic instruction that provides the
+ * required ordering.
+ */
+
+#define READ_ONCE(x)					\
+({							\
+	union { typeof(x) __val; char __c[1]; } __u =	\
+		{ .__c = { 0 } };			\
+	__read_once_size(&(x), __u.__c, sizeof(x));	\
+	__u.__val;					\
+})
+
+#define WRITE_ONCE(x, val)				\
+({							\
+	union { typeof(x) __val; char __c[1]; } __u =	\
+		{ .__val = (val) }; 			\
+	__write_once_size(&(x), __u.__c, sizeof(x));	\
+	__u.__val;					\
+})
 
 #endif /* __ASSEMBLY__ */
 
@@ -149,117 +262,7 @@ extern void __chk_io_ptr(void __iomem *);
 #endif
 
 
-/*
- * Prevent the compiler from merging or refetching accesses.  The compiler
- * is also forbidden from reordering successive instances of ACCESS_ONCE(),
- * but only when the compiler is aware of some particular ordering.  One way
- * to make the compiler aware of ordering is to put the two invocations of
- * ACCESS_ONCE() in different C statements.
- *
- * ACCESS_ONCE will only work on scalar types. For union types, ACCESS_ONCE
- * on a union member will work as long as the size of the member matches the
- * size of the union and the size is smaller than word size.
- *
- * The major use cases of ACCESS_ONCE used to be (1) Mediating communication
- * between process-level code and irq/NMI handlers, all running on the same CPU,
- * and (2) Ensuring that the compiler does not  fold, spindle, or otherwise
- * mutilate accesses that either do not require ordering or that interact
- * with an explicit memory barrier or atomic instruction that provides the
- * required ordering.
- *
- * If possible use READ_ONCE/ASSIGN_ONCE instead.
- */
-#define __ACCESS_ONCE(x) ({ \
-	 __maybe_unused typeof(x) __var = (__force typeof(x)) 0; \
-	(volatile typeof(x) *)&(x); })
-#define ACCESS_ONCE(x) (*__ACCESS_ONCE(x))
-
-
-
-/*
- * Following functions are taken from kernel sources and
- * break aliasing rules in their original form.
- *
- * While kernel is compiled with -fno-strict-aliasing,
- * perf uses -Wstrict-aliasing=3 which makes build fail
- * under gcc 4.4.
- *
- * Using extra __may_alias__ type to allow aliasing
- * in this case.
- */
-/* typedef u8   __u8_alias_t; */
-/* typedef u16  __u16_alias_t; */
-/* typedef u32  __u32_alias_t; */
-/* typedef u64  __u64_alias_t; */
-
-/* static __always_inline void __read_once_size(const volatile void *p, void *res, int size) */
-/* { */
-/* 	/\* switch (size) { *\/ */
-/* 	/\* case 1: *(__u8_alias_t  *) res = *(volatile __u8_alias_t  *) p; break; *\/ */
-/* 	/\* case 2: *(__u16_alias_t *) res = *(volatile __u16_alias_t *) p; break; *\/ */
-/* 	/\* case 4: *(__u32_alias_t *) res = *(volatile __u32_alias_t *) p; break; *\/ */
-/* 	/\* case 8: *(__u64_alias_t *) res = *(volatile __u64_alias_t *) p; break; *\/ */
-/* 	/\* default: *\/ */
-/* 	/\* 	barrier(); *\/ */
-/* 	/\* 	__builtin_memcpy((void *)res, (const void *)p, size); *\/ */
-/* 	/\* 	barrier(); *\/ */
-/* 	/\* } *\/ */
-/* 		barrier(); */
-/* } */
-
-/* static __always_inline void __write_once_size(volatile void *p, void *res, int size) */
-/* { */
-/* 	/\* switch (size) { *\/ */
-/* 	/\* case 1: *(volatile  __u8_alias_t *) p = *(__u8_alias_t  *) res; break; *\/ */
-/* 	/\* case 2: *(volatile __u16_alias_t *) p = *(__u16_alias_t *) res; break; *\/ */
-/* 	/\* case 4: *(volatile __u32_alias_t *) p = *(__u32_alias_t *) res; break; *\/ */
-/* 	/\* case 8: *(volatile __u64_alias_t *) p = *(__u64_alias_t *) res; break; *\/ */
-/* 	/\* default: *\/ */
-/* 	/\* 	barrier(); *\/ */
-/* 	/\* 	__builtin_memcpy((void *)p, (const void *)res, size); *\/ */
-/* 	/\* 	barrier(); *\/ */
-/* 	/\* } *\/ */
-/* 		barrier(); */
-/* } */
-
-/*
- * Prevent the compiler from merging or refetching reads or writes. The
- * compiler is also forbidden from reordering successive instances of
- * READ_ONCE and WRITE_ONCE, but only when the compiler is aware of some
- * particular ordering. One way to make the compiler aware of ordering is to
- * put the two invocations of READ_ONCE or WRITE_ONCE in different C
- * statements.
- *
- * These two macros will also work on aggregate data types like structs or
- * unions. If the size of the accessed data type exceeds the word size of
- * the machine (e.g., 32 bits or 64 bits) READ_ONCE() and WRITE_ONCE() will
- * fall back to memcpy and print a compile-time warning.
- *
- * Their two major use cases are: (1) Mediating communication between
- * process-level code and irq/NMI handlers, all running on the same CPU,
- * and (2) Ensuring that the compiler does not fold, spindle, or otherwise
- * mutilate accesses that either do not require ordering or that interact
- * with an explicit memory barrier or atomic instruction that provides the
- * required ordering.
- */
-
-/* #define READ_ONCE(x)					\ */
-/* ({							\ */
-/* 	union { typeof(x) __val; char __c[1]; } __u =	\ */
-/* 		{ .__c = { 0 } };			\ */
-/* 	__read_once_size(&(x), __u.__c, sizeof(x));	\ */
-/* 	__u.__val;					\ */
-/* }) */
-
-/* #define WRITE_ONCE(x, val)				\ */
-/* ({							\ */
-/* 	union { typeof(x) __val; char __c[1]; } __u =	\ */
-/* 		{ .__val = (val) }; 			\ */
-/* 	__write_once_size(&(x), __u.__c, sizeof(x));	\ */
-/* 	__u.__val;					\ */
-/* }) */
-
-#define READ_ONCE(x) x
-#define WRITE_ONCE(x, val) x
+/* #define READ_ONCE(x) x */
+/* #define WRITE_ONCE(x, val) x */
 
 #endif /* _LWK_COMPILER_H */

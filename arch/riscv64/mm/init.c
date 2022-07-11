@@ -256,18 +256,18 @@ static pmd_t __maybe_unused early_dtb_pmd[PTRS_PER_PMD] __initdata __aligned(PAG
 
 void __set_fixmap(enum fixed_addresses idx, phys_addr_t phys, pgprot_t prot)
 {
-	/* unsigned long addr = __fix_to_virt(idx); */
-	/* pte_t *ptep; */
+	unsigned long addr = __fix_to_virt(idx);
+	pte_t *ptep;
 
-	/* BUG_ON(idx <= FIX_HOLE || idx >= __end_of_fixed_addresses); */
+	BUG_ON(idx <= FIX_HOLE || idx >= __end_of_fixed_addresses);
 
-	/* ptep = &fixmap_pte[pte_index(addr)]; */
+	ptep = &fixmap_pte[pte_index(addr)];
 
-	/* if (pgprot_val(prot)) */
-	/* 	set_pte(ptep, pfn_pte(phys >> PAGE_SHIFT, prot)); */
+	if (pgprot_val(prot))
+		set_pte(ptep, pfn_pte(phys >> PAGE_SHIFT, prot));
 	/* else */
 	/* 	pte_clear(&init_mm, addr, ptep); */
-	/* local_flush_tlb_page(addr); */
+	local_flush_tlb_page(addr);
 }
 
 static inline pte_t *__init get_pte_virt_early(phys_addr_t pa)
@@ -714,47 +714,51 @@ static __init void set_satp_mode(void)
 	uintptr_t set_satp_mode_pmd = ((unsigned long)set_satp_mode) & PMD_MASK;
 	bool check_l4 = false;
 
-	create_p4d_mapping(early_p4d,
-			set_satp_mode_pmd, (uintptr_t)early_pud,
-			P4D_SIZE, PAGE_TABLE);
-	create_pud_mapping(early_pud,
-			   set_satp_mode_pmd, (uintptr_t)early_pmd,
-			   PUD_SIZE, PAGE_TABLE);
-	/* Handle the case where set_satp_mode straddles 2 PMDs */
-	create_pmd_mapping(early_pmd,
-			   set_satp_mode_pmd, set_satp_mode_pmd,
-			   PMD_SIZE, PAGE_KERNEL_EXEC);
-	create_pmd_mapping(early_pmd,
-			   set_satp_mode_pmd + PMD_SIZE,
-			   set_satp_mode_pmd + PMD_SIZE,
-			   PMD_SIZE, PAGE_KERNEL_EXEC);
-retry:
-	create_pgd_mapping(early_pg_dir,
-			   set_satp_mode_pmd,
-			   check_l4 ? (uintptr_t)early_pud : (uintptr_t)early_p4d,
-			   PGDIR_SIZE, PAGE_TABLE);
+	disable_pgtable_l5();
+	disable_pgtable_l4();
 
-	identity_satp = PFN_DOWN((uintptr_t)&early_pg_dir) | satp_mode;
 
-	local_flush_tlb_all();
-	csr_write(CSR_SATP, identity_satp);
-	hw_satp = csr_swap(CSR_SATP, 0ULL);
-	local_flush_tlb_all();
+/* 	create_p4d_mapping(early_p4d, */
+/* 			set_satp_mode_pmd, (uintptr_t)early_pud, */
+/* 			P4D_SIZE, PAGE_TABLE); */
+/* 	create_pud_mapping(early_pud, */
+/* 			   set_satp_mode_pmd, (uintptr_t)early_pmd, */
+/* 			   PUD_SIZE, PAGE_TABLE); */
+/* 	/\* Handle the case where set_satp_mode straddles 2 PMDs *\/ */
+/* 	create_pmd_mapping(early_pmd, */
+/* 			   set_satp_mode_pmd, set_satp_mode_pmd, */
+/* 			   PMD_SIZE, PAGE_KERNEL_EXEC); */
+/* 	create_pmd_mapping(early_pmd, */
+/* 			   set_satp_mode_pmd + PMD_SIZE, */
+/* 			   set_satp_mode_pmd + PMD_SIZE, */
+/* 			   PMD_SIZE, PAGE_KERNEL_EXEC); */
+/* retry: */
+/* 	create_pgd_mapping(early_pg_dir, */
+/* 			   set_satp_mode_pmd, */
+/* 			   check_l4 ? (uintptr_t)early_pud : (uintptr_t)early_p4d, */
+/* 			   PGDIR_SIZE, PAGE_TABLE); */
 
-	if (hw_satp != identity_satp) {
-		if (!check_l4) {
-			disable_pgtable_l5();
-			check_l4 = true;
-			memset(early_pg_dir, 0, PAGE_SIZE);
-			goto retry;
-		}
-		disable_pgtable_l4();
-	}
+/* 	identity_satp = PFN_DOWN((uintptr_t)&early_pg_dir) | satp_mode; */
 
-	memset(early_pg_dir, 0, PAGE_SIZE);
-	memset(early_p4d, 0, PAGE_SIZE);
-	memset(early_pud, 0, PAGE_SIZE);
-	memset(early_pmd, 0, PAGE_SIZE);
+/* 	local_flush_tlb_all(); */
+/* 	csr_write(CSR_SATP, identity_satp); */
+/* 	hw_satp = csr_swap(CSR_SATP, 0ULL); */
+/* 	local_flush_tlb_all(); */
+
+/* 	if (hw_satp != identity_satp) { */
+/* 		if (!check_l4) { */
+/* 			disable_pgtable_l5(); */
+/* 			check_l4 = true; */
+/* 			memset(early_pg_dir, 0, PAGE_SIZE); */
+/* 			goto retry; */
+/* 		} */
+/* 		disable_pgtable_l4(); */
+/* 	} */
+
+/* 	memset(early_pg_dir, 0, PAGE_SIZE); */
+/* 	memset(early_p4d, 0, PAGE_SIZE); */
+/* 	memset(early_pud, 0, PAGE_SIZE); */
+/* 	memset(early_pmd, 0, PAGE_SIZE); */
 }
 #endif
 
@@ -1017,6 +1021,8 @@ asmlinkage void __init setup_vm(uintptr_t dtb_pa)
 	/* Setup early mapping for FDT early scan */
 	create_fdt_early_page_table(early_pg_dir, dtb_pa);
 
+	
+
 	/*
 	 * Bootime fixmap only can handle PMD_SIZE mapping. Thus, boot-ioremap
 	 * range can not span multiple pmds.
@@ -1184,7 +1190,7 @@ static void __init reserve_crashkernel(void)
 void __init paging_init(void)
 {
 	setup_bootmem();
-	/* setup_vm_final(); */
+	setup_vm_final();
 }
 
 void __init misc_mem_init(void)

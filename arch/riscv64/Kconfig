@@ -10,6 +10,10 @@ config RISCV
 	bool
 	default y
 
+config PC
+       bool
+       default y
+
 config 64BIT
        bool
        default y
@@ -77,6 +81,8 @@ config BLK_DEV_INITRD
 #
 # Define implied options from the CPU selection
 #
+
+config CONSOLE
 
 config SERIAL_PHYS
 	hex

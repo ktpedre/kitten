@@ -440,9 +440,6 @@ static void __init create_mapping(phys_addr_t phys, unsigned long virt,
         } while (pgd++, addr = next, addr != end);
 }
 
-
-/* #if 0 */
-/* #ifdef CONFIG_EARLY_PRINTK */
 /* /\* */
 /*  * Create an early I/O mapping using the pgd/pmd entries already populated */
 /*  * in head.S as this function is called too early to allocated any memory. The */
@@ -481,8 +478,6 @@ static void __init create_mapping(phys_addr_t phys, unsigned long virt,
 
 /* 	return (void __iomem *)((virt & mask) + (phys & ~mask)); */
 /* } */
-/* #endif */
-/* #endif */
 
 static void __init map_mem(void)
 {

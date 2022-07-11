@@ -27,6 +27,7 @@ static LIST_HEAD(console_list);
  * Serializes access to the console.
  */
 static DEFINE_SPINLOCK(console_lock);
+static DEFINE_SPINLOCK(console_lock2);
 
 /**
  * Holds a comma separated list of consoles to configure.
@@ -151,5 +152,6 @@ ssize_t console_inbuf_read(char *buf, size_t len)
  */
 void console_init(void)
 {
+	serial_console_init();
 	driver_init_list("console", console_str);
 }

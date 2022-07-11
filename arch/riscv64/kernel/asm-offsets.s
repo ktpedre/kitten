@@ -1,23 +1,23 @@
 	.file	"asm-offsets.c"
 	.option nopic
-# GNU C99 (Buildroot 2022.02.1) version 10.3.0 (riscv64-buildroot-linux-uclibc)
+# GNU C99 (Buildroot 2022.02.1) version 10.3.0 (riscv64-buildroot-linux-gnu)
 #	compiled by GNU C version 11.2.0, GMP version 6.2.1, MPFR version 4.1.0, MPC version 1.2.1, isl version none
 # GGC heuristics: --param ggc-min-expand=100 --param ggc-min-heapsize=131072
 # options passed:  -nostdinc -I include -I ofed/include
-# -isysroot /tmp/buildroot-2022.02.1/output/host/riscv64-buildroot-linux-uclibc/sysroot
+# -isysroot /tmp/buildroot-2022.02.1/output/host/riscv64-buildroot-linux-gnu/sysroot
 # -D __KERNEL__ -D __LWK__ -D __KERNEL__ -D TEXT_OFFSET=0x00080000
 # -D KBUILD_STR(s)=#s -D KBUILD_BASENAME=KBUILD_STR(asm_offsets)
 # -D KBUILD_MODNAME=KBUILD_STR(asm_offsets)
-# -isystem /tmp/buildroot-2022.02.1/output/host/lib/gcc/riscv64-buildroot-linux-uclibc/10.3.0/include
+# -isystem /tmp/buildroot-2022.02.1/output/host/lib/gcc/riscv64-buildroot-linux-gnu/10.3.0/include
 # -include include/lwk/autoconf.h -MD arch/riscv64/kernel/.asm-offsets.s.d
-# arch/riscv64/kernel/asm-offsets.c -march=rv64imafd -mabi=lp64d
+# arch/riscv64/kernel/asm-offsets.c -mabi=lp64d -march=rv64imafdc
 # -auxbase-strip arch/riscv64/kernel/asm-offsets.s -g -g -O2 -Wall -Wundef
 # -Wstrict-prototypes -Wno-trigraphs -Wno-sign-compare
 # -Wno-unused-parameter -Wno-pointer-sign -w -std=gnu99
-# -fno-strict-aliasing -fno-strict-overflow -fno-common -fno-pie
-# -fno-stack-protector -fgnu89-inline -fno-omit-frame-pointer
-# -fno-optimize-sibling-calls -fno-builtin -ffunction-sections
-# -fno-reorder-blocks -funit-at-a-time -fverbose-asm
+# -fstack-protector-strong -fno-strict-aliasing -fno-strict-overflow
+# -fno-common -fno-pie -fno-stack-protector -fgnu89-inline
+# -fno-omit-frame-pointer -fno-optimize-sibling-calls -fno-builtin
+# -ffunction-sections -fno-reorder-blocks -funit-at-a-time -fverbose-asm
 # options enabled:  -faggressive-loop-optimizations -falign-functions
 # -falign-jumps -falign-labels -falign-loops -fallocation-dce
 # -fauto-inc-dec -fbranch-count-reg -fcaller-saves -fcode-hoisting
@@ -60,17 +60,17 @@
 # -ftree-switch-conversion -ftree-tail-merge -ftree-ter -ftree-vrp
 # -funit-at-a-time -fvar-tracking -fvar-tracking-assignments -fverbose-asm
 # -fwrapv -fwrapv-pointer -fzero-initialized-in-bss -mdiv -mexplicit-relocs
-# -mfdiv -mplt -mstrict-align -muclibc
+# -mfdiv -mglibc -mplt -mstrict-align
 
 	.text
 .Ltext0:
 	.cfi_sections	.debug_frame
 	.section	.text.asm_offsets,"ax",@progbits
-	.align	2
+	.align	1
 	.globl	asm_offsets
 	.type	asm_offsets, @function
 asm_offsets:
-.LFB366:
+.LFB368:
 	.file 1 "arch/riscv64/kernel/asm-offsets.c"
 	.loc 1 30 1
 	.cfi_startproc
@@ -795,7 +795,7 @@ asm_offsets:
 	.cfi_def_cfa_offset 0
 	jr	ra		#
 	.cfi_endproc
-.LFE366:
+.LFE368:
 	.size	asm_offsets, .-asm_offsets
 	.text
 .Letext0:
@@ -826,71 +826,71 @@ asm_offsets:
 	.8byte	0
 	.4byte	.Ldebug_line0
 	.byte	0x2
-	.byte	0x8
+	.byte	0x2
 	.byte	0x7
 	.4byte	.LASF0
+	.byte	0x2
+	.byte	0x1
+	.byte	0x6
+	.4byte	.LASF1
+	.byte	0x2
+	.byte	0x1
+	.byte	0x8
+	.4byte	.LASF2
+	.byte	0x2
+	.byte	0x2
+	.byte	0x5
+	.4byte	.LASF3
 	.byte	0x3
 	.byte	0x4
 	.byte	0x5
 	.string	"int"
-	.byte	0x2
 	.byte	0x4
-	.byte	0x7
-	.4byte	.LASF1
-	.byte	0x2
-	.byte	0x8
-	.byte	0x5
-	.4byte	.LASF2
-	.byte	0x4
-	.byte	0x8
-	.4byte	0x4b
-	.byte	0x2
-	.byte	0x1
-	.byte	0x8
-	.4byte	.LASF3
-	.byte	0x2
-	.byte	0x8
-	.byte	0x5
-	.4byte	.LASF4
-	.byte	0x2
-	.byte	0x2
-	.byte	0x7
-	.4byte	.LASF5
-	.byte	0x2
-	.byte	0x1
-	.byte	0x6
 	.4byte	.LASF6
 	.byte	0x2
-	.byte	0x1
+	.byte	0x16
+	.byte	0x16
+	.4byte	0x58
+	.byte	0x2
+	.byte	0x4
+	.byte	0x7
+	.4byte	.LASF4
+	.byte	0x2
 	.byte	0x8
+	.byte	0x5
+	.4byte	.LASF5
+	.byte	0x4
 	.4byte	.LASF7
-	.byte	0x2
-	.byte	0x2
-	.byte	0x5
-	.4byte	.LASF8
-	.byte	0x5
-	.4byte	.LASF9
-	.byte	0x2
-	.byte	0x16
-	.byte	0x16
-	.4byte	0x37
-	.byte	0x5
-	.4byte	.LASF10
 	.byte	0x2
 	.byte	0x19
 	.byte	0x1d
-	.4byte	0x8d
+	.4byte	0x72
 	.byte	0x2
 	.byte	0x8
 	.byte	0x7
-	.4byte	.LASF11
+	.4byte	.LASF8
+	.byte	0x2
+	.byte	0x8
+	.byte	0x7
+	.4byte	.LASF9
+	.byte	0x2
+	.byte	0x8
 	.byte	0x5
+	.4byte	.LASF10
+	.byte	0x5
+	.byte	0x8
+	.4byte	0x8d
+	.byte	0x2
+	.byte	0x1
+	.byte	0x8
+	.4byte	.LASF11
+	.byte	0x4
 	.4byte	.LASF12
 	.byte	0x3
 	.byte	0x73
 	.byte	0x11
-	.4byte	0x75
-	.byte	0x5
+	.4byte	0x4c
+	.byte	0x4
 	.4byte	.LASF13
 	.byte	0x3
 	.byte	0x84
@@ -900,12 +900,12 @@ asm_offsets:
 	.byte	0x1
 	.byte	0x2
 	.4byte	.LASF14
-	.byte	0x5
+	.byte	0x4
 	.4byte	.LASF15
 	.byte	0x4
 	.byte	0x10
 	.byte	0x16
-	.4byte	0x37
+	.4byte	0x58
 	.byte	0x6
 	.4byte	.LASF17
 	.byte	0x8
@@ -922,23 +922,23 @@ asm_offsets:
 	.byte	0
 	.byte	0
 	.byte	0x8
-	.4byte	0x29
+	.4byte	0x79
 	.4byte	0xea
 	.byte	0x9
-	.4byte	0x29
+	.4byte	0x79
 	.byte	0
 	.byte	0
-	.byte	0x5
+	.byte	0x4
 	.4byte	.LASF16
 	.byte	0x5
 	.byte	0x91
 	.byte	0x3b
 	.4byte	0xbf
 	.byte	0x8
-	.4byte	0x4b
+	.4byte	0x8d
 	.4byte	0x106
 	.byte	0x9
-	.4byte	0x29
+	.4byte	0x79
 	.byte	0x1f
 	.byte	0
 	.byte	0xa
@@ -960,14 +960,14 @@ asm_offsets:
 	.byte	0x6
 	.byte	0x3d
 	.byte	0x8
-	.4byte	0x75
+	.4byte	0x4c
 	.2byte	0x100
 	.byte	0
 	.byte	0x8
-	.4byte	0x81
+	.4byte	0x66
 	.4byte	0x13e
 	.byte	0x9
-	.4byte	0x29
+	.4byte	0x79
 	.byte	0x1f
 	.byte	0
 	.byte	0xa
@@ -982,35 +982,35 @@ asm_offsets:
 	.byte	0x7
 	.byte	0x39
 	.byte	0x10
-	.4byte	0x29
+	.4byte	0x79
 	.byte	0
 	.byte	0x7
 	.4byte	.LASF22
 	.byte	0x7
 	.byte	0x3a
 	.byte	0x10
-	.4byte	0x29
+	.4byte	0x79
 	.byte	0x8
 	.byte	0x7
 	.4byte	.LASF23
 	.byte	0x7
 	.byte	0x3b
 	.byte	0x10
-	.4byte	0x29
+	.4byte	0x79
 	.byte	0x10
 	.byte	0x7
 	.4byte	.LASF24
 	.byte	0x7
 	.byte	0x3c
 	.byte	0x10
-	.4byte	0x29
+	.4byte	0x79
 	.byte	0x18
 	.byte	0xb
 	.string	"tp"
 	.byte	0x7
 	.byte	0x3d
 	.byte	0x10
-	.4byte	0x29
+	.4byte	0x79
 	.byte	0x20
 	.byte	0xb
 	.string	"s"
@@ -1031,14 +1031,14 @@ asm_offsets:
 	.byte	0x7
 	.byte	0x40
 	.byte	0x10
-	.4byte	0x29
+	.4byte	0x79
 	.2byte	0x190
 	.byte	0
 	.byte	0x8
-	.4byte	0x29
+	.4byte	0x79
 	.4byte	0x1c2
 	.byte	0x9
-	.4byte	0x29
+	.4byte	0x79
 	.byte	0xb
 	.byte	0
 	.byte	0x6
@@ -1063,7 +1063,7 @@ asm_offsets:
 	.4byte	0x1ea
 	.byte	0x8
 	.byte	0
-	.byte	0x4
+	.byte	0x5
 	.byte	0x8
 	.4byte	0x1c2
 	.byte	0xd
@@ -1103,10 +1103,10 @@ asm_offsets:
 	.4byte	0x23e
 	.byte	0x8
 	.byte	0
-	.byte	0x4
+	.byte	0x5
 	.byte	0x8
 	.4byte	0x20d
-	.byte	0x4
+	.byte	0x5
 	.byte	0x8
 	.4byte	0x238
 	.byte	0xf
@@ -1123,7 +1123,7 @@ asm_offsets:
 	.4byte	0xda
 	.byte	0
 	.byte	0
-	.byte	0x5
+	.byte	0x4
 	.4byte	.LASF35
 	.byte	0x9
 	.byte	0x47
@@ -1170,7 +1170,7 @@ asm_offsets:
 	.byte	0xb
 	.byte	0x20
 	.byte	0x11
-	.4byte	0x29
+	.4byte	0x79
 	.byte	0x8
 	.byte	0x7
 	.4byte	.LASF42
@@ -1297,7 +1297,7 @@ asm_offsets:
 	.byte	0xc
 	.byte	0x86
 	.byte	0x11
-	.4byte	0x29
+	.4byte	0x79
 	.byte	0x98
 	.byte	0x7
 	.4byte	.LASF40
@@ -1318,7 +1318,7 @@ asm_offsets:
 	.byte	0xc
 	.byte	0x8a
 	.byte	0x8
-	.4byte	0x30
+	.4byte	0x45
 	.byte	0xb0
 	.byte	0x7
 	.4byte	.LASF58
@@ -1360,7 +1360,7 @@ asm_offsets:
 	.byte	0xc
 	.byte	0xb9
 	.byte	0xb
-	.4byte	0x45
+	.4byte	0x87
 	.2byte	0x290
 	.byte	0x10
 	.string	"mm"
@@ -1383,7 +1383,7 @@ asm_offsets:
 	.byte	0x14
 	.byte	0x1e
 	.4byte	0x443
-	.byte	0x4
+	.byte	0x5
 	.byte	0x8
 	.4byte	0x2c5
 	.byte	0x11
@@ -1391,18 +1391,18 @@ asm_offsets:
 	.byte	0xd
 	.byte	0x1f
 	.byte	0x18
-	.4byte	0x29
+	.4byte	0x79
 	.byte	0x12
 	.4byte	.LASF47
-	.byte	0x4
+	.byte	0x5
 	.byte	0x8
 	.4byte	0x455
-	.byte	0x5
+	.byte	0x4
 	.4byte	.LASF66
 	.byte	0xc
 	.byte	0x60
 	.byte	0x16
-	.4byte	0x37
+	.4byte	0x58
 	.byte	0x6
 	.4byte	.LASF67
 	.byte	0x10
@@ -1418,19 +1418,19 @@ asm_offsets:
 	.4byte	0x1c2
 	.byte	0
 	.byte	0
-	.byte	0x4
+	.byte	0x5
 	.byte	0x8
-	.4byte	0x30
+	.4byte	0x45
 	.byte	0x12
 	.4byte	.LASF59
-	.byte	0x4
+	.byte	0x5
 	.byte	0x8
 	.4byte	0x48d
 	.byte	0x8
-	.4byte	0x4b
+	.4byte	0x8d
 	.4byte	0x4a9
 	.byte	0x13
-	.4byte	0x29
+	.4byte	0x79
 	.2byte	0x216
 	.byte	0
 	.byte	0x14
@@ -1980,8 +1980,8 @@ asm_offsets:
 	.byte	0x1
 	.byte	0x1d
 	.byte	0x6
-	.8byte	.LFB366
-	.8byte	.LFE366-.LFB366
+	.8byte	.LFB368
+	.8byte	.LFE368-.LFB368
 	.byte	0x1
 	.byte	0x9c
 	.byte	0
@@ -2029,15 +2029,6 @@ asm_offsets:
 	.byte	0
 	.byte	0
 	.byte	0x4
-	.byte	0xf
-	.byte	0
-	.byte	0xb
-	.byte	0xb
-	.byte	0x49
-	.byte	0x13
-	.byte	0
-	.byte	0
-	.byte	0x5
 	.byte	0x16
 	.byte	0
 	.byte	0x3
@@ -2047,6 +2038,15 @@ asm_offsets:
 	.byte	0x3b
 	.byte	0xb
 	.byte	0x39
+	.byte	0xb
+	.byte	0x49
+	.byte	0x13
+	.byte	0
+	.byte	0
+	.byte	0x5
+	.byte	0xf
+	.byte	0
+	.byte	0xb
 	.byte	0xb
 	.byte	0x49
 	.byte	0x13
@@ -2307,14 +2307,14 @@ asm_offsets:
 	.byte	0
 	.2byte	0
 	.2byte	0
-	.8byte	.LFB366
-	.8byte	.LFE366-.LFB366
+	.8byte	.LFB368
+	.8byte	.LFE368-.LFB368
 	.8byte	0
 	.8byte	0
 	.section	.debug_ranges,"",@progbits
 .Ldebug_ranges0:
-	.8byte	.LFB366
-	.8byte	.LFE366
+	.8byte	.LFB368
+	.8byte	.LFE368
 	.8byte	0
 	.8byte	0
 	.section	.debug_line,"",@progbits
@@ -2324,13 +2324,13 @@ asm_offsets:
 	.string	"comm"
 .LASF13:
 	.string	"bool"
-.LASF10:
+.LASF7:
 	.string	"__u64"
 .LASF57:
 	.string	"exit_status"
 .LASF46:
 	.string	"state"
-.LASF8:
+.LASF3:
 	.string	"short int"
 .LASF51:
 	.string	"cpu_mask"
@@ -2340,7 +2340,7 @@ asm_offsets:
 	.string	"task_struct"
 .LASF16:
 	.string	"cpumask_t"
-.LASF4:
+.LASF5:
 	.string	"long long int"
 .LASF59:
 	.string	"fdTable"
@@ -2348,11 +2348,13 @@ asm_offsets:
 	.string	"sigset"
 .LASF50:
 	.string	"cpu_id"
+.LASF58:
+	.string	"arch"
 .LASF24:
 	.string	"preempt_count"
 .LASF63:
 	.string	"preempt_notifiers"
-.LASF9:
+.LASF6:
 	.string	"__u32"
 .LASF34:
 	.string	"bitmap"
@@ -2370,7 +2372,7 @@ asm_offsets:
 	.string	"bits"
 .LASF68:
 	.string	"sched_link"
-.LASF2:
+.LASF10:
 	.string	"long int"
 .LASF55:
 	.string	"ptrace"
@@ -2378,25 +2380,26 @@ asm_offsets:
 	.string	"hlist_head"
 .LASF53:
 	.string	"set_child_tid"
-.LASF58:
-	.string	"arch"
+.LASF70:
+	.ascii	"GNU C99 10.3.0 -mabi=lp64d -march=rv64imafdc -g -g -O2 "
+	.string	"-std=gnu99 -fstack-protector-strong -fno-strict-aliasing -fno-strict-overflow -fno-common -fno-pie -fno-stack-protector -fgnu89-inline -fno-omit-frame-pointer -fno-optimize-sibling-calls -fno-builtin -ffunction-sections -fno-reorder-blocks -funit-at-a-time"
 .LASF56:
 	.string	"saved_sigmask"
-.LASF7:
+.LASF2:
 	.string	"unsigned char"
 .LASF26:
 	.string	"bad_cause"
 .LASF22:
 	.string	"kern_sp"
-.LASF6:
+.LASF1:
 	.string	"signed char"
 .LASF40:
 	.string	"flags"
-.LASF11:
+.LASF8:
 	.string	"long long unsigned int"
 .LASF12:
 	.string	"uint32_t"
-.LASF1:
+.LASF4:
 	.string	"unsigned int"
 .LASF39:
 	.string	"arch_task"
@@ -2406,17 +2409,14 @@ asm_offsets:
 	.string	"sigblocked"
 .LASF42:
 	.string	"thread"
-.LASF5:
+.LASF0:
 	.string	"short unsigned int"
 .LASF66:
 	.string	"taskstate_t"
 .LASF17:
 	.string	"cpumask"
-.LASF3:
+.LASF11:
 	.string	"char"
-.LASF70:
-	.ascii	"GNU C99 10.3.0 -march=rv64ima"
-	.string	"fd -mabi=lp64d -g -g -O2 -std=gnu99 -fno-strict-aliasing -fno-strict-overflow -fno-common -fno-pie -fno-stack-protector -fgnu89-inline -fno-omit-frame-pointer -fno-optimize-sibling-calls -fno-builtin -ffunction-sections -fno-reorder-blocks -funit-at-a-time"
 .LASF25:
 	.string	"fstate"
 .LASF71:
@@ -2431,7 +2431,7 @@ asm_offsets:
 	.string	"syscalls"
 .LASF67:
 	.string	"task_rr"
-.LASF0:
+.LASF9:
 	.string	"long unsigned int"
 .LASF35:
 	.string	"sigset_t"

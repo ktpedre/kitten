@@ -11,7 +11,7 @@ EXTRA_AFLAGS	:= -traditional
 
 # cannot use EXTRA_CFLAGS because base CFLAGS contains -mkernel which conflicts with
 # -m32
-CFLAGS := -D__KERNEL__ -Iinclude -O2  -fno-strict-aliasing -fPIC -mcmodel=medlow -fno-builtin
+CFLAGS := -D__KERNEL__ -Iinclude -O2  -fno-strict-aliasing -fPIC -mcmodel=medany -fno-builtin
 LDFLAGS := -m elf64lriscv_lp64f
 
 LDFLAGS_vmlwk := -T

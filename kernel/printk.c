@@ -20,7 +20,7 @@ int printk(
 	return chars_printed;
 }
 
-int printk_print_cpu_number = 1;
+int printk_print_cpu_number = 0;
 
 int
 vprintk(
