@@ -63,7 +63,7 @@ static pmdval_t prot_sect_kernel;
 
 
 void
-dump_pgtable_arm64()
+dump_pgtable_riscv()
 {
 
 }

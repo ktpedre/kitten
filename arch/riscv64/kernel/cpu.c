@@ -19,6 +19,7 @@
 #include <arch/mpspec.h>
 #include <arch/proto.h>
 
+#define early_printk printk
 
 /**
  * Bitmap of CPUs that have been initialized.

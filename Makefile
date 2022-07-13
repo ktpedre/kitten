@@ -192,9 +192,9 @@ CONFIG_SHELL := $(shell if [ -x "$$BASH" ]; then echo $$BASH; \
 
 HOSTCC  	= gcc
 HOSTCXX  	= g++
-HOSTCFLAGS	= -Wall -Wstrict-prototypes -O2 -fomit-frame-pointer \
+HOSTCFLAGS	= -Wall -Wstrict-prototypes -O0 -g -fomit-frame-pointer \
 			-Wno-unused -Wno-format-security -U_FORTIFY_SOURCE
-HOSTCXXFLAGS	= -O2
+HOSTCXXFLAGS	= -O0 -g
 
 # 	Decide whether to build built-in, modular, or both.
 #	Normally, just do built-in.
@@ -495,7 +495,7 @@ all: vmlwk $(DEFAULT_EXTRA_TARGETS)
 ifdef CONFIG_CC_OPTIMIZE_FOR_SIZE
 CFLAGS		+= -Os
 else
-CFLAGS		+= -O2
+CFLAGS		+= -O0
 endif
 
 ifdef CONFIG_FRAME_POINTER

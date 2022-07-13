@@ -135,18 +135,11 @@ relocate_enable_mmu:
 	or a0, a0, a1
 	sfence.vma
 	csrw CSR_SATP, a0
-  fence.i
 .align 2
 1:
 	/* Set trap vector to spin forever to help debug */
 	la a0, .Lsecondary_park
 	csrw CSR_TVEC, a0
-
-	/* Reload the global pointer */
-.option push
-.option norelax
-	la gp, __global_pointer$
-.option pop
 
 	/*
 	 * Switch to kernel page tables.  A full fence is necessary in order to
@@ -266,6 +259,12 @@ clear_bss_done:
 ;; #ifdef CONFIG_MMU
 	la a0, early_pg_dir
 	call relocate_enable_mmu
+
+  	/* Reload the global pointer */
+	.option push
+	.option norelax
+	la gp, __global_pointer$
+	.option pop
 ;; #endif /* CONFIG_MMU */
 
 	call setup_trap_vector
@@ -277,6 +276,6 @@ clear_bss_done:
 	/* Start the kernel */
 
 	;; //call soc_early_init
-	tail start_kernel
+	tail riscv_start_kernel
 
 END(_start_kernel)

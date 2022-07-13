@@ -45,7 +45,26 @@ enum fixed_addresses {
 	__end_of_fixed_addresses
 };
 
+/*
+ * Provide some reasonable defaults for page flags.
+ * Not all architectures use all of these different types and some
+ * architectures use different names.
+ */
+#ifndef FIXMAP_PAGE_NORMAL
+#define FIXMAP_PAGE_NORMAL PAGE_KERNEL
+#endif
+#if !defined(FIXMAP_PAGE_RO) && defined(PAGE_KERNEL_RO)
+#define FIXMAP_PAGE_RO PAGE_KERNEL_RO
+#endif
+#ifndef FIXMAP_PAGE_NOCACHE
+#define FIXMAP_PAGE_NOCACHE PAGE_KERNEL_NOCACHE
+#endif
+#ifndef FIXMAP_PAGE_IO
+#define FIXMAP_PAGE_IO PAGE_KERNEL_IO
+#endif
+#ifndef FIXMAP_PAGE_CLEAR
 #define FIXMAP_PAGE_CLEAR __pgprot(0)
+#endif
 
 #define __early_set_fixmap	__set_fixmap
 
@@ -81,6 +100,18 @@ static __always_inline unsigned long fix_to_virt(const unsigned int idx)
 
 #define clear_fixmap(idx)			\
 	__set_fixmap(idx, 0, FIXMAP_PAGE_CLEAR)
+
+/* Return a pointer with offset calculated */
+#define __set_fixmap_offset(idx, phys, flags)				\
+({									\
+	unsigned long ________addr;					\
+	__set_fixmap(idx, phys, flags);					\
+	________addr = fix_to_virt(idx) + ((phys) & (PAGE_SIZE - 1));	\
+	________addr;							\
+})
+
+#define set_fixmap_offset(idx, phys) \
+	__set_fixmap_offset(idx, phys, FIXMAP_PAGE_NORMAL)
 
 //#include <asm-generic/fixmap.h>
 

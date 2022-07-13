@@ -63,29 +63,29 @@ hexdump(
 	size_t			len
 )
 {
-	int i;
-	const uint32_t * const data = data_v;
-	static char buf[ 32*4 + 5 ];
+	/* int i; */
+	/* const uint32_t * const data = data_v; */
+	/* static char buf[ 32*4 + 5 ]; */
 
-	size_t offset = 0;
-	for( i=0 ; i<len && offset < sizeof(buf)-10 ; i+=4 )
-	{
-		offset += snprintf(
-			buf+offset,
-			sizeof(buf)-offset,
-			"%08x ",
-			htonl( data[i / 4] )
-		);
-	}
+	/* size_t offset = 0; */
+	/* for( i=0 ; i<len && offset < sizeof(buf)-10 ; i+=4 ) */
+	/* { */
+	/* 	offset += snprintf( */
+	/* 		buf+offset, */
+	/* 		sizeof(buf)-offset, */
+	/* 		"%08x ", */
+	/* 		htonl( data[i / 4] ) */
+	/* 	); */
+	/* } */
 
-	if( i < len )
-		snprintf(
-			buf + offset,
-			sizeof(buf)-offset,
-			"..."
-		);
-	else
-		buf[offset] = '\0';
+	/* if( i < len ) */
+	/* 	snprintf( */
+	/* 		buf + offset, */
+	/* 		sizeof(buf)-offset, */
+	/* 		"..." */
+	/* 	); */
+	/* else */
+	/* 	buf[offset] = '\0'; */
 
-	return buf;
+	/* return buf; */
 }

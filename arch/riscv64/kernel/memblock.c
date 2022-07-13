@@ -17,7 +17,7 @@
 #include <arch/memblock.h>
 #include <lwk/print.h>
 
-#define printk early_printk
+#define printk
 
 unsigned long max_low_pfn;
 unsigned long min_low_pfn;

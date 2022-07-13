@@ -23,6 +23,7 @@
 static const char * cpu_name;
 static const char * machine_name;
 
+#define early_printk printk
 
 /**
  * Data passed to the kernel by the bootloader.
@@ -141,8 +142,8 @@ early_fdt_setup(phys_addr_t dt_phys)
 	}
 
 
-
-	devtree = phys_to_virt(dt_phys);
+	devtree = dt_phys;
+	/* devtree = phys_to_virt(dt_phys); */
 
 	/* Check device tree validity */
 	if (be32_to_cpu(devtree->magic) != OF_DT_HEADER) {
@@ -186,14 +187,15 @@ void __init
 riscv_start_kernel( void ) {
 	int32_t i;
 
-	memset(__bss_start, 0,
-	      (unsigned long) __bss_stop - (unsigned long) __bss_start);
+	/* memset(__bss_start, 0, */
+	/*       (unsigned long) __bss_stop - (unsigned long) __bss_start); */
 
 
 	early_printk("FDT Located At %p\n", fdt_start);
 //	early_printk("memstart_addr: %p\n", memstart_addr);
 
-	early_fdt_setup(fdt_start);
+	fdt_start = phys_to_virt(dtb_early_pa);
+	early_fdt_setup(dtb_early_va);
 
 	for (i = 0; i < NR_CPUS; i++)
 		cpu_pda(i) = &boot_cpu_pda[i];

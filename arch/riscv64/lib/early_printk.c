@@ -196,7 +196,7 @@ __putc(char ch) {
 
 #ifndef CONFIG_ARCH_QEMU
 	while (1) {
-		uint8_t ready = *(volatile uint8_t *)((CONFIG_SERIAL_PHYS & ((1u << PMD_SHIFT) - 1)) + 20);
+		uint8_t ready = *(volatile uint8_t *)(EARLYCON_IOBASE + (CONFIG_SERIAL_PHYS & ((1u << PMD_SHIFT) - 1)) + 20);
 		if ((ready & 0x20) != 0) break;
 		asm("":::"memory");
 	}
@@ -330,15 +330,16 @@ __vprintf(const char   * fmt,
 	return 0;
 }
 
+#define early_printk printk
 
-int
-early_printk(const char * fmt, ...)
-{
-	int ret;
-	va_list va;
-	va_start(va, fmt);
-	ret = __vprintf(fmt, va);
-	va_end(va);
+/* int */
+/* early_printk(const char * fmt, ...) */
+/* { */
+/* 	int ret; */
+/* 	va_list va; */
+/* 	va_start(va, fmt); */
+/* 	ret = __vprintf(fmt, va); */
+/* 	va_end(va); */
 
-	return ret;
-}
+/* 	return ret; */
+/* } */

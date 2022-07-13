@@ -79,19 +79,19 @@ static void __init zone_sizes_init(void)
 #if defined(CONFIG_MMU)// && defined(CONFIG_DEBUG_VM)
 static inline void print_mlk(char *name, unsigned long b, unsigned long t)
 {
-	pr_notice("%12s : 0x%08lx - 0x%08lx   (%4ld kB)\n", name, b, t,
+	printk("%12s : 0x%08lx - 0x%08lx   (%4ld kB)\n", name, b, t,
 		  (((t) - (b)) >> 10));
 }
 
 static inline void print_mlm(char *name, unsigned long b, unsigned long t)
 {
-	pr_notice("%12s : 0x%08lx - 0x%08lx   (%4ld MB)\n", name, b, t,
+	printk("%12s : 0x%08lx - 0x%08lx   (%4ld MB)\n", name, b, t,
 		  (((t) - (b)) >> 20));
 }
 
 static void __init print_vm_layout(void)
 {
-	pr_notice("Virtual kernel memory layout:\n");
+	printk("Virtual kernel memory layout:\n");
 	/* print_mlk("fixmap", (unsigned long)FIXADDR_START, */
 	/* 	  (unsigned long)FIXADDR_TOP); */
 	/* print_mlm("pci io", (unsigned long)PCI_IO_START, */
@@ -152,83 +152,84 @@ static void __init setup_bootmem(void)
 /* 	phys_addr_t max_mapped_addr; */
 /* 	phys_addr_t phys_ram_end, vmlinux_start; */
 
-/* 	/* if (IS_ENABLED(CONFIG_XIP_KERNEL)) */
-/* 	/* 	vmlinux_start = __pa_symbol(&_sdata); */
-/* 	/* else */
+/* 	/\* if (IS_ENABLED(CONFIG_XIP_KERNEL)) */
+/* 	/\* 	vmlinux_start = __pa_symbol(&_sdata); */
+/*  	/\* else *\/ */
 /* 	vmlinux_start = __pa_symbol(&_start); */
 
 /* 	memblock_enforce_memory_limit(memory_limit); */
 
-/* 	/* */
-/* 	 * Make sure we align the reservation on PMD_SIZE since we will */
-/* 	 * map the kernel in the linear mapping as read-only: we do not want */
-/* 	 * any allocation to happen between _end and the next pmd aligned page. */
-/* */
-	/* if (IS_ENABLED(CONFIG_64BIT) && IS_ENABLED(CONFIG_STRICT_KERNEL_RWX)) */
-	/* 	vmlinux_end = (vmlinux_end + PMD_SIZE - 1) & PMD_MASK; */
-	/*
-	 * Reserve from the start of the kernel to the end of the kernel
- */
-	/* memblock_reserve(vmlinux_start, vmlinux_end - vmlinux_start); */
+/*  	/\* */
+/*  	 * Make sure we align the reservation on PMD_SIZE since we will */
+/*  	 * map the kernel in the linear mapping as read-only: we do not want */
+/*  	 * any allocation to happen between _end and the next pmd aligned page. */
+/* 	 *\/ */
+/* 	if (IS_ENABLED(CONFIG_64BIT) && IS_ENABLED(CONFIG_STRICT_KERNEL_RWX)) */
+/* 		vmlinux_end = (vmlinux_end + PMD_SIZE - 1) & PMD_MASK; */
+/* 	/\* */
+/* 	 * Reserve from the start of the kernel to the end of the kernel */
+/* 	 *\/ */
+/* 	memblock_reserve(vmlinux_start, vmlinux_end - vmlinux_start); */
 
-	/* phys_ram_end = memblock_end_of_DRAM(); */
-//	if (!IS_ENABLED(CONFIG_XIP_KERNEL))
-	/* phys_ram_base = memblock_start_of_DRAM(); */
-	/*
-	 * memblock allocator is not aware of the fact that last 4K bytes of
-	 * the addressable memory can not be mapped because of IS_ERR_VALUE
-	 * macro. Make sure that last 4k bytes are not usable by memblock
-	 * if end of dram is equal to maximum addressable memory.  For 64-bit
-	 * kernel, this problem can't happen here as the end of the virtual
-	 * address space is occupied by the kernel mapping then this check must
-	 * be done as soon as the kernel mapping base address is determined.
- */
-	/* if (!IS_ENABLED(CONFIG_64BIT)) { */
-	/* 	max_mapped_addr = __pa(~(ulong)0); */
-	/* 	if (max_mapped_addr == (phys_ram_end - 1)) */
-	/* 		memblock_set_current_limit(max_mapped_addr - 4096); */
-	/* } */
+/* 	phys_ram_end = memblock_end_of_DRAM(); */
+/* //	if (!IS_ENABLED(CONFIG_XIP_KERNEL)) */
+/* 	phys_ram_base = memblock_start_of_DRAM(); */
+/* 	/\* */
+/* 	 * memblock allocator is not aware of the fact that last 4K bytes of */
+/* 	 * the addressable memory can not be mapped because of IS_ERR_VALUE */
+/* 	 * macro. Make sure that last 4k bytes are not usable by memblock */
+/* 	 * if end of dram is equal to maximum addressable memory.  For 64-bit */
+/* 	 * kernel, this problem can't happen here as the end of the virtual */
+/* 	 * address space is occupied by the kernel mapping then this check must */
+/* 	 * be done as soon as the kernel mapping base address is determined. */
+/* 	 *\/ */
+/* 	if (!IS_ENABLED(CONFIG_64BIT)) { */
+/* 		max_mapped_addr = __pa(~(ulong)0); */
+/* 		if (max_mapped_addr == (phys_ram_end - 1)) */
+/* 			memblock_set_current_limit(max_mapped_addr - 4096); */
+/* 	} */
 
-	/* min_low_pfn = PFN_UP(phys_ram_base); */
-	/* max_low_pfn = max_pfn = PFN_DOWN(phys_ram_end); */
-	/* high_memory = (void *)(__va(PFN_PHYS(max_low_pfn))); */
+/* 	min_low_pfn = PFN_UP(phys_ram_base); */
+/* 	max_low_pfn = max_pfn = PFN_DOWN(phys_ram_end); */
+/* 	high_memory = (void *)(__va(PFN_PHYS(max_low_pfn))); */
 
-	/* dma32_phys_limit = min(4UL * SZ_1G, (unsigned long)PFN_PHYS(max_low_pfn)); */
-	/* set_max_mapnr(max_low_pfn - ARCH_PFN_OFFSET); */
+/* 	dma32_phys_limit = min(4UL * SZ_1G, (unsigned long)PFN_PHYS(max_low_pfn)); */
+/* 	set_max_mapnr(max_low_pfn - ARCH_PFN_OFFSET); */
 
-	/* reserve_initrd_mem(); */
-	/*
-	 * If DTB is built in, no need to reserve its memblock.
-	 * Otherwise, do reserve it but avoid using
-	 * early_init_fdt_reserve_self() since __pa() does
-	 * not work for DTB pointers that are fixmap addresses
- */
-	//if (!IS_ENABLED(CONFIG_BUILTIN_DTB))
-	/* { */
-		/*
-		 * In case the DTB is not located in a memory region we won't
-		 * be able to locate it later on via the linear mapping and
-		 * get a segfault when accessing it via __va(dtb_early_pa).
-		 * To avoid this situation copy DTB to a memory region.
-		 * Note that memblock_phys_alloc will also reserve DTB region.
- */
-	/* 	if (!memblock_is_memory(dtb_early_pa)) { */
-	/* 		size_t fdt_size = fdt_totalsize(dtb_early_va); */
-	/* 		phys_addr_t new_dtb_early_pa = memblock_phys_alloc(fdt_size, PAGE_SIZE); */
-	/* 		void *new_dtb_early_va = early_memremap(new_dtb_early_pa, fdt_size); */
+/* 	reserve_initrd_mem(); */
+/* 	/\* */
+/* 	 * If DTB is built in, no need to reserve its memblock. */
+/* 	 * Otherwise, do reserve it but avoid using */
+/* 	 * early_init_fdt_reserve_self() since __pa() does */
+/* 	 * not work for DTB pointers that are fixmap addresses */
+/* 	 *\/ */
+/* 	//if (!IS_ENABLED(CONFIG_BUILTIN_DTB)) */
+/* 	{ */
+/* 		/\* */
+/* 		 * In case the DTB is not located in a memory region we won't */
+/* 		 * be able to locate it later on via the linear mapping and */
+/* 		 * get a segfault when accessing it via __va(dtb_early_pa). */
+/* 		 * To avoid this situation copy DTB to a memory region. */
+/* 		 * Note that memblock_phys_alloc will also reserve DTB region. */
+/* 		 *\/ */
+/* 		if (!memblock_is_memory(dtb_early_pa)) { */
+/* 			size_t fdt_size = fdt_totalsize(dtb_early_va); */
+/* 			phys_addr_t new_dtb_early_pa = memblock_phys_alloc(fdt_size, PAGE_SIZE); */
+/* 			void *new_dtb_early_va = early_memremap(new_dtb_early_pa, fdt_size); */
 
-	/* 		memcpy(new_dtb_early_va, dtb_early_va, fdt_size); */
-	/* 		early_memunmap(new_dtb_early_va, fdt_size); */
-	/* 		_dtb_early_pa = new_dtb_early_pa; */
-	/* 	} else */
-	/* 		memblock_reserve(dtb_early_pa, fdt_totalsize(dtb_early_va)); */
-	/* } */
+/* 			memcpy(new_dtb_early_va, dtb_early_va, fdt_size); */
+/* 			early_memunmap(new_dtb_early_va, fdt_size); */
+/* 			_dtb_early_pa = new_dtb_early_pa; */
+/* 		} else { */
+/* 			memblock_reserve(dtb_early_pa, fdt_totalsize(dtb_early_va)); */
+/* 		} */
+/* 	} */
 
-	/* early_init_fdt_scan_reserved_mem(); */
-	/* dma_contiguous_reserve(dma32_phys_limit); */
-	/* /\* if (IS_ENABLED(CONFIG_64BIT)) *\/ */
-	/* hugetlb_cma_reserve(PUD_SHIFT - PAGE_SHIFT); */
-	/* memblock_allow_resize(); */
+/* 	early_init_fdt_scan_reserved_mem(); */
+/* 	dma_contiguous_reserve(dma32_phys_limit); */
+/* 	/\* if (IS_ENABLED(CONFIG_64BIT)) *\/ */
+/* 	hugetlb_cma_reserve(PUD_SHIFT - PAGE_SHIFT); */
+/* 	memblock_allow_resize(); */
 }
 
 #ifdef CONFIG_MMU
@@ -277,9 +278,8 @@ static inline pte_t *__init get_pte_virt_early(phys_addr_t pa)
 
 static inline pte_t *__init get_pte_virt_fixmap(phys_addr_t pa)
 {
-	/* clear_fixmap(FIX_PTE); */
-	/* return (pte_t *)set_fixmap_offset(FIX_PTE, pa); */
-	return 0;
+	clear_fixmap(FIX_PTE);
+	return (pte_t *)set_fixmap_offset(FIX_PTE, pa);
 }
 
 static inline pte_t *__init get_pte_virt_late(phys_addr_t pa)
@@ -363,9 +363,8 @@ static pmd_t *__init get_pmd_virt_early(phys_addr_t pa)
 
 static pmd_t *__init get_pmd_virt_fixmap(phys_addr_t pa)
 {
-/* 	clear_fixmap(FIX_PMD); */
-/* 	return (pmd_t *)set_fixmap_offset(FIX_PMD, pa); */
-	return 0;
+	clear_fixmap(FIX_PMD);
+	return (pmd_t *)set_fixmap_offset(FIX_PMD, pa);
 }
 
 static pmd_t *__init get_pmd_virt_late(phys_addr_t pa)
@@ -429,9 +428,8 @@ static pud_t *__init get_pud_virt_early(phys_addr_t pa)
 
 static pud_t *__init get_pud_virt_fixmap(phys_addr_t pa)
 {
-	/* clear_fixmap(FIX_PUD); */
-	/* return (pud_t *)set_fixmap_offset(FIX_PUD, pa); */
-	return 0;
+	clear_fixmap(FIX_PUD);
+	return (pud_t *)set_fixmap_offset(FIX_PUD, pa);
 }
 
 static pud_t *__init get_pud_virt_late(phys_addr_t pa)

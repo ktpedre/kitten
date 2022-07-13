@@ -30,6 +30,8 @@
 
 extern int early_printk(const char * fmt, ...);
 
+#define early_printk printk
+
 char *of_fdt_get_string(struct boot_param_header *blob, u32 offset)
 {
 	return ((char *)blob) +
@@ -440,6 +442,7 @@ int __initdata dt_root_addr_cells;
 int __initdata dt_root_size_cells;
 
 struct boot_param_header *initial_boot_params;
+unsigned long initial_boot_params_phys;
 
 
 /**

@@ -31,6 +31,7 @@ unsigned long __supported_pte_mask __read_mostly = ~0UL;
 
 extern int early_printk(const char * fmt, ...);
 
+#define early_printk printk
 
 
 phys_addr_t memstart_addr __read_mostly = 0;
@@ -103,6 +104,7 @@ setup_bootmem_allocator(unsigned long	start_pfn,
 	phys         = memblock_alloc(bootmap_size * PAGE_SIZE, 16);
 	bootmap_size = init_bootmem(phys >> PAGE_SHIFT, start_pfn, end_pfn);
 
+	free_bootmem(start_pfn << PAGE_SHIFT, (end_pfn - start_pfn) << PAGE_SHIFT);
 
 	for_each_memblock(memory, reg) {
 		if (reg->size == 0) {
@@ -181,6 +183,7 @@ memblock_init(void)
 	u64   base;
 	u64   size;
 
+	printk("text %p pa text %p end %p\n", _text, __pa(_text), _end);
 	/* Register the kernel text, kernel data and initrd with memblock */
 	memblock_reserve(__pa(_text), _end - _text);
 	
@@ -205,8 +208,10 @@ memblock_init(void)
 	/* memblock_reserve(__pa(early_pg_dir), SWAPPER_DIR_SIZE); */
 	/* memblock_reserve(__pa(trampoline_pg_dir), IDMAP_DIR_SIZE); */
 
+	printk("DTB pa %p va %p\n", dtb_early_pa, dtb_early_va);
+
 	/* Reserve the dtb region */
-	memblock_reserve(virt_to_phys(initial_boot_params),
+	memblock_reserve(dtb_early_pa,
 			 be32_to_cpu(initial_boot_params->totalsize));
 
 	/*
@@ -271,6 +276,8 @@ setup_arch(void)
 
 	paging_init();
 
+	initial_boot_params = fdt_start;
+
 
 	/*
  	 * Get the bare minimum info about the bootstrap CPU... the
@@ -287,12 +294,13 @@ setup_arch(void)
  	 * Initialize the bootstrap dynamic memory allocator.
  	 * alloc_bootmem() will work after this.
  	 */
-	start = memblock_start_of_DRAM();
+	//start = memblock_start_of_DRAM();
+	start = kernel_map.phys_addr;
 	end   = memblock_end_of_DRAM();
-	setup_bootmem_allocator(start >> PAGE_SHIFT, end >> PAGE_SHIFT);
-
 	printk("BOOT_MEM start: %p\n",  start);
 	printk("BOOT_MEM   end: %p\n",  end);
+	setup_bootmem_allocator(start >> PAGE_SHIFT, end >> PAGE_SHIFT);
+
 
 	// Must free available memory
 
