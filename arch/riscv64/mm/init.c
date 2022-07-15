@@ -15,6 +15,8 @@
 #include <lwk/sizes.h>
 #include <arch/of_fdt.h>
 #include <lwk/const.h>
+#include <lwk/pmem.h>
+#include <arch/proto.h>
 /*#include <lwk/of_reserved_mem.h>*/
 /*#include <lwk/libfdt.h>*/
 /*#include <lwk/set_memory.h>*/
@@ -74,6 +76,185 @@ static void __init zone_sizes_init(void)
 /* 	max_zone_pfns[ZONE_NORMAL] = max_low_pfn; */
 
 /* 	free_area_init(max_zone_pfns); */
+}
+
+static __init
+__move_initrd(size_t kmem_size)
+{
+	struct pmem_region query;
+	struct pmem_region result;
+
+	paddr_t new_initrd_start = 0;
+	paddr_t new_initrd_end   = 0;
+	size_t  initrd_size      = 0;
+	size_t  umem_size        = 0;
+
+
+
+
+	printk("initrd_start %llx\n", initrd_start);
+
+	if (initrd_start == 0) {
+		return;
+	}
+
+	initrd_size = initrd_end - initrd_start;
+	umem_size   = round_up(initrd_size, PAGE_SIZE);
+
+	/* Step 1: Mark any umem that the initrd image is currently occupying
+	 *         as free.
+	 *         NOTE: This doesn't actually affect the initrd image in any
+	 *               way, but is necessary so that the allocation in step 2
+	 *               succeeds and returns memory at the beginning of umem.
+	 */
+	pmem_region_unset_all(&query);
+	query.start = round_down( initrd_start, PAGE_SIZE );
+	query.end   = round_up  ( initrd_end,   PAGE_SIZE );
+	while (pmem_query(&query, &result) == 0) {
+		/* Only umem needs to be marked free at this point */
+		if (result.start >= kmem_size) {
+			result.type      = PMEM_TYPE_UMEM;
+			result.allocated = false;
+
+			BUG_ON(pmem_update(&result));
+		}
+		query.start = result.end;
+	}
+
+	/* Step 2: Move the initrd image to the start of umem.
+	 *         NOTE: At this point, no umem should be allocated...
+	 *               we are the first users of umem.
+	 */
+
+	if (pmem_alloc_umem(umem_size, PAGE_SIZE, &result)) {
+		panic("Failed to allocate umem for initrd image.");
+	}
+
+	result.type = PMEM_TYPE_INITRD;
+	pmem_update(&result);
+	new_initrd_start = result.start;
+	new_initrd_end   = result.start + initrd_size;
+
+	printk("Moving initrd (%d bytes) from %p to %p\n", initrd_size, initrd_start, new_initrd_start);
+
+	memmove(__va(new_initrd_start), __va(initrd_start), initrd_size);
+
+	/* Step 3: Mark any kmem that the original initrd image (before
+	 *         being moved) was occupying as free and add it to the
+	 *         kmem pool.
+	 *         NOTE: We can't do this in step 1 because step 2 may
+	 *               cause kmem to be allocated, which might result
+	 *               in the initrd image being corrupted.
+	 */
+	pmem_region_unset_all(&query);
+	query.start = round_down( initrd_start, PAGE_SIZE );
+	query.end   = round_up  ( initrd_end,   PAGE_SIZE );
+	while (pmem_query(&query, &result) == 0) {
+		if (result.start < kmem_size) {
+			result.type      = PMEM_TYPE_KMEM;
+			result.allocated = false;
+
+			BUG_ON(pmem_update(&result));
+
+			kmem_add_memory((unsigned long)__va(result.start),
+			                result.end - result.start);
+		}
+		query.start = result.end;
+	}
+
+	/* Update initrd_start and initrd_end to their new values */
+	initrd_start = new_initrd_start;
+	initrd_end   = new_initrd_end;
+
+	/* Assume the initrd image is the init_task ELF executable */
+	init_elf_image = initrd_start;
+}
+
+static __init
+__move_fdt(size_t kmem_size)
+{
+	struct pmem_region query;
+	struct pmem_region result;
+
+	paddr_t new_fdt_start = 0;
+	paddr_t new_fdt_end   = 0;
+	size_t  fdt_size      = 0;
+	size_t  umem_size        = 0;
+
+
+	printk("fdt_start %llx\n", fdt_start);
+
+	if (fdt_start == 0) {
+		return;
+	}
+
+	fdt_size = fdt_end - fdt_start;
+	umem_size   = round_up(fdt_size, PAGE_SIZE);
+
+	/* Step 1: Mark any umem that the fdt image is currently occupying
+	 *         as free.
+	 *         NOTE: This doesn't actually affect the fdt image in any
+	 *               way, but is necessary so that the allocation in step 2
+	 *               succeeds and returns memory at the beginning of umem.
+	 */
+	pmem_region_unset_all(&query);
+	query.start = round_down( fdt_start, PAGE_SIZE );
+	query.end   = round_up  ( fdt_end,   PAGE_SIZE );
+	while (pmem_query(&query, &result) == 0) {
+		/* Only umem needs to be marked free at this point */
+		if (result.start >= kmem_size) {
+			result.type      = PMEM_TYPE_UMEM;
+			result.allocated = false;
+
+			BUG_ON(pmem_update(&result));
+		}
+		query.start = result.end;
+	}
+
+	/* Step 2: Move the fdt image to the start of umem.
+	 *         NOTE: At this point, no umem should be allocated...
+	 *               we are the first users of umem.
+	 */
+
+	if (pmem_alloc_umem(umem_size, PAGE_SIZE, &result)) {
+		panic("Failed to allocate umem for fdt image.");
+	}
+
+	result.type = PMEM_TYPE_FDT;
+	pmem_update(&result);
+	new_fdt_start = result.start;
+	new_fdt_end   = result.start + fdt_size;
+
+	printk("Moving fdt (%d bytes) from %p to %p\n", fdt_size, fdt_start, new_fdt_start);
+
+	memmove(__va(new_fdt_start), __va(fdt_start), fdt_size);
+
+	/* Step 3: Mark any kmem that the original fdt image (before
+	 *         being moved) was occupying as free and add it to the
+	 *         kmem pool.
+	 *         NOTE: We can't do this in step 1 because step 2 may
+	 *               cause kmem to be allocated, which might result
+	 *               in the fdt image being corrupted.
+	 */
+	pmem_region_unset_all(&query);
+	query.start = round_down( fdt_start, PAGE_SIZE );
+	query.end   = round_up  ( fdt_end,   PAGE_SIZE );
+	while (pmem_query(&query, &result) == 0) {
+		if (result.start < kmem_size) {
+			result.type      = PMEM_TYPE_KMEM;
+			result.allocated = false;
+
+			BUG_ON(pmem_update(&result));
+
+			kmem_add_memory((unsigned long)__va(result.start),
+			                result.end - result.start);
+		}
+		query.start = result.end;
+	}
+
+	/* Update fdt_start and fdt_end to their new values */
+	fdt_start = new_fdt_start;
+	fdt_end   = new_fdt_end;
 }
 
 #if defined(CONFIG_MMU)// && defined(CONFIG_DEBUG_VM)
@@ -1214,5 +1395,6 @@ int __meminit vmemmap_populate(unsigned long start, unsigned long end, int node,
 void __init
 arch_memsys_init(size_t kmem_size)
 {
-	;
+	__move_fdt(kmem_size);
+	__move_initrd(kmem_size);
 }

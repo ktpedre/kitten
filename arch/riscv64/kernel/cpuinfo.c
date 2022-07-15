@@ -169,8 +169,10 @@ __identify_caches(struct arch_cpuinfo * a)
 void __init
 early_identify_cpu(struct cpuinfo *c)
 {
-	/* struct arch_cpuinfo *a = &c->arch; */
-	/* memset(a, 0, sizeof(*a)); */
+	struct arch_cpuinfo *a = &c->arch;
+	memset(a, 0, sizeof(*a));
+
+	/* NMG TODO Implement this whole cpuinfo thing */
 
 	/* struct midr_el1         midr_el1          = { mrs(MIDR_EL1)         }; */
 	/* struct mpidr_el1        mpidr_el1         = { mrs(MPIDR_EL1)        }; */
@@ -243,7 +245,7 @@ early_identify_cpu(struct cpuinfo *c)
 
 
 
-	/* c->pagesz_mask = (VM_PAGE_4KB | VM_PAGE_2MB); */
+	c->pagesz_mask = (VM_PAGE_4KB | VM_PAGE_2MB);
 }
 
 /*
@@ -253,12 +255,12 @@ void __init
 identify_cpu(void)
 {
 	int i;
-	/* struct cpuinfo *c = &cpu_info[this_cpu]; */
-	/* struct arch_cpuinfo *a = &c->arch; */
+	struct cpuinfo *c = &cpu_info[this_cpu];
+	struct arch_cpuinfo *a = &c->arch;
 
-	/* early_identify_cpu(c); */
+	early_identify_cpu(c);
 
-	/* print_arch_cpuinfo(c); */
+	print_arch_cpuinfo(c);
 
 }
 

@@ -36,26 +36,18 @@
  * CPU info is kept separately for each CPU.
  */
 struct arch_cpuinfo {
-    uint8_t  arm64_vendor;          /* CPU vendor */
-    uint8_t  arm64_variant;         /* CPU variant */
-    uint8_t  arm64_arch;            /* CPU architecture */
-    uint8_t  arm64_partnum;         /* CPU part number */
-    uint8_t  arm64_revision;        /* CPU revision */
-    uint16_t arm64_cache_size[3][7];  /* [I|D|U][LEVEL], in KB */
-    uint16_t arm64_cache_line[3][7];  /* [I|D|U][LEVEL], in bytes */
-    uint32_t arm64_capability;
-
-#if 0
-    int      x86_clflush_size;      /* In bytes */
-    int      x86_cache_alignment;   /* In bytes */
-    uint16_t x86_tlb_size[3][2][3]; /* [I|D|U][LEVEL][PAGE_SIZE], in #entries */
-    uint32_t x86_capability[NCAPINTS]; /* optional CPU features */
-#endif
-
-    uint8_t  arm64_virt_bits;       /* Bits of virt address space */
-    uint8_t  arm64_phys_bits;       /* Bits of phys address space */
-    uint8_t  x86_pkg_cores;         /* Number of cores in this CPU's package */
-    uint32_t arm64_power;           /* Power management features */
+    uint8_t  riscv_vendor;          /* CPU vendor */
+    uint8_t  riscv_variant;         /* CPU variant */
+    uint8_t  riscv_arch;            /* CPU architecture */
+    uint8_t  riscv_partnum;         /* CPU part number */
+    uint8_t  riscv_revision;        /* CPU revision */
+    uint16_t riscv_cache_size[3][7];  /* [I|D|U][LEVEL], in KB */
+    uint16_t riscv_cache_line[3][7];  /* [I|D|U][LEVEL], in bytes */
+    uint32_t riscv_capability;
+    uint8_t  riscv_virt_bits;       /* Bits of virt address space */
+    uint8_t  riscv_phys_bits;       /* Bits of phys address space */
+    uint8_t  riscv_pkg_cores;         /* Number of cores in this CPU's package */
+    uint32_t riscv_power;           /* Power management features */
     uint32_t cur_cpu_khz;           /* Current CPU freq. in KHz (need to calibrate) */
     uint32_t tsc_khz;
     uint32_t timer_hz; 		    /* Timer frequency in Hz */

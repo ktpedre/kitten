@@ -27,12 +27,20 @@ arch_aspace_create(
 	struct aspace *	aspace
 )
 {
+	unsigned int i;
+
 	// Creates only a new user page table
-	printk("Kernel page tables do not need to be copied on ARM\n");
+	/* printk("Kernel page tables do not need to be copied on RISCV (?)\n"); */
 	if ((aspace->arch.pgd = kmem_get_pages(0)) == NULL)
 		return -ENOMEM;
+
+		/* Copy the current kernel page tables into the address space */
+	for (i = pgd_index(PAGE_OFFSET); i < PTRS_PER_PGD; i++)
+		aspace->arch.pgd[i] = bootstrap_task.aspace->arch.pgd[i];
+
 	return 0;
 }
+
 
 
 /**
@@ -98,13 +106,14 @@ arch_aspace_activate(
 	//printk("&aspace->child_list %p\n",&aspace->child_list);
 	//printk("(&aspace->child_list)->prev %p\n",(&aspace->child_list)->prev);
 
+	printk("aspace activate pgd %p pa %p\n", aspace->arch.pgd, __pa(aspace->arch.pgd));
 	if (aspace->id != BOOTSTRAP_ASPACE_ID) {
 		asm volatile(
 			"sfence.vma\n"
 			"csrw satp, %0\n"
 			"fence.i\n"
 			:
-			: "r" (__pa(aspace->arch.pgd))
+			: "r" (PFN_DOWN(__pa(aspace->arch.pgd)) | satp_mode)
 			: "memory"
 			);
 	} else {
@@ -122,7 +131,7 @@ alloc_page_table(
 )
 {
 	xpte_t *new_table;
-	
+
 	if (bootmem_destoyed == true) {
 		new_table = kmem_get_pages(0);
 	} else {
@@ -132,6 +141,7 @@ alloc_page_table(
 	if (!new_table)
 		return NULL;
 
+	/* Simple sanity checking */
 	if (parent_pte) {
 		xpte_t _pte;
 
@@ -147,7 +157,11 @@ alloc_page_table(
 		_pte.AP1        = 1;
 #endif
 
-		_pte.value  = __pa(new_table) >> PAGE_SHIFT;
+		pte_paddr_t next_pa = (pte_paddr_t) { .value = __pa(new_table) };
+		printk("Next PA %p\n", next_pa.value);
+		_pte.ppn2 = next_pa.ppn2;
+		_pte.ppn1 = next_pa.ppn1;
+		_pte.ppn0 = next_pa.ppn0;
 
 		*parent_pte = _pte;
 	}
@@ -173,14 +187,13 @@ find_or_create_pte(
 	xpte_t *ptd = NULL;	/* Page Table Directory:  level 3 */
 
 	xpte_t *pge = NULL;	/* Page Global Directory Entry */
-	xpte_t *pue = NULL;	/* Page Upper Directory Entry */
 	xpte_t *pme = NULL;	/* Page Middle Directory Entry */
 	xpte_t *pte = NULL;	/* Page Table Directory Entry */
 
 	/* Calculate indices into above directories based on vaddr specified */
-	unsigned int pgd_index =  (pte_vaddr.vpn0 >> 30) & 0x1FF;
-	unsigned int pmd_index =  (pte_vaddr.vpn1 >> 21) & 0x1FF;
-	unsigned int ptd_index =  (pte_vaddr.vpn2 >> 12) & 0x1FF;
+	unsigned int pgd_index =  pte_vaddr.vpn2 & 0x1FF;
+	unsigned int pmd_index =  pte_vaddr.vpn1 & 0x1FF;
+	unsigned int ptd_index =  pte_vaddr.vpn0 & 0x1FF;
 
 
 	/* /\* JRL: These should either be handled OK here, or be moved to initialization time checks *\/ */
@@ -206,13 +219,16 @@ find_or_create_pte(
 		}
 	}
 
+
 	/* Traverse the Page Global Directory */
 	pgd = aspace->arch.pgd;
 	pge = &pgd[pgd_index];
 	if (pagesz == VM_PAGE_1GB) {
 		return pge;
-	} else if (!pge->valid && !alloc_page_table(pge)) {
-		return NULL;
+	} else if (!pge->valid) {
+		if (!alloc_page_table(pge)) {
+				return NULL;
+		}
 	} else if (is_leaf(pge)) {
 		panic("BUG: Can't follow PGD entry, entry is a leaf.");
 	}
@@ -222,13 +238,14 @@ find_or_create_pte(
 	pme = &pmd[pmd_index];
 	if (pagesz == VM_PAGE_2MB) {
 		return pme;
-	} else if (!pme->valid && !alloc_page_table(pme)) {
-		return NULL;
+	} else if (!pme->valid) {
+		if (!alloc_page_table(pme)) {
+				return NULL;
+		}
 	} else if (is_leaf(pme)) {
 		panic("BUG: Can't follow PMD entry, entry is a leaf.");
 	}
 	
-
 	ptd = __va(xpte_paddr(pme));
 	pte = &ptd[ptd_index];
 out:
@@ -392,11 +409,13 @@ write_pte(
 	xpte_leaf_t _pte;
 	memset(&_pte, 0, sizeof(_pte));
 
-	_pte.valid = 1;
-	_pte.write = VM_WRITE;
-	_pte.user  = VM_USER;
-	_pte.global = VM_GLOBAL;
-	_pte.exec = VM_EXEC;
+	_pte.valid	= 1;
+	_pte.read   = 1;
+	_pte.write	= 1;
+	_pte.global = 1;
+	_pte.exec		= 1;
+	_pte.acc    = 1;
+	_pte.dirty  = 1;
 
 	/* NMG Not sure how to model nocache/device memory in these page tables. */
 /* 	if (flags & VM_NOCACHE) { */
@@ -410,15 +429,19 @@ write_pte(
 
 /* 	} */
 
-	if (pagesz == VM_PAGE_4KB) {
+	switch (pagesz) {
+	case VM_PAGE_4KB:
 		_pte.ppn0 = pte_paddr.ppn0;
-	}
-	if (pagesz == VM_PAGE_2MB) {
+	case VM_PAGE_2MB:
 		_pte.ppn1 = pte_paddr.ppn1;
-	}
-	if (pagesz == VM_PAGE_1GB) {
+	case VM_PAGE_1GB:
 		_pte.ppn2 = pte_paddr.ppn2;
-	}
+		break;
+	default:
+		printk("pagesz is a weird value! %p\n", pagesz);
+		BUG();
+		break;
+	};
 
 	// printk("Writing PTE [%p]\n", *(u64 *)&_pte);
 
@@ -559,9 +582,9 @@ arch_aspace_virt_to_phys(struct aspace *aspace, vaddr_t vaddr, paddr_t *paddr)
 
 	paddr_t result; /* The result of the translation */
 
-	unsigned int pgd_index =  (pte_vaddr.vpn0 >> 30) & 0x1FF;
-	unsigned int pmd_index =  (pte_vaddr.vpn1 >> 21) & 0x1FF;
-	unsigned int ptd_index =  (pte_vaddr.vpn2 >> 12) & 0x1FF;
+	unsigned int pgd_index =  pte_vaddr.vpn2;
+	unsigned int pmd_index =  pte_vaddr.vpn1;
+	unsigned int ptd_index =  pte_vaddr.vpn0;
 
 	struct ssatp satp = { .value = csr_read(CSR_SATP) };
 
@@ -581,17 +604,17 @@ arch_aspace_virt_to_phys(struct aspace *aspace, vaddr_t vaddr, paddr_t *paddr)
 			panic("Invalid Bootstrap Address [vaddr=%p] [msb_mask=%p]\n", vaddr, msb_mask);
 		}
 
-		pud = aspace->arch.pgd;
+		pgd = aspace->arch.pgd;
 
 	} else {
 		u64 msb_mask = ~(0xffffffffffffffff >> 26); /* NMG Get rid of these 26s as magic numbers */
 
 		/* If the vaddr has all the same bits as the mask set, it is a kernel virtual address. */
 		if ((vaddr & msb_mask) == msb_mask) {
-			pud = bootstrap_aspace.arch.pgd;
+			pgd = bootstrap_aspace.arch.pgd;
 		/* If they share no bits, then it is a user virtual address */
 		} else if ((vaddr & msb_mask) == 0) {
-			pud = aspace->arch.pgd;
+			pgd = aspace->arch.pgd;
 		} else {
 			panic("Invalid Kernel/User Address [vaddr=%p]\n", vaddr);
 		}
@@ -615,8 +638,10 @@ arch_aspace_virt_to_phys(struct aspace *aspace, vaddr_t vaddr, paddr_t *paddr)
 		if (!pge->valid)
 			return -ENOENT;
 		if (is_leaf(pge)) {
+
 			result = (xpte_paddr(pge) | (vaddr & (PAGE_SIZE_1GB-1)));
 		}
+//		printk("Traverse: xpte_paddr(pge): %p\n", xpte_paddr(pge));
 		pmd = __va(xpte_paddr(pge));
 		//pmd = __va(pge->base_paddr << 12);
 	}
@@ -633,10 +658,12 @@ arch_aspace_virt_to_phys(struct aspace *aspace, vaddr_t vaddr, paddr_t *paddr)
 	}
 
 	/* Traverse the Page Table Entry Directory */
-	ptd = __va(xpte_paddr(pte));
+//	printk("Traverse: xpte_paddr(pme): %p\n", xpte_paddr(pme));
+	ptd = __va(xpte_paddr(pme));
 	pte = &ptd[ptd_index];
 	if (!pte->valid)
 		return -ENOENT;
+//	printk("Traverse: xpte_paddr(pte): %p\n", xpte_paddr(pte));
 	result = (xpte_paddr(pte) | (vaddr & (PAGE_SIZE_4KB-1)));
 
 	out:

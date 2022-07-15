@@ -20,11 +20,11 @@ typedef struct {
 				union {
 								uint64_t value;
 								struct {
-												uint64_t offset : 12; // 00-11
-												uint64_t ppn0   : 9;  // 12-20
-												uint64_t ppn1   : 9;  // 21-28
-												uint64_t ppn2   : 9;  // 28-37
-												uint64_t rsvd   : 26; // 38-63
+												uint64_t offset : 12;  // 00-11
+												uint64_t ppn0   : 9;   // 12-20
+												uint64_t ppn1   : 9;   // 21-29
+												uint64_t ppn2   : 26;  // 30-55
+												uint64_t rsvd   : 8;   // 56-63
 								};
 				};
 } pte_paddr_t;
@@ -52,17 +52,22 @@ typedef struct {
 
 typedef xpte_t xpte_leaf_t;
 
+
+
 /* Extract whatever this PTE thinks is the physical address of the
  * next page. This is a uniform action, making the page table
  * traversal simpler.
  */
+static inline pte_paddr_t
+__xpte_paddr (xpte_t* pte)
+{
+				return (pte_paddr_t){ .ppn2 = pte->ppn2, .ppn1 = pte->ppn1, .ppn0 = pte->ppn0 };
+}
+
 static inline paddr_t
 xpte_paddr (xpte_t* pte)
 {
-		return (paddr_t)( ( (pte->ppn2 << 28) ||
-												(pte->ppn1 << 19) ||
-												(pte->ppn0 << 10) )
-											<< PAGE_SHIFT );
+				return (paddr_t)__xpte_paddr(pte).value;
 }
 
 static inline bool

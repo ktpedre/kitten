@@ -187,14 +187,9 @@ void __init
 riscv_start_kernel( void ) {
 	int32_t i;
 
-	/* memset(__bss_start, 0, */
-	/*       (unsigned long) __bss_stop - (unsigned long) __bss_start); */
-
-
 	early_printk("FDT Located At %p\n", fdt_start);
-//	early_printk("memstart_addr: %p\n", memstart_addr);
 
-	fdt_start = phys_to_virt(dtb_early_pa);
+	fdt_start = dtb_early_pa;
 	early_fdt_setup(dtb_early_va);
 
 	for (i = 0; i < NR_CPUS; i++)

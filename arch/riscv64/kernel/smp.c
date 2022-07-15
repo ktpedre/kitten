@@ -18,6 +18,7 @@
 /*#include <linux/seq_file.h>*/
 #include <lwk/delay.h>
 /*#include <lwk/irq_work.h>*/
+#include <lwk/cpuinfo.h>
 
 #include <arch/sbi.h>
 #include <arch/tlbflush.h>
@@ -39,6 +40,7 @@ unsigned long __cpuid_to_hartid_map[NR_CPUS] __ro_after_init = {
 void __init smp_setup_processor_id(void)
 {
 	cpuid_to_hartid_map(0) = boot_cpu_hartid;
+	/* cpu_logical_map(0)     = boot_cpu_hartid; */
 }
 
 /* A collection of single bit ipi messages.  */
@@ -215,6 +217,37 @@ void tick_broadcast(const struct cpumask *mask)
 	send_ipi_mask(mask, IPI_TIMER);
 }
 #endif
+
+void __init smp_prepare_boot_cpu(void)
+{
+
+	/* Assign the only CPU logical=physical ID 0 */
+	cpu_set(0, cpu_present_map);
+	/* physid_set(0, phys_cpu_present_map); */
+	cpu_info[0].logical_id   = 0;
+	cpu_info[0].physical_id  = 0;
+	cpu_info[0].arch.cpu_phys_id  = 0;
+
+
+
+
+#if 0
+	set_my_cpu_offset(per_cpu_offset(smp_processor_id()));
+	/*
+	 * Initialise the static keys early as they may be enabled by the
+	 * cpufeature code.
+	 */
+	jump_label_init();
+	cpuinfo_store_boot_cpu();
+	save_boot_cpu_run_el();
+	/*
+	 * Run the errata work around checks on the boot CPU, once we have
+	 * initialised the cpu feature infrastructure from
+	 * cpuinfo_store_boot_cpu() above.
+	 */
+	update_cpu_errata_workarounds();
+#endif
+}
 
 void smp_send_stop(void)
 {

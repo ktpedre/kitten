@@ -276,7 +276,7 @@ setup_arch(void)
 
 	paging_init();
 
-	initial_boot_params = fdt_start;
+	initial_boot_params = phys_to_virt(fdt_start);
 
 
 	/*
@@ -341,8 +341,8 @@ setup_arch(void)
 //	smp_init_cpus();
 
 
-
-//	smp_prepare_boot_cpu();
+	smp_setup_processor_id();
+	smp_prepare_boot_cpu();
 //	smp_prepare_cpus(num_possible_cpus());
 
 	/*

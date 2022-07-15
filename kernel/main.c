@@ -137,12 +137,13 @@ start_kernel()
 	 */
 	printk(KERN_INFO "Number of CPUs detected: %d\n", num_cpus());
 	/* NMG Do this later */
-	/* for_each_cpu_mask(cpu, cpu_present_map) { */
-	/* 	/\* The bootstrap CPU (that's us) is already booted. *\/ */
-	/* 	if (cpu == 0) { */
-	/* 		cpu_set(cpu, cpu_online_map); */
-	/* 		continue; */
-	/* 	} */
+	for_each_cpu_mask(cpu, cpu_present_map) {
+		/* 	/\* The bootstrap CPU (that's us) is already booted. *\/ */
+		if (cpu == 0) {
+			cpu_set(cpu, cpu_online_map);
+			continue;
+		}
+	}
 
 	/* 	printk(KERN_DEBUG "Booting CPU %u.\n", cpu); */
 	/* 	arch_boot_cpu(cpu); */
