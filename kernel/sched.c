@@ -520,7 +520,6 @@ schedule_new_task_tail(struct task_struct *prev, struct task_struct *next)
 #endif
 		kmem_free_pages(prev, TASK_ORDER);
 	}
-
         spin_unlock(&runq->lock);
         BUG_ON(irqs_enabled());
         /* arch code will re-enable IRQs as part of starting the new task */

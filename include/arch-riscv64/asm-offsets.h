@@ -8,55 +8,56 @@
  */
 
 #define TASK_THREAD_RA 200 /* offsetof(struct task_struct, arch.thread.ra)	# */
-#define TASK_THREAD_S0 240 /* offsetof(struct task_struct, arch.thread.s[0])	# */
-#define TASK_THREAD_S1 248 /* offsetof(struct task_struct, arch.thread.s[1])	# */
-#define TASK_THREAD_S2 256 /* offsetof(struct task_struct, arch.thread.s[2])	# */
-#define TASK_THREAD_S3 264 /* offsetof(struct task_struct, arch.thread.s[3])	# */
-#define TASK_THREAD_S4 272 /* offsetof(struct task_struct, arch.thread.s[4])	# */
-#define TASK_THREAD_S5 280 /* offsetof(struct task_struct, arch.thread.s[5])	# */
-#define TASK_THREAD_S6 288 /* offsetof(struct task_struct, arch.thread.s[6])	# */
-#define TASK_THREAD_S7 296 /* offsetof(struct task_struct, arch.thread.s[7])	# */
-#define TASK_THREAD_S8 304 /* offsetof(struct task_struct, arch.thread.s[8])	# */
-#define TASK_THREAD_S9 312 /* offsetof(struct task_struct, arch.thread.s[9])	# */
-#define TASK_THREAD_S10 320 /* offsetof(struct task_struct, arch.thread.s[10])	# */
-#define TASK_THREAD_S11 328 /* offsetof(struct task_struct, arch.thread.s[11])	# */
+#define TASK_THREAD_S0 248 /* offsetof(struct task_struct, arch.thread.s[0])	# */
+#define TASK_THREAD_S1 256 /* offsetof(struct task_struct, arch.thread.s[1])	# */
+#define TASK_THREAD_S2 264 /* offsetof(struct task_struct, arch.thread.s[2])	# */
+#define TASK_THREAD_S3 272 /* offsetof(struct task_struct, arch.thread.s[3])	# */
+#define TASK_THREAD_S4 280 /* offsetof(struct task_struct, arch.thread.s[4])	# */
+#define TASK_THREAD_S5 288 /* offsetof(struct task_struct, arch.thread.s[5])	# */
+#define TASK_THREAD_S6 296 /* offsetof(struct task_struct, arch.thread.s[6])	# */
+#define TASK_THREAD_S7 304 /* offsetof(struct task_struct, arch.thread.s[7])	# */
+#define TASK_THREAD_S8 312 /* offsetof(struct task_struct, arch.thread.s[8])	# */
+#define TASK_THREAD_S9 320 /* offsetof(struct task_struct, arch.thread.s[9])	# */
+#define TASK_THREAD_S10 328 /* offsetof(struct task_struct, arch.thread.s[10])	# */
+#define TASK_THREAD_S11 336 /* offsetof(struct task_struct, arch.thread.s[11])	# */
 #define TASK_THREAD_FLAGS 184 /* offsetof(struct task_struct, arch.flags)	# */
-#define TASK_THREAD_KERNEL_SP 208 /* offsetof(struct task_struct, arch.thread.kern_sp)	# */
-#define TASK_THREAD_USER_SP 216 /* offsetof(struct task_struct, arch.thread.user_sp)	# */
-#define TASK_THREAD_PREEMPT_COUNT 224 /* offsetof(struct task_struct, arch.thread.preempt_count)	# */
-#define TASK_THREAD_F0 336 /* offsetof(struct task_struct, arch.thread.fstate.f[0])	# */
-#define TASK_THREAD_F1 344 /* offsetof(struct task_struct, arch.thread.fstate.f[1])	# */
-#define TASK_THREAD_F2 352 /* offsetof(struct task_struct, arch.thread.fstate.f[2])	# */
-#define TASK_THREAD_F3 360 /* offsetof(struct task_struct, arch.thread.fstate.f[3])	# */
-#define TASK_THREAD_F4 368 /* offsetof(struct task_struct, arch.thread.fstate.f[4])	# */
-#define TASK_THREAD_F5 376 /* offsetof(struct task_struct, arch.thread.fstate.f[5])	# */
-#define TASK_THREAD_F6 384 /* offsetof(struct task_struct, arch.thread.fstate.f[6])	# */
-#define TASK_THREAD_F7 392 /* offsetof(struct task_struct, arch.thread.fstate.f[7])	# */
-#define TASK_THREAD_F8 400 /* offsetof(struct task_struct, arch.thread.fstate.f[8])	# */
-#define TASK_THREAD_F9 408 /* offsetof(struct task_struct, arch.thread.fstate.f[9])	# */
-#define TASK_THREAD_F10 416 /* offsetof(struct task_struct, arch.thread.fstate.f[10])	# */
-#define TASK_THREAD_F11 424 /* offsetof(struct task_struct, arch.thread.fstate.f[11])	# */
-#define TASK_THREAD_F12 432 /* offsetof(struct task_struct, arch.thread.fstate.f[12])	# */
-#define TASK_THREAD_F13 440 /* offsetof(struct task_struct, arch.thread.fstate.f[13])	# */
-#define TASK_THREAD_F14 448 /* offsetof(struct task_struct, arch.thread.fstate.f[14])	# */
-#define TASK_THREAD_F15 456 /* offsetof(struct task_struct, arch.thread.fstate.f[15])	# */
-#define TASK_THREAD_F16 464 /* offsetof(struct task_struct, arch.thread.fstate.f[16])	# */
-#define TASK_THREAD_F17 472 /* offsetof(struct task_struct, arch.thread.fstate.f[17])	# */
-#define TASK_THREAD_F18 480 /* offsetof(struct task_struct, arch.thread.fstate.f[18])	# */
-#define TASK_THREAD_F19 488 /* offsetof(struct task_struct, arch.thread.fstate.f[19])	# */
-#define TASK_THREAD_F20 496 /* offsetof(struct task_struct, arch.thread.fstate.f[20])	# */
-#define TASK_THREAD_F21 504 /* offsetof(struct task_struct, arch.thread.fstate.f[21])	# */
-#define TASK_THREAD_F22 512 /* offsetof(struct task_struct, arch.thread.fstate.f[22])	# */
-#define TASK_THREAD_F23 520 /* offsetof(struct task_struct, arch.thread.fstate.f[23])	# */
-#define TASK_THREAD_F24 528 /* offsetof(struct task_struct, arch.thread.fstate.f[24])	# */
-#define TASK_THREAD_F25 536 /* offsetof(struct task_struct, arch.thread.fstate.f[25])	# */
-#define TASK_THREAD_F26 544 /* offsetof(struct task_struct, arch.thread.fstate.f[26])	# */
-#define TASK_THREAD_F27 552 /* offsetof(struct task_struct, arch.thread.fstate.f[27])	# */
-#define TASK_THREAD_F28 560 /* offsetof(struct task_struct, arch.thread.fstate.f[28])	# */
-#define TASK_THREAD_F29 568 /* offsetof(struct task_struct, arch.thread.fstate.f[29])	# */
-#define TASK_THREAD_F30 576 /* offsetof(struct task_struct, arch.thread.fstate.f[30])	# */
-#define TASK_THREAD_F31 584 /* offsetof(struct task_struct, arch.thread.fstate.f[31])	# */
-#define TASK_THREAD_FCSR 592 /* offsetof(struct task_struct, arch.thread.fstate.fcsr)	# */
+#define TASK_THREAD_KERNEL_SP0 208 /* offsetof(struct task_struct, arch.thread.kern_sp0)	# */
+#define TASK_THREAD_KERNEL_SP 216 /* offsetof(struct task_struct, arch.thread.kern_sp)	# */
+#define TASK_THREAD_USER_SP 224 /* offsetof(struct task_struct, arch.thread.user_sp)	# */
+#define TASK_THREAD_PREEMPT_COUNT 232 /* offsetof(struct task_struct, arch.thread.preempt_count)	# */
+#define TASK_THREAD_F0 344 /* offsetof(struct task_struct, arch.thread.fstate.f[0])	# */
+#define TASK_THREAD_F1 352 /* offsetof(struct task_struct, arch.thread.fstate.f[1])	# */
+#define TASK_THREAD_F2 360 /* offsetof(struct task_struct, arch.thread.fstate.f[2])	# */
+#define TASK_THREAD_F3 368 /* offsetof(struct task_struct, arch.thread.fstate.f[3])	# */
+#define TASK_THREAD_F4 376 /* offsetof(struct task_struct, arch.thread.fstate.f[4])	# */
+#define TASK_THREAD_F5 384 /* offsetof(struct task_struct, arch.thread.fstate.f[5])	# */
+#define TASK_THREAD_F6 392 /* offsetof(struct task_struct, arch.thread.fstate.f[6])	# */
+#define TASK_THREAD_F7 400 /* offsetof(struct task_struct, arch.thread.fstate.f[7])	# */
+#define TASK_THREAD_F8 408 /* offsetof(struct task_struct, arch.thread.fstate.f[8])	# */
+#define TASK_THREAD_F9 416 /* offsetof(struct task_struct, arch.thread.fstate.f[9])	# */
+#define TASK_THREAD_F10 424 /* offsetof(struct task_struct, arch.thread.fstate.f[10])	# */
+#define TASK_THREAD_F11 432 /* offsetof(struct task_struct, arch.thread.fstate.f[11])	# */
+#define TASK_THREAD_F12 440 /* offsetof(struct task_struct, arch.thread.fstate.f[12])	# */
+#define TASK_THREAD_F13 448 /* offsetof(struct task_struct, arch.thread.fstate.f[13])	# */
+#define TASK_THREAD_F14 456 /* offsetof(struct task_struct, arch.thread.fstate.f[14])	# */
+#define TASK_THREAD_F15 464 /* offsetof(struct task_struct, arch.thread.fstate.f[15])	# */
+#define TASK_THREAD_F16 472 /* offsetof(struct task_struct, arch.thread.fstate.f[16])	# */
+#define TASK_THREAD_F17 480 /* offsetof(struct task_struct, arch.thread.fstate.f[17])	# */
+#define TASK_THREAD_F18 488 /* offsetof(struct task_struct, arch.thread.fstate.f[18])	# */
+#define TASK_THREAD_F19 496 /* offsetof(struct task_struct, arch.thread.fstate.f[19])	# */
+#define TASK_THREAD_F20 504 /* offsetof(struct task_struct, arch.thread.fstate.f[20])	# */
+#define TASK_THREAD_F21 512 /* offsetof(struct task_struct, arch.thread.fstate.f[21])	# */
+#define TASK_THREAD_F22 520 /* offsetof(struct task_struct, arch.thread.fstate.f[22])	# */
+#define TASK_THREAD_F23 528 /* offsetof(struct task_struct, arch.thread.fstate.f[23])	# */
+#define TASK_THREAD_F24 536 /* offsetof(struct task_struct, arch.thread.fstate.f[24])	# */
+#define TASK_THREAD_F25 544 /* offsetof(struct task_struct, arch.thread.fstate.f[25])	# */
+#define TASK_THREAD_F26 552 /* offsetof(struct task_struct, arch.thread.fstate.f[26])	# */
+#define TASK_THREAD_F27 560 /* offsetof(struct task_struct, arch.thread.fstate.f[27])	# */
+#define TASK_THREAD_F28 568 /* offsetof(struct task_struct, arch.thread.fstate.f[28])	# */
+#define TASK_THREAD_F29 576 /* offsetof(struct task_struct, arch.thread.fstate.f[29])	# */
+#define TASK_THREAD_F30 584 /* offsetof(struct task_struct, arch.thread.fstate.f[30])	# */
+#define TASK_THREAD_F31 592 /* offsetof(struct task_struct, arch.thread.fstate.f[31])	# */
+#define TASK_THREAD_FCSR 600 /* offsetof(struct task_struct, arch.thread.fstate.fcsr)	# */
 #define PT_SIZE 288 /* sizeof(struct pt_regs)	# */
 #define PT_EPC 0 /* offsetof(struct pt_regs, epc)	# */
 #define PT_RA 8 /* offsetof(struct pt_regs, ra)	# */
@@ -96,19 +97,19 @@
 #define PT_BADADDR 264 /* offsetof(struct pt_regs, badaddr)	# */
 #define PT_CAUSE 272 /* offsetof(struct pt_regs, cause)	# */
 #define TASK_THREAD_RA_RA 0 /* offsetof(struct task_struct, arch.thread.ra) - offsetof(struct task_struct, arch.thread.ra)	# */
-#define TASK_THREAD_USER_SP_RA 16 /* offsetof(struct task_struct, arch.thread.user_sp) - offsetof(struct task_struct, arch.thread.ra)	# */
-#define TASK_THREAD_S0_RA 40 /* offsetof(struct task_struct, arch.thread.s[0]) - offsetof(struct task_struct, arch.thread.ra)	# */
-#define TASK_THREAD_S1_RA 48 /* offsetof(struct task_struct, arch.thread.s[1]) - offsetof(struct task_struct, arch.thread.ra)	# */
-#define TASK_THREAD_S2_RA 56 /* offsetof(struct task_struct, arch.thread.s[2]) - offsetof(struct task_struct, arch.thread.ra)	# */
-#define TASK_THREAD_S3_RA 64 /* offsetof(struct task_struct, arch.thread.s[3]) - offsetof(struct task_struct, arch.thread.ra)	# */
-#define TASK_THREAD_S4_RA 72 /* offsetof(struct task_struct, arch.thread.s[4]) - offsetof(struct task_struct, arch.thread.ra)	# */
-#define TASK_THREAD_S5_RA 80 /* offsetof(struct task_struct, arch.thread.s[5]) - offsetof(struct task_struct, arch.thread.ra)	# */
-#define TASK_THREAD_S6_RA 88 /* offsetof(struct task_struct, arch.thread.s[6]) - offsetof(struct task_struct, arch.thread.ra)	# */
-#define TASK_THREAD_S7_RA 96 /* offsetof(struct task_struct, arch.thread.s[7]) - offsetof(struct task_struct, arch.thread.ra)	# */
-#define TASK_THREAD_S8_RA 104 /* offsetof(struct task_struct, arch.thread.s[8]) - offsetof(struct task_struct, arch.thread.ra)	# */
-#define TASK_THREAD_S9_RA 112 /* offsetof(struct task_struct, arch.thread.s[9]) - offsetof(struct task_struct, arch.thread.ra)	# */
-#define TASK_THREAD_S10_RA 120 /* offsetof(struct task_struct, arch.thread.s[10]) - offsetof(struct task_struct, arch.thread.ra)	# */
-#define TASK_THREAD_S11_RA 128 /* offsetof(struct task_struct, arch.thread.s[11]) - offsetof(struct task_struct, arch.thread.ra)	# */
+#define TASK_THREAD_USER_SP_RA 24 /* offsetof(struct task_struct, arch.thread.user_sp) - offsetof(struct task_struct, arch.thread.ra)	# */
+#define TASK_THREAD_S0_RA 48 /* offsetof(struct task_struct, arch.thread.s[0]) - offsetof(struct task_struct, arch.thread.ra)	# */
+#define TASK_THREAD_S1_RA 56 /* offsetof(struct task_struct, arch.thread.s[1]) - offsetof(struct task_struct, arch.thread.ra)	# */
+#define TASK_THREAD_S2_RA 64 /* offsetof(struct task_struct, arch.thread.s[2]) - offsetof(struct task_struct, arch.thread.ra)	# */
+#define TASK_THREAD_S3_RA 72 /* offsetof(struct task_struct, arch.thread.s[3]) - offsetof(struct task_struct, arch.thread.ra)	# */
+#define TASK_THREAD_S4_RA 80 /* offsetof(struct task_struct, arch.thread.s[4]) - offsetof(struct task_struct, arch.thread.ra)	# */
+#define TASK_THREAD_S5_RA 88 /* offsetof(struct task_struct, arch.thread.s[5]) - offsetof(struct task_struct, arch.thread.ra)	# */
+#define TASK_THREAD_S6_RA 96 /* offsetof(struct task_struct, arch.thread.s[6]) - offsetof(struct task_struct, arch.thread.ra)	# */
+#define TASK_THREAD_S7_RA 104 /* offsetof(struct task_struct, arch.thread.s[7]) - offsetof(struct task_struct, arch.thread.ra)	# */
+#define TASK_THREAD_S8_RA 112 /* offsetof(struct task_struct, arch.thread.s[8]) - offsetof(struct task_struct, arch.thread.ra)	# */
+#define TASK_THREAD_S9_RA 120 /* offsetof(struct task_struct, arch.thread.s[9]) - offsetof(struct task_struct, arch.thread.ra)	# */
+#define TASK_THREAD_S10_RA 128 /* offsetof(struct task_struct, arch.thread.s[10]) - offsetof(struct task_struct, arch.thread.ra)	# */
+#define TASK_THREAD_S11_RA 136 /* offsetof(struct task_struct, arch.thread.s[11]) - offsetof(struct task_struct, arch.thread.ra)	# */
 #define TASK_THREAD_F0_F0 0 /* offsetof(struct task_struct, arch.thread.fstate.f[0]) - offsetof(struct task_struct, arch.thread.fstate.f[0])	# */
 #define TASK_THREAD_F1_F0 8 /* offsetof(struct task_struct, arch.thread.fstate.f[1]) - offsetof(struct task_struct, arch.thread.fstate.f[0])	# */
 #define TASK_THREAD_F2_F0 16 /* offsetof(struct task_struct, arch.thread.fstate.f[2]) - offsetof(struct task_struct, arch.thread.fstate.f[0])	# */

@@ -53,7 +53,7 @@ static inline void local_irq_enable(void)
 ({								\
 	unsigned long flags;		\
 	local_save_flags(flags);	\
-	!!(flags & (0x1 << 7));		\
+	!(flags & SR_IE);		\
 })
 
 #define irqs_enabled() !irqs_disabled()

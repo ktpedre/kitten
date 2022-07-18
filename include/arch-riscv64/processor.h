@@ -55,6 +55,7 @@ typedef enum {
 struct thread_struct {
 	/* Callee-saved registers */
 	unsigned long ra;
+	unsigned long kern_sp0; /* Top of kernel stack */
 	unsigned long kern_sp;	/* Kernel mode stack */
 	unsigned long user_sp; /* User-mode stack */
 	unsigned long preempt_count;

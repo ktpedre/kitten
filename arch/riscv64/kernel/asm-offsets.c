@@ -43,6 +43,7 @@ void asm_offsets(void)
 	OFFSET(TASK_THREAD_S10, task_struct, arch.thread.s[10]);
 	OFFSET(TASK_THREAD_S11, task_struct, arch.thread.s[11]);
 	OFFSET(TASK_THREAD_FLAGS, task_struct, arch.flags);
+	OFFSET(TASK_THREAD_KERNEL_SP0, task_struct, arch.thread.kern_sp0);
 	OFFSET(TASK_THREAD_KERNEL_SP, task_struct, arch.thread.kern_sp);
 	OFFSET(TASK_THREAD_USER_SP, task_struct, arch.thread.user_sp);
   OFFSET(TASK_THREAD_PREEMPT_COUNT, task_struct, arch.thread.preempt_count);

@@ -106,16 +106,27 @@ arch_aspace_activate(
 	//printk("&aspace->child_list %p\n",&aspace->child_list);
 	//printk("(&aspace->child_list)->prev %p\n",(&aspace->child_list)->prev);
 
-	printk("aspace activate pgd %p pa %p\n", aspace->arch.pgd, __pa(aspace->arch.pgd));
+	/* printk("aspace activate pgd %p pa %p pfndown %p satp %p\n", aspace->arch.pgd, __pa(aspace->arch.pgd), */
+	/* 			 PFN_DOWN(__pa(aspace->arch.pgd)), PFN_DOWN(__pa(aspace->arch.pgd)) | satp_mode); */
+	barrier();
+	unsigned long long step1 = aspace->arch.pgd;
+	unsigned long long step2 = __pa(step1);
+	unsigned long long step3 = PFN_DOWN(step2);
+	unsigned long long step4 = step3 | satp_mode;
+	/* unsigned long new_satp = PFN_DOWN(__pa(aspace->arch.pgd)) | satp_mode; */
+	barrier();
 	if (aspace->id != BOOTSTRAP_ASPACE_ID) {
-		asm volatile(
-			"sfence.vma\n"
-			"csrw satp, %0\n"
-			"fence.i\n"
-			:
-			: "r" (PFN_DOWN(__pa(aspace->arch.pgd)) | satp_mode)
-			: "memory"
-			);
+		csr_write(CSR_SATP, step4);
+		local_flush_tlb_all();
+		/* asm volatile( */
+		/* 	"sfence.vma\n" */
+		/* 	"csrw satp, %0\n" */
+		/* 	"sfence.vma\n" */
+		/* 	"fence.i\n" */
+		/* 	: */
+		/* 	: "r" (PFN_DOWN(__pa(aspace->arch.pgd)) | satp_mode) */
+		/* 	: "memory" */
+		/* 	); */
 	} else {
 		// Nothing to do for the bootstrap aspace
 	}
@@ -158,7 +169,6 @@ alloc_page_table(
 #endif
 
 		pte_paddr_t next_pa = (pte_paddr_t) { .value = __pa(new_table) };
-		printk("Next PA %p\n", next_pa.value);
 		_pte.ppn2 = next_pa.ppn2;
 		_pte.ppn1 = next_pa.ppn1;
 		_pte.ppn0 = next_pa.ppn0;

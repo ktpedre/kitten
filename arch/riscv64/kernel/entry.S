@@ -7,6 +7,7 @@
 #include <lwk/init.h>
 #include <lwk/linkage.h>
 
+#include <arch/task.h>
 #include <arch/asm.h>
 #include <arch/csr.h>
 #include <arch/unistd.h>
@@ -421,8 +422,58 @@ ENTRY(arch_context_switch)
     - update the PDA
     - update FPU stuff
   */
-  call __arch_context_switch
-  
+  /* call __arch_context_switch */
+
+  /* Check if a new task. Otherwise, jump straight to the end of the routine */
+  REG_L t0, TASK_THREAD_FLAGS(a1)
+  andi t0, t0, TF_NEW_TASK_MASK
+  beqz t0, 1f
+  move s1, a1
+  move s2, a4
+
+kickstart_new_task:
+  jal ra, schedule_new_task_tail
+
+  move a1, s1
+  move a4, s2
+
+	/* The offset of thread_info in task_struct is zero. */
+  move tp, a1
+
+  REG_L a3, TASK_THREAD_KERNEL_SP0(a1)
+  addi a3, a3, -PT_SIZE
+  /*REG_L x1,  PT_RA(sp)*/
+	REG_L gp, PT_GP(a3)
+/*	REG_L tp, PT_TP(a3)*/
+	REG_L t0, PT_T0(a3)
+	REG_L t1, PT_T1(a3)
+	REG_L t2, PT_T2(a3)
+	REG_L s0, PT_S0(a3)
+	REG_L s1, PT_S1(a3)
+	REG_L a0, PT_A0(a3)
+	REG_L a1, PT_A1(a3)
+	REG_L a2, PT_A2(a3)
+	REG_L a5, PT_A5(a3)
+	REG_L a6, PT_A6(a3)
+	REG_L a7, PT_A7(a3)
+	REG_L s2, PT_S2(a3)
+	REG_L s3, PT_S3(a3)
+	REG_L s4, PT_S4(a3)
+	REG_L s5, PT_S5(a3)
+	REG_L s6, PT_S6(a3)
+	REG_L s7, PT_S7(a3)
+	REG_L s8, PT_S8(a3)
+	REG_L s9, PT_S9(a3)
+	REG_L s10, PT_S10(a3)
+	REG_L s11, PT_S11(a3)
+	REG_L t3, PT_T3(a3)
+	REG_L t4, PT_T4(a3)
+	REG_L t5, PT_T5(a3)
+	REG_L t6, PT_T6(a3)
+
+	/*REG_L sp,  PT_SP(sp)*/
+1:
+
 	/* Restore context from next->thread */
 	REG_L ra,  TASK_THREAD_RA_RA(a4)
 	REG_L sp,  TASK_THREAD_USER_SP_RA(a4)
@@ -438,8 +489,11 @@ ENTRY(arch_context_switch)
 	REG_L s9,  TASK_THREAD_S9_RA(a4)
 	REG_L s10, TASK_THREAD_S10_RA(a4)
 	REG_L s11, TASK_THREAD_S11_RA(a4)
-	/* The offset of thread_info in task_struct is zero. */
-	move tp, a1
+
+  REG_L a4, PT_A4(a3)
+  REG_L a3, PT_A3(a3)
+
+
 	ret
 //ENDPROC(__switch_to)
 ENDPROC(arch_context_switch)

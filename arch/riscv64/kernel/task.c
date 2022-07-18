@@ -49,9 +49,10 @@ arch_task_create(
 		memset(regs, 0, sizeof(regs));
 	}
 
-	task->arch.thread.kern_sp = (kaddr_t)(regs + 1);    /* kstack top */
-//task->arch.thread.cpu_context.kern_sp = (kaddr_t)regs;          /* kstack ptr */
-	task->arch.thread.user_sp = start_state->stack_ptr; /* ustack ptr */
+	task->arch.thread.kern_sp0 = (kaddr_t)(regs + 1);
+	task->arch.thread.kern_sp	 = (kaddr_t)regs;	/* kstack top */
+	task->arch.thread.user_sp	 = start_state->stack_ptr;	/* ustack ptr */
+	task->arch.thread.ra			 = start_state->entry_point;
 
 	/* Mark this as a new-task... arch_context_switch() checks this flag */
 	task->arch.flags = TF_NEW_TASK_MASK;
@@ -72,6 +73,7 @@ arch_task_create(
 	}
 //	regs->eflags = (1 << 9);  /* enable interrupts */
 	regs->epc    = is_clone ? parent_regs->epc : start_state->entry_point;
+	regs->ra     = is_clone ? parent_regs->epc : start_state->entry_point;
 
 	return 0;
 }
