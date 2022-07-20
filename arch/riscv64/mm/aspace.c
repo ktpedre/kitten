@@ -101,6 +101,11 @@ arch_aspace_activate(
 	struct aspace *	aspace
 )
 {
+	static unsigned long long local_satp_mode = 0;
+	if (!local_satp_mode)
+	{
+		local_satp_mode = satp_mode;
+	}
 	//printk("activate aspace [%d] at %p\n", aspace->id, aspace->arch.pgd);
 	//printk("aspace->child_list %p\n",aspace->child_list);
 	//printk("&aspace->child_list %p\n",&aspace->child_list);
@@ -112,7 +117,7 @@ arch_aspace_activate(
 	unsigned long long step1 = aspace->arch.pgd;
 	unsigned long long step2 = __pa(step1);
 	unsigned long long step3 = PFN_DOWN(step2);
-	unsigned long long step4 = step3 | satp_mode;
+	unsigned long long step4 = step3 | local_satp_mode;
 	/* unsigned long new_satp = PFN_DOWN(__pa(aspace->arch.pgd)) | satp_mode; */
 	barrier();
 	if (aspace->id != BOOTSTRAP_ASPACE_ID) {
@@ -420,12 +425,31 @@ write_pte(
 	memset(&_pte, 0, sizeof(_pte));
 
 	_pte.valid	= 1;
-	_pte.read   = 1;
-	_pte.write	= 1;
-	_pte.global = 1;
-	_pte.exec		= 1;
-	_pte.acc    = 1;
-	_pte.dirty  = 1;
+
+	if (flags & VM_WRITE)
+		_pte.write = 1;
+	if (flags & VM_USER)
+		_pte.user = 1;
+	if (flags & VM_READ)
+		_pte.read = 1;
+	if (flags & VM_GLOBAL)
+		_pte.global = 1;
+	if (flags & VM_EXEC)
+		_pte.exec = 1;
+	if (flags & VM_KERNEL) {
+		_pte.global = 1;
+		_pte.write  = 1;
+		_pte.read		= 1;
+		_pte.acc = 1;
+		_pte.dirty    = 1;
+	}
+
+	/* _pte.valid	= 1; */
+	/* _pte.read   = 1; */
+	/* _pte.write	= 1; */
+	/* _pte.global = 1; */
+	/* _pte.acc    = 1; */
+	/* _pte.dirty  = 1; */
 
 	/* NMG Not sure how to model nocache/device memory in these page tables. */
 /* 	if (flags & VM_NOCACHE) { */
@@ -484,13 +508,21 @@ arch_aspace_map_page(
 {
 	xpte_t *pte;
 
+	/* On RISC-V the kernel can't access user pages unless a mode bit is
+	 * set. We don't want to do this all the time, but for e.g. copying
+	 * ELF segments we need to do it. If we are mapping user memory into
+	 * the kernel it is for this purpose, and we can clear that bit. */
+	if (aspace->id == KERNEL_ASPACE_ID || aspace->id == BOOTSTRAP_ASPACE_ID)
+	{
+		flags = flags & (~VM_USER);
+	}
+
 	//printk("Mapping Page [aspace=%d] (vaddr=%p) (paddr=%p) (pagesz=%d)\n", aspace->id, (void *)start, (void *)paddr, pagesz);
 
 	/* Locate page table entry that needs to be updated to map the page */
 	pte = find_or_create_pte(aspace, start, pagesz);
 	if (!pte)
 		return -ENOMEM;
-
 
 	/* Update the page table entry */
 	write_pte(pte, paddr, flags, pagesz);

@@ -33,6 +33,12 @@ struct arch_task {
 	struct thread_struct 	thread;
 };
 
+extern void ret_from_exception();
+
+extern void ret_from_fork();
+
+extern void ret_from_kernel_thread();
+
 
 #endif
 #endif

@@ -51,8 +51,8 @@ arch_task_create(
 
 	task->arch.thread.kern_sp0 = (kaddr_t)(regs + 1);
 	task->arch.thread.kern_sp	 = (kaddr_t)regs;	/* kstack top */
-	task->arch.thread.user_sp	 = start_state->stack_ptr;	/* ustack ptr */
-	task->arch.thread.ra			 = start_state->entry_point;
+	/* task->arch.thread.user_sp	 = start_state->stack_ptr;	/\* ustack ptr *\/ */
+	/* task->arch.thread.ra			 = start_state->entry_point; */
 
 	/* Mark this as a new-task... arch_context_switch() checks this flag */
 	task->arch.flags = TF_NEW_TASK_MASK;
@@ -65,15 +65,23 @@ arch_task_create(
 
 	/* Initialize register state */
 	if (start_state->aspace_id == KERNEL_ASPACE_ID) {
-		regs->sp     = (vaddr_t)task + TASK_SIZE;
-		regs->status = SR_PP | SR_PIE;
+		regs->status							= SR_PP | SR_PIE;
+		regs->gp									= get_gp();
+		task->arch.thread.ra			= ret_from_kernel_thread;
+
+		task->arch.thread.s[0] = start_state->arg[0];
+		task->arch.thread.s[1] = start_state->arg[1];
+
+		/* regs->s0     = start_state->arg[0]; */
+		/* regs->s1     = start_state->arg[1]; */
 	} else {
-		regs->sp     = start_state->stack_ptr;
 		regs->status = 0;
+		task->arch.thread.ra = ret_from_fork;
+		task->arch.thread.user_sp = start_state->stack_ptr;
+		regs->sp = start_state->stack_ptr;
 	}
-//	regs->eflags = (1 << 9);  /* enable interrupts */
+//	repgs->eflags = (1 << 9);  /* enable interrupts */
 	regs->epc    = is_clone ? parent_regs->epc : start_state->entry_point;
-	regs->ra     = is_clone ? parent_regs->epc : start_state->entry_point;
 
 	return 0;
 }

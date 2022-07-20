@@ -265,7 +265,7 @@ syscalls:
 	.globl	asm_offsets
 	.type	asm_offsets, @function
 asm_offsets:
-.LFB369:
+.LFB370:
 	.file 1 "arch/riscv64/kernel/asm-offsets.c"
 	.loc 1 30 1
 	.cfi_startproc
@@ -281,6 +281,12 @@ asm_offsets:
 # 31 "arch/riscv64/kernel/asm-offsets.c" 1
 	
 ->TASK_THREAD_RA 200 offsetof(struct task_struct, arch.thread.ra)	#
+# 0 "" 2
+# arch/riscv64/kernel/asm-offsets.c:32: 	OFFSET(TASK_THREAD_KERN_SP, task_struct, arch.thread.kern_sp);
+	.loc 1 32 2
+# 32 "arch/riscv64/kernel/asm-offsets.c" 1
+	
+->TASK_THREAD_KERN_SP 216 offsetof(struct task_struct, arch.thread.kern_sp)	#
 # 0 "" 2
 # arch/riscv64/kernel/asm-offsets.c:33: 	OFFSET(TASK_THREAD_S0, task_struct, arch.thread.s[0]);
 	.loc 1 33 2
@@ -1133,7 +1139,7 @@ asm_offsets:
 	.cfi_def_cfa_offset 0
 	jr	ra		#
 	.cfi_endproc
-.LFE369:
+.LFE370:
 	.size	asm_offsets, .-asm_offsets
 	.text
 .Letext0:
@@ -1792,8 +1798,8 @@ asm_offsets:
 	.byte	0x1
 	.byte	0x1d
 	.byte	0x6
-	.8byte	.LFB369
-	.8byte	.LFE369-.LFB369
+	.8byte	.LFB370
+	.8byte	.LFE370-.LFB370
 	.byte	0x1
 	.byte	0x9c
 	.byte	0
@@ -2119,14 +2125,14 @@ asm_offsets:
 	.byte	0
 	.2byte	0
 	.2byte	0
-	.8byte	.LFB369
-	.8byte	.LFE369-.LFB369
+	.8byte	.LFB370
+	.8byte	.LFE370-.LFB370
 	.8byte	0
 	.8byte	0
 	.section	.debug_ranges,"",@progbits
 .Ldebug_ranges0:
-	.8byte	.LFB369
-	.8byte	.LFE369
+	.8byte	.LFB370
+	.8byte	.LFE370
 	.8byte	0
 	.8byte	0
 	.section	.debug_line,"",@progbits

@@ -22,6 +22,13 @@ static inline u64 get_tp()
 	return tp;
 }
 
+static inline u64 get_gp()
+{
+	u64 gp;
+	__asm__ __volatile__("mv %0, gp\n" : "=r"(gp));
+	return gp;
+}
+
 /* Per processor datastructure. Each core stores its own version in the tpidr_el1 register. */ 
 struct RISCV_pda {
 	struct task_struct * pcurrent;	/* Current process */

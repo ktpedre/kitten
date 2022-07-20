@@ -8,6 +8,7 @@
  */
 
 #define TASK_THREAD_RA 200 /* offsetof(struct task_struct, arch.thread.ra)	# */
+#define TASK_THREAD_KERN_SP 216 /* offsetof(struct task_struct, arch.thread.kern_sp)	# */
 #define TASK_THREAD_S0 248 /* offsetof(struct task_struct, arch.thread.s[0])	# */
 #define TASK_THREAD_S1 256 /* offsetof(struct task_struct, arch.thread.s[1])	# */
 #define TASK_THREAD_S2 264 /* offsetof(struct task_struct, arch.thread.s[2])	# */

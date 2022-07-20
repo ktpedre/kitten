@@ -602,6 +602,8 @@ aspace_add_region(id_t id,
 	struct aspace *aspace;
 	unsigned long irqstate;
 
+	printk("Flags! 0x%x\n", flags);
+
 	local_irq_save(irqstate);
 	aspace = lookup_and_lock(id);
 	status = __aspace_add_region(aspace, start, extent, flags, pagesz, name);
@@ -725,6 +727,8 @@ aspace_map_pmem(id_t id, paddr_t pmem, vaddr_t start, size_t extent)
 	int status;
 	struct aspace *aspace;
 	unsigned long irqstate;
+
+	printk("Mapping paddr %p to vaddr %p with extent 0x%x\n", pmem, start, extent);
 
 	local_irq_save(irqstate);
 	aspace = lookup_and_lock(id);
