@@ -3,7 +3,7 @@ include $(BASE)/Makefile.header
 
 PROGRAMS = hello_world
 
-hello_world_SOURCES = hello_world.c sched_getcpu.c
+hello_world_SOURCES = hello_world.c
 hello_world_LDADD   = -llwk -lpthread
 #ifdef CONFIG_TASK_MEAS
 hello_world_LDADD   += -lm

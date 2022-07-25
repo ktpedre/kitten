@@ -1,102 +1,60 @@
 #ifndef _RISCV_SYSCALL_H
 #define _RISCV_SYSCALL_H
-/**
- * There is no way to specify inline assembly constraints for %r10 (arg4),
- * %r8 (arg5), and %r9 (arg6), so the macros below specify the registers
- * to use for local variables as a work-around.
- *
- * GCC BUG? -- For some unknown reason, the register specified to store
- *             a local variable is not always honored if the variable
- *             is assigned when it is declared.  Work-around by declaring
- *             and assigning on separate lines.
- */
+
+static inline long
+__internal_syscall(long n, long _a0, long _a1, long _a2, long _a3, long _a4, long _a5)
+{
+  register long a0 asm("a0") = _a0;
+  register long a1 asm("a1") = _a1;
+  register long a2 asm("a2") = _a2;
+  register long a3 asm("a3") = _a3;
+  register long a4 asm("a4") = _a4;
+  register long a5 asm("a5") = _a5;
+
+#ifdef __riscv_32e
+  register long syscall_id asm("t0") = n;
+#else
+  register long syscall_id asm("a7") = n;
+#endif
+
+  asm volatile ("scall"
+		: "+r"(a0) : "r"(a1), "r"(a2), "r"(a3), "r"(a4), "r"(a5), "r"(syscall_id));
+
+  return a0;
+}
+
 #define SYSCALL0(name) 						\
 int name(void) {						\
 	int status;						\
-	/*asm volatile(						\
-		"syscall"					\
-		: "=a" (status)					\
-		: "0" (__NR_##name)				\
-		: "memory", "rcx", "r11", "cc"			\
-	);*/							\
+	status = __internal_syscall(__NR_##name, 0, 0, 0, 0, 0, 0); \
 	return status;						\
 }
 
 #define SYSCALL1(name, type1) 					\
 int name(type1 arg1) {						\
 	int status = 0;						\
-	/*register type1 rdi asm("rdi");				\
-	rdi = arg1;						\
-	asm volatile(						\
-		"syscall"					\
-		: "=a" (status)					\
-		: "0" (__NR_##name),				\
-		  "r" (rdi)					\
-		: "memory", "rcx", "r11", "cc"			\
-	);*/							\
+	status = __internal_syscall(__NR_##name, (long)arg1, 0, 0, 0, 0, 0); \
 	return status;						\
 }
 
 #define SYSCALL2(name, type1, type2) 				\
 int name(type1 arg1, type2 arg2) {				\
 	int status = 0;						\
-	/*register type1 rdi asm("rdi");				\
-	register type2 rsi asm("rsi");				\
-	rdi = arg1;						\
-	rsi = arg2;						\
-	asm volatile(						\
-		"syscall"					\
-		: "=a" (status)					\
-		: "0" (__NR_##name),				\
-		  "r" (rdi),					\
-		  "r" (rsi)					\
-		: "memory", "rcx", "r11", "cc"			\
-	);*/							\
+	status = __internal_syscall(__NR_##name, (long)arg1, (long)arg2, 0, 0, 0, 0); \
 	return status;						\
 }
 
 #define SYSCALL3(name, type1, type2, type3) 			\
 int name(type1 arg1, type2 arg2, type3 arg3) {			\
 	int status = 0;						\
-	/*register type1 rdi asm("rdi");				\
-	register type2 rsi asm("rsi");				\
-	register type3 rdx asm("rdx");				\
-	rdi = arg1;						\
-	rsi = arg2;						\
-	rdx = arg3;						\
-	asm volatile(						\
-		"syscall"					\
-		: "=a" (status)					\
-		: "0" (__NR_##name),				\
-		  "r" (rdi),					\
-		  "r" (rsi),					\
-		  "r" (rdx)					\
-		: "memory", "rcx", "r11", "cc"			\
-	);*/							\
+	status = __internal_syscall(__NR_##name, (long)arg1, (long)arg2, (long)arg3, 0, 0, 0); \
 	return status;						\
 }
 
 #define SYSCALL4(name, type1, type2, type3, type4) 		\
 int name(type1 arg1, type2 arg2, type3 arg3, type4 arg4) {	\
 	int status = 0;						\
-	/*register type1 rdi asm("rdi");				\
-	register type2 rsi asm("rsi");				\
-	register type3 rdx asm("rdx");				\
-	register type4 r10 asm("r10");				\
-	rdi = arg1;						\
-	rsi = arg2;						\
-	rdx = arg3;						\
-	r10 = arg4;						\
-	asm volatile(						\
-		"syscall"					\
-		: "=a" (status)					\
-		: "0" (__NR_##name),				\
-		  "r" (rdi),					\
-		  "r" (rsi),					\
-		  "r" (rdx),					\
-		  "r" (r10)					\
-		: "memory", "rcx", "r11", "cc"			\
-	);*/							\
+	status = __internal_syscall(__NR_##name, (long)arg1, (long)arg2, (long)arg3, (long)arg4, 0, 0); \
 	return status;						\
 }
 
@@ -104,27 +62,7 @@ int name(type1 arg1, type2 arg2, type3 arg3, type4 arg4) {	\
 int name(type1 arg1, type2 arg2, type3 arg3, type4 arg4,	\
          type5 arg5) {						\
 	int status = 0;						\
-	/*register type1 rdi asm("rdi");				\
-	register type2 rsi asm("rsi");				\
-	register type3 rdx asm("rdx");				\
-	register type4 r10 asm("r10");				\
-	register type5 r8  asm("r8");				\
-	rdi = arg1;						\
-	rsi = arg2;						\
-	rdx = arg3;						\
-	r10 = arg4;						\
-	r8  = arg5;						\
-	asm volatile(						\
-		"syscall"					\
-		: "=a" (status)					\
-		: "0" (__NR_##name),				\
-		  "r" (rdi),					\
-		  "r" (rsi),					\
-		  "r" (rdx),					\
-		  "r" (r10),					\
-		  "r" (r8)					\
-		: "memory", "rcx", "r11", "cc"			\
-	);*/							\
+	status = __internal_syscall(__NR_##name, (long)arg1, (long)arg2, (long)arg3, (long)arg4, (long)arg5, 0); \
 	return status;						\
 }
 
@@ -132,30 +70,7 @@ int name(type1 arg1, type2 arg2, type3 arg3, type4 arg4,	\
 int name(type1 arg1, type2 arg2, type3 arg3, type4 arg4,	\
          type5 arg5, type6 arg6) {				\
 	int status = 0;						\
-	/*register type1 rdi asm("rdi");				\
-	register type2 rsi asm("rsi");				\
-	register type3 rdx asm("rdx");				\
-	register type4 r10 asm("r10");				\
-	register type5 r8  asm("r8");				\
-	register type6 r9  asm("r9");				\
-	rdi = arg1;						\
-	rsi = arg2;						\
-	rdx = arg3;						\
-	r10 = arg4;						\
-	r8  = arg5;						\
-	r9  = arg6;						\
-	asm volatile(						\
-		"syscall"					\
-		: "=a" (status)					\
-		: "0" (__NR_##name),				\
-		  "r" (rdi),					\
-		  "r" (rsi),					\
-		  "r" (rdx),					\
-		  "r" (r10),					\
-		  "r" (r8),					\
-		  "r" (r9)					\
-		: "memory", "rcx", "r11", "cc"			\
-	);*/							\
+	status = __internal_syscall(__NR_##name, (long)arg1, (long)arg2, (long)arg3, (long)arg4, (long)arg5, (long)arg6); \
 	return status;						\
 }
 

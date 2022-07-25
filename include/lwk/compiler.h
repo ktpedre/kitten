@@ -110,12 +110,21 @@ extern void __chk_io_ptr(void __iomem *);
  * Using extra __may_alias__ type to allow aliasing
  * in this case.
  */
+typedef unsigned char u8;
+
+typedef unsigned short u16;
+
+typedef unsigned int u32;
+
+typedef unsigned long long u64;
+
+
 typedef u8   __u8_alias_t;
 typedef u16  __u16_alias_t;
 typedef u32  __u32_alias_t;
 typedef u64  __u64_alias_t;
 
-static __always_inline void __read_once_size(const volatile void *p, void *res, int size)
+static inline void __read_once_size(const volatile void *p, void *res, int size)
 {
 	switch (size) {
 	case 1: *(__u8_alias_t  *) res = *(volatile __u8_alias_t  *) p; break;
@@ -130,7 +139,7 @@ static __always_inline void __read_once_size(const volatile void *p, void *res, 
 		barrier();
 }
 
-static __always_inline void __write_once_size(volatile void *p, void *res, int size)
+static inline void __write_once_size(volatile void *p, void *res, int size)
 {
 	switch (size) {
 	case 1: *(volatile  __u8_alias_t *) p = *(__u8_alias_t  *) res; break;

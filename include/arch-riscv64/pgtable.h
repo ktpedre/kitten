@@ -184,6 +184,11 @@ extern struct pt_alloc_ops pt_ops __initdata;
 				| _PAGE_DIRTY \
 				| _PAGE_GLOBAL)
 
+#define _PAGE_KERNEL_VSYSCALL \
+	(_PAGE_PRESENT | _PAGE_USER | _PAGE_ACCESSED | _PAGE_DIRTY | _PAGE_READ)
+
+#define PAGE_KERNEL_VSYSCALL __pgprot(_PAGE_KERNEL_VSYSCALL)
+
 #define PAGE_KERNEL		__pgprot(_PAGE_KERNEL)
 #define PAGE_KERNEL_READ	__pgprot(_PAGE_KERNEL & ~_PAGE_WRITE)
 #define PAGE_KERNEL_EXEC	__pgprot(_PAGE_KERNEL | _PAGE_EXEC)

@@ -46,14 +46,20 @@ main(int argc, char *argv[], char *envp[])
 	int i;
 
 	printf("Hello, world!\n");
+fflush(stdout);
 
 	printf("Arguments:\n");
+fflush(stdout);
 	for (i = 0; i < argc; i++)
 		printf("  argv[%d] = %s\n", i, argv[i]);
+fflush(stdout);
 
 	printf("Environment Variables:\n");
+fflush(stdout);
+  fflush(stdout);
 	for (i = 0; envp[i] != NULL; i++)
 		printf("  envp[%d] = %s\n", i, envp[i]);
+fflush(stdout);
 
 	pmem_api_test();
 	aspace_api_test();
@@ -68,10 +74,14 @@ main(int argc, char *argv[], char *envp[])
 	rcr_test();
 
 	printf("\n");
+fflush(stdout);
 	printf("ALL TESTS COMPLETE\n");
+fflush(stdout);
 
 	printf("\n");
+fflush(stdout);
 	printf("Spinning forever...\n");
+fflush(stdout);
 	for (i = 0; i < 10; i++) {
 #ifdef TEST_TASK_MEAS
 		{
@@ -83,8 +93,10 @@ main(int argc, char *argv[], char *envp[])
 		sleep(5);
 #endif
 		printf("%s: Meow %d!\n", __func__, i );
+fflush(stdout);
 	}
 	printf("   That's all, folks!\n");
+fflush(stdout);
 
 	while(1)
 		sleep(100000);
@@ -107,13 +119,16 @@ pmem_api_test(void)
 	int status;
 
 	printf("\n");
+fflush(stdout);
 	printf("TEST BEGIN: Physical Memory Management\n");
+fflush(stdout);
 
 	query.start = 0;
 	query.end = ULONG_MAX;
 	pmem_region_unset_all(&query);
 
 	printf("  Physical Memory Map:\n");
+fflush(stdout);
 	while ((status = pmem_query(&query, &result)) == 0) {
 		printf("    [%#016lx, %#016lx) %-10s numa_node=%u\n",
 			result.start,
@@ -134,12 +149,15 @@ pmem_api_test(void)
 
 	if (status != -ENOENT) {
 		printf("ERROR: pmem_query() status=%d\n", status);
+fflush(stdout);
 		return -1;
 	}
 
 	printf("  Total User-Level Managed Memory: %lu bytes\n", bytes_umem);
+fflush(stdout);
 
 	printf("TEST END:   Physical Memory Management\n");
+fflush(stdout);
 	return 0;
 }
 
@@ -150,68 +168,99 @@ aspace_api_test(void)
 	id_t my_id, new_id;
 
 	printf("\n");
+fflush(stdout);
+  fflush(stdout);
 	printf("TEST BEGIN: Address Space Management\n");
+fflush(stdout);
+  fflush(stdout);
 
 	status = aspace_get_myid(&my_id);
 	if (status) {
 		printf("ERROR: aspace_get_myid() status=%d\n", status);
+fflush(stdout);
 		return -1;
 	}
 	printf("  My address space ID is %u\n", my_id);
+fflush(stdout);
+  fflush(stdout);
 
 	printf("  Creating a new aspace: ");
+fflush(stdout);
+  fflush(stdout);
 	status = aspace_create(ANY_ID, "TEST-ASPACE", &new_id);
 	if (status) {
 		printf("\nERROR: aspace_create() status=%d\n", status);
+fflush(stdout);
 		return -1;
 	}
 	printf("id=%u\n", new_id);
+fflush(stdout);
+  fflush(stdout);
 
 	printf("  Using SMARTMAP to map myself into aspace %u\n", new_id);
-	status = aspace_smartmap(my_id, new_id, SMARTMAP_ALIGN, SMARTMAP_ALIGN);
+fflush(stdout);
+  fflush(stdout);
+	//status = aspace_smartmap(my_id, new_id, SMARTMAP_ALIGN, SMARTMAP_ALIGN);
 	if (status) {
 		printf("ERROR: aspace_smartmap() status=%d\n", status);
+fflush(stdout);
 		return -1;
 	}
 
 	aspace_dump2console(new_id);
 
 	printf("  Unmapping myself from aspace %u\n", new_id);
-	status = aspace_unsmartmap(my_id, new_id);
+fflush(stdout);
+  fflush(stdout);
+	//status = aspace_unsmartmap(my_id, new_id);
 	if (status) {
 		printf("ERROR: aspace_unsmartmap() status=%d\n", status);
+fflush(stdout);
 		return -1;
 	}
 
 	aspace_dump2console(new_id);
 
 	printf("  Destroying a aspace %u: ", new_id);
-	status = aspace_destroy(new_id);
+fflush(stdout);
+  fflush(stdout);
+	//status = aspace_destroy(new_id);
 	if (status) {
 		printf("ERROR: aspace_destroy() status=%d\n", status);
+fflush(stdout);
 		return -1;
 	}
 	printf("OK\n");
+fflush(stdout);
+  fflush(stdout);
 
 	printf("  Using SMARTMAP to do a self-mapping\n");
-	status = aspace_smartmap(my_id, my_id, SMARTMAP_ALIGN, SMARTMAP_ALIGN);
+fflush(stdout);
+  fflush(stdout);
+	//status = aspace_smartmap(my_id, my_id, SMARTMAP_ALIGN, SMARTMAP_ALIGN);
 	if (status) {
 		printf("ERROR: aspace_smartmap() status=%d\n", status);
+fflush(stdout);
 		return -1;
 	}
 
 	aspace_dump2console(my_id);
 
 	printf("  Unmapping my self-mapping\n");
-	status = aspace_unsmartmap(my_id, my_id);
+fflush(stdout);
+  fflush(stdout);
+	//status = aspace_unsmartmap(my_id, my_id);
 	if (status) {
 		printf("ERROR: aspace_unsmartmap() status=%d\n", status);
+fflush(stdout);
 		return -1;
 	}
 
 	aspace_dump2console(my_id);
 
 	printf("TEST END:   Address Space Management\n");
+fflush(stdout);
+  fflush(stdout);
 	return 0;
 }
 
@@ -239,6 +288,7 @@ barrier(void)
 		pthread_cond_wait(&barrier_cond, &barrier_mutex);
 	} else {
 		printf("All threads barrier\n");
+fflush(stdout);
 		barrier_count = 0;
 		pthread_cond_broadcast(&barrier_cond);
 	}
@@ -250,7 +300,7 @@ barrier(void)
 // The glibc in RHEL5 does not support sched_getcpu() even though
 // the RHEL5 kernel does. To workaround, we implement our own
 // sched_getcpu() in sched_getcpu.c and provide this prototype.
-int sched_getcpu(void);
+/* int sched_getcpu(void); */
 
 
 static void *
@@ -268,6 +318,7 @@ hello_world_thread(void *arg)
 	barrier();
 
 	printf("Goodbye from thread %d\n", my_id);
+fflush(stdout);
 
 	barrier();
 
@@ -285,29 +336,38 @@ task_api_test(void)
 	pthread_attr_t attr;
 
 	printf("\n");
+fflush(stdout);
 	printf("TEST BEGIN: Task Management\n");
+fflush(stdout);
 
 	// Set stack size to something small to avoid running out of heap
 	pthread_attr_init(&attr);
 	pthread_attr_setstacksize(&attr, 1024 * 32);
 
 	printf("  My Linux process id (PID) is: %d\n",  getpid());
+fflush(stdout);
 	printf("  My Linux thread id  (TID) is: %d\n",  gettid());
+fflush(stdout);
 	
 	status = pthread_getaffinity_np(pthread_self(), sizeof(cpu_mask), &cpu_mask);
 	if (status) {
 		printf("    ERROR: pthread_getaffinity_np() status=%d\n", status);
+fflush(stdout);
 		return -1;
 	}
 
 	printf("  My CPU mask is:               ");
+fflush(stdout);
 	for (i = 0; i < CPU_SETSIZE; i++) {
 		if (CPU_ISSET(i, &cpu_mask))
 			printf("%d ", i);
+fflush(stdout);
 	}
 	printf("\n");
+fflush(stdout);
 
 	printf("  Creating one thread for each CPU:\n");
+fflush(stdout);
 	pthread_mutex_lock(&num_threads_mutex);
 	for (i = 0; i < CPU_SETSIZE; i++) {
 		if (!CPU_ISSET(i, &cpu_mask))
@@ -322,26 +382,32 @@ task_api_test(void)
 
 		if (status) {
 			printf("    ERROR: pthread_create() status=%d\n", status);
+fflush(stdout);
 			continue;
 		} else {
 			printf("    created thread %d\n", num_threads+1);
+fflush(stdout);
 			++num_threads;
 		}
 	}
 	pthread_mutex_unlock(&num_threads_mutex);
 
 	printf("  Waiting for threads to exit:\n");
+fflush(stdout);
 	for (i = 0; i < num_threads; i++) {
 		status = pthread_join(pthread_id[i], &value_ptr);
 		if (status) {
 			printf("    ERROR: pthread_join() status=%d\n", status);
+fflush(stdout);
 			continue;
 		} else {
 			printf("    thread %d exited\n", (int)(uintptr_t)value_ptr);
+fflush(stdout);
 		}
 	}
 
 	printf("TEST END:   Task Management\n");
+fflush(stdout);
 	return 0;
 }
 
@@ -390,32 +456,40 @@ task_migrate_test(void)
 	int status, i, cur, cpu, home_cpu, home_index=-1, ncpus=0;
 	int cpus[CPU_SETSIZE];
 	cpu_set_t cpu_mask;
-	int ntrips = 100000;
+	int ntrips = 10000;
 	double start, end;
 
 	printf("\n");
+fflush(stdout);
 	printf("TEST BEGIN: Task Migration Test\n");
+fflush(stdout);
 
 	home_cpu = sched_getcpu();
 	printf("  My home CPU is: %d\n",  home_cpu);
+fflush(stdout);
 
 	status = pthread_getaffinity_np(pthread_self(), sizeof(cpu_mask), &cpu_mask);
 	if (status) {
 		printf("    ERROR: pthread_getaffinity_np() status=%d\n", status);
+fflush(stdout);
 		return -1;
 	}
 
 	printf("  My CPU mask is: ");
+fflush(stdout);
 	for (i = 0; i < CPU_SETSIZE; i++) {
 		if (CPU_ISSET(i, &cpu_mask)) {
 			printf("%d ", i);
+fflush(stdout);
 			cpus[ncpus] = i;
 			++ncpus;
 		}
 	}
 	printf("\n");
+fflush(stdout);
 
 	printf("  Total # CPUs:   %d\n", ncpus);
+fflush(stdout);
 
 	for (i = 0; i < ncpus; i++) {
 		if (cpus[i] == home_cpu) {
@@ -425,10 +499,13 @@ task_migrate_test(void)
 	}
 
 	printf("  Begin Warm Up Trip Around Ring:\n");
+fflush(stdout);
 	cur = (home_index + 1) % ncpus;
 	printf("      Initial CPU is %d\n", home_cpu);
+fflush(stdout);
 	for (i = 0; i < ncpus; i++) {
 		printf("      Migrating to CPU %d: ", cpus[cur]);
+fflush(stdout);
 
 		task_switch_cpus(cpus[cur]);
 
@@ -437,12 +514,15 @@ task_migrate_test(void)
 			printf("Success\n");
 		else
 			printf("Failure (current CPU = %d)\n", cpu);
+fflush(stdout);
 
 		cur = (cur + 1) % ncpus;
 	}
 	printf("      Trip Complete\n");
+fflush(stdout);
 
 	printf("  Begin Benchmark (%d Trips Around Ring):\n", ntrips);
+fflush(stdout);
 	start = now();
 	cur = (home_index + 1) % ncpus;
 	for (i = 0; i < (ntrips * ncpus); i++) {
@@ -451,8 +531,10 @@ task_migrate_test(void)
 	}
 	end = now();
 	printf("      Average Time/Migrate: %.0f ns\n", (end - start) * 1.e9 / (ntrips * ncpus * 1.0));
+fflush(stdout);
 
 	printf("TEST END:   Task Migration Test\n");
+fflush(stdout);
 	return 0;
 }
 
@@ -465,24 +547,29 @@ fd_test( void )
 	ssize_t rc;
 
 	printf("\n");
+fflush(stdout);
 	printf("TEST BEGIN: File Test\n");
+fflush(stdout);
 
 	fd = open( "/sys", O_RDONLY );
 	rc = read( fd, buf, sizeof(buf) );
-	if( rc >= 0 )
+	if( rc >= 0 ) 
 		printf( "fd %d rc=%ld '%s'\n", fd, rc, buf );
+fflush(stdout);
 	close( fd );
 
 	fd = open( "/sys/kernel/dummy/int", O_RDONLY );
 	rc = read( fd, buf, sizeof(buf) );
 	if( rc >= 0 )
 		printf( "fd %d rc=%ld '%s'\n", fd, rc, buf );
+fflush(stdout);
 	close( fd );
 
 	fd = open( "/sys/kernel/dummy/hex", O_RDONLY );
 	rc = read( fd, buf, sizeof(buf) );
 	if( rc >= 0 )
 		printf( "fd %d rc=%ld '%s'\n", fd, rc, buf );
+fflush(stdout);
 	close( fd );
 
 	fd = open( "/sys/kernel/dummy/bin", O_RDONLY );
@@ -490,6 +577,7 @@ fd_test( void )
 	rc = read( fd, &val, sizeof(val) );
 	if( rc >= 0 )
 		printf( "fd %d rc=%ld '%s'\n", fd, rc, buf );
+fflush(stdout);
 	close( fd );
 
 	// Should fail
@@ -497,10 +585,13 @@ fd_test( void )
 	rc = read( fd, buf, sizeof(buf) );
 	if( rc >= 0 )
 		printf( "fd %d rc=%ld '%s'\n", fd, rc, buf );
+fflush(stdout);
 	close( fd );
 
 	printf("    Success.\n");
+fflush(stdout);
 	printf("TEST END:   File Test\n");
+fflush(stdout);
 
 	return 0;
 }
@@ -509,12 +600,14 @@ int
 socket_api_test( void )
 {
         printf("\nTEST BEGIN: Sockets API\n");
+fflush(stdout);
 
         int port = 80;
         int s = socket( PF_INET, SOCK_STREAM, 0 );
         if( s < 0 )
         {
                 printf( "ERROR: socket() failed! rc=%d\n", s );
+fflush(stdout);
                 return -1;
         }
 
@@ -536,6 +629,7 @@ socket_api_test( void )
         FD_SET( s, &fds );
 
         printf( "Going into mainloop: server fd %d on port %d\n", s, port );
+fflush(stdout);
 
         while(1)
         {
@@ -544,12 +638,14 @@ socket_api_test( void )
                 if( rc < 0 )
                 {
                         printf( "ERROR: select() failed! rc=%d\n", rc );
+fflush(stdout);
                         return -1;
                 }
 
                 if( FD_ISSET( s, &read_fds ) )
                 {
                         printf( "new connection\n" );
+fflush(stdout);
                         socklen_t socklen = sizeof(client);
                         int new_fd = accept(
                                 s,
@@ -558,6 +654,7 @@ socket_api_test( void )
                         );
 
                         printf( "connected newfd %d!\n", new_fd );
+fflush(stdout);
                         writen( new_fd, "Welcome!\n", 9 );
                         FD_SET( new_fd, &fds );
                         if( new_fd > max_fd )
@@ -575,6 +672,7 @@ socket_api_test( void )
                         if( rc <= 0 )
                         {
                                 printf( "%d: closed connection rc=%zd\n", fd, rc );
+fflush(stdout);
                                 FD_CLR( fd, &fds );
                                 continue;
                         }
@@ -600,11 +698,13 @@ socket_api_test( void )
 
                         char outbuf[ 32 ];
                         int len = snprintf( outbuf, sizeof(outbuf), "%d: read %zd bytes\n", fd, rc );
+fflush(stdout);
                         writen( fd, outbuf, len );
                 }
         }
 
         printf("TEST END: Sockets API\n");
+fflush(stdout);
         return 0;
 }
 
@@ -620,19 +720,24 @@ int block_layer_test(void) {
     int ret = 0;
 
     printf("\nTEST BEGIN: Block Layer\n");
+fflush(stdout);
 
     memset(test_buf, 0, 4096);
     memset(hello_buf, 0, 512);
     memset(resp_buf, 0, 4096);
 
     sprintf(hello_buf, "Hello There\n");
+fflush(stdout);
 
     fd = open("/dev/block/sata-0", O_RDWR);
     printf("  Opened SATA-0\n");
+fflush(stdout);
 
     ret = read(fd, test_buf, 4096);
     printf("  Read %d bytes. Buf:\n", ret);
+fflush(stdout);
     printf("  %s\n", test_buf);
+fflush(stdout);
 
     lseek(fd, 100 * 4096, 0);
 
@@ -640,15 +745,18 @@ int block_layer_test(void) {
 
     read(fd, resp_buf, 512);
     printf("  Resp1: %s\n", resp_buf);
+fflush(stdout);
 
     lseek(fd, 100 * 4096, 0);
 
     read(fd, resp_buf + 1024, 512);
     printf("  Resp2: %s\n", resp_buf + 1024);
+fflush(stdout);
 
     close(fd);
 
     printf("TEST END: Block Layer\n");
+fflush(stdout);
     return 0;
 }
 
@@ -674,13 +782,17 @@ hypervisor_api_test(void)
 	/* Make sure there is an embedded ISO image */
 	if (iso_size != (iso_end - iso_start)) {
 		//printf("    Failed, no ISO image available.\n");
+fflush(stdout);
 		return -1;
 	}
 
 	printf("\n");
+fflush(stdout);
 	printf("TEST BEGIN: Hypervisor API\n");
+fflush(stdout);
 
 	printf("  Starting a guest OS...\n");
+fflush(stdout);
 
 	/* Determine the physical address of the ISO image */
 	aspace_get_myid(&my_aspace);
@@ -690,12 +802,15 @@ hypervisor_api_test(void)
 	status = v3_start_guest(iso_start_paddr, iso_size);
 	if (status) {
 		printf("    Failed (status=%d).\n", status);
+fflush(stdout);
 		return -1;
 	}
 
 	printf("    Success.\n");
+fflush(stdout);
 
 	printf("TEST END:   Hypervisor API\n");
+fflush(stdout);
 	return 0;
 }
 
@@ -704,6 +819,7 @@ static int
 task_meas_api_test(void)
 {
 	printf("TEST BEGIN: Task Measurement\n");
+fflush(stdout);
 
 	id_t aspace_id, task_id = gettid();
 	uint64_t time = 0, energy = 0, unit_energy = 0;
@@ -716,6 +832,7 @@ task_meas_api_test(void)
 		aspace_id, task_id, time / 10e9, energy * pow(0.5, unit_energy), energy * pow(0.5, unit_energy) / (time/10e9));
 
 	printf("TEST END:   Task Measurement\n");
+fflush(stdout);
 	return 0;
 }
 #endif
@@ -733,29 +850,38 @@ rcr_test(void)
 	double s0_watts;
 
 	printf("TEST BEGIN: RCR\n");
+fflush(stdout);
 
 	printf("  Opening /dev/rcr...\n");
+fflush(stdout);
 	if ((rcr_fd = open(RCR_DEV_PATH, O_RDWR)) == -1) {
 		printf("    ERROR: open failed\n");
+fflush(stdout);
 		return -1;
 	}
 	printf("    Success, rcr_fd = %d\n", rcr_fd);
+fflush(stdout);
 
 	printf("  Calling mmap() on /dev/rcr...\n");
+fflush(stdout);
 	blackboard = mmap(0, RCR_BLACKBOARD_SIZE, PROT_READ, MAP_SHARED, rcr_fd, 0);
 	if (blackboard == MAP_FAILED) {
 		printf("    ERROR: mmap of blackboard failed\n");
+fflush(stdout);
 		return -1;
 	}
 	printf("    Success, blackboard mapped to %p\n", blackboard);
+fflush(stdout);
 
 	/* Read some stuff from the blackboard */
 	printf("  Reading values from the blackboard...\n");
+fflush(stdout);
 	for (i = 0; i < 100; i++) {
 		/* Read values from the blackboard */
 		s0_energy    = *((uint64_t *)(blackboard + 0xf0));
 		s0_timestamp = *((uint64_t *)(blackboard + 0x100));
 		printf("    BB_RAW: energy=%lu, timestamp=%lu\n", s0_energy, s0_timestamp);
+fflush(stdout);
 
 		/* Calculate Joules used since last measurement and
 		 * average Watts since last measurement */
@@ -764,12 +890,15 @@ rcr_test(void)
 		s0_time_delta   = 10.0;  // todo, calc time from timestamps
 		s0_watts        = s0_joules_delta / s0_time_delta;
 		printf("    CALC:   joules=%.3f joules_delta=%.3f, watts=%.3f\n", s0_joules, s0_joules_delta, s0_watts);
+fflush(stdout);
 
 		s0_joules_prev  = s0_joules;
 		sleep(10);
 	}
 	printf("  Done.\n");
+fflush(stdout);
 
 	printf("TEST END:   RCR\n");
+fflush(stdout);
 	return 0;
 }

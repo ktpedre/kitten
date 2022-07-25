@@ -369,6 +369,8 @@ task_switch_cpus(id_t cpu_id)
 {
 	BUG_ON(irqs_disabled());
 
+//	printk("cpu_id %d\n", cpu_id);
+
 	/* Make sure target CPU is valid */
 	if ((cpu_id >= NR_CPUS) || !cpu_isset(cpu_id, current->cpu_mask))
 		return -EINVAL;
@@ -377,6 +379,7 @@ task_switch_cpus(id_t cpu_id)
 	current->cpu_target_id = cpu_id;
 	schedule();
 
+//	printk("cpu_id this_cpu %d\n", cpu_id, this_cpu);
 	BUG_ON(this_cpu != cpu_id);
 
 	return 0;

@@ -60,12 +60,14 @@ arch_task_create(
 	/* Task's address space is from [0, task->addr_limit) */
 	task->arch.addr_limit = PAGE_OFFSET;
 
+	regs->status = SR_PIE;
+
 	/* Initialize FPU state */
 	//reinit_fpu_state(task);
 
 	/* Initialize register state */
 	if (start_state->aspace_id == KERNEL_ASPACE_ID) {
-		regs->status							= SR_PP | SR_PIE;
+		regs->status							= SR_PP;
 		regs->gp									= get_gp();
 		task->arch.thread.ra			= ret_from_kernel_thread;
 
@@ -75,7 +77,6 @@ arch_task_create(
 		/* regs->s0     = start_state->arg[0]; */
 		/* regs->s1     = start_state->arg[1]; */
 	} else {
-		regs->status = 0;
 		task->arch.thread.ra = ret_from_fork;
 		task->arch.thread.user_sp = start_state->stack_ptr;
 		regs->sp = start_state->stack_ptr;

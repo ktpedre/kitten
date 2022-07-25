@@ -71,6 +71,9 @@ _save_context:
 	 * Disable the FPU to detect illegal usage of floating point in kernel
 	 * space.
 	 */
+  li t0, SR_SUM
+  csrrs t0, CSR_STATUS, t0
+  
 	li t0, SR_SUM | SR_FS
 
 	REG_L s0, TASK_THREAD_USER_SP(tp)
@@ -178,6 +181,10 @@ handle_syscall:
 //;; 	REG_L a6, PT_A6(sp)
 //;; 	REG_L a7, PT_A7(sp)
 //;; #endif
+
+  /* Allow the kernel to access user memory */
+  li t0, SR_SUM
+  csrrs t0, CSR_STATUS, t0
 	 /* save the initial A0 value (needed in signal handlers) */
 	REG_S a0, PT_ORIG_A0(sp)
 	/*
@@ -594,9 +601,16 @@ ENTRY(__user_rt_sigreturn)
 END(__user_rt_sigreturn)
 #endif
 
-  /* NMG This is wrong for sure */
+
+	/* glibc is going to call the clone sys call with these params
+	 * a0:flags, a1:newsp, a2:parenttidptr, a3:newtls, a4:childtid.
+	 *
+	 * We need the args like this:
+	 *   a0:flags, a1:newsp, a2:parenttid, a3:childtid, a4:parentregs
+	 *
+	 */
 ENTRY(asm_sys_clone)
 	move a3, a4
-	move a4, tp
-	call sys_clone
+	move a4, sp
+	j    sys_clone
 END(asm_sys_clone)
