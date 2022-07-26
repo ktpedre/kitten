@@ -50,8 +50,6 @@ __timer_tick(int irq, void * dev_id)
     // the next return to user-space
     set_bit(TF_NEED_RESCHED_BIT, &current->arch.flags);
 
-    init_cycles2ns(1000000);
-
     __reload_timer();
 
     return irqret;
@@ -95,6 +93,7 @@ riscv_timer_init(struct device_node* dt_node)
 {
     int ret = 0;
     u32 regs[8] = {[0 ... 7] = 0};
+    struct device_node * dn = NULL;
 
     ret = of_property_read_u32_array(dt_node, "reg", (u32 *)regs, 4);
 
@@ -125,6 +124,25 @@ riscv_timer_init(struct device_node* dt_node)
      * an architectural register like on ARM that tells you the
      * frequency of the hart. */
     //arch_info->cur_cpu_khz = cpu_khz;
+
+    /* NMG Not really sure how to do this. Do we get core-local frequency or what? */
+    /* dn = of_find_node_with_property(NULL, allnodes, "clock-frequency"); */
+
+    /* if (dn &&  */
+
+    dn = of_find_node_with_property(allnodes, "timebase-frequency");
+    if (dn)
+    {
+        unsigned freq;
+        of_property_read_u32(dn, "timebase-frequency", &freq);
+        printk("Found freq 0x%x cycles2ns %x\n", freq, freq/1000);
+        init_cycles2ns(freq/1000);
+        of_node_put(dn);
+    }
+    else
+    {
+        printk("Did not find dn!\n");
+    }
 
     riscv_timer.dt_node = dt_node;
     arch_timer_register(&riscv_timer);

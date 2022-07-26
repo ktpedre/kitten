@@ -14,15 +14,15 @@ sys_clock_gettime(
 {
 	uint64_t when = get_time();
 
-        struct timespec _rem = {
-                .tv_sec  = when / NSEC_PER_SEC,
-                .tv_nsec = when % NSEC_PER_SEC,
-        };
+  struct timespec _rem = {
+    .tv_sec  = when / NSEC_PER_SEC,
+    .tv_nsec = when % NSEC_PER_SEC,
+  };
 	if ( (which_clock != CLOCK_REALTIME) && (which_clock != CLOCK_MONOTONIC) ) 
 		return -EINVAL;	
 
-        if (copy_to_user(tp, &_rem, sizeof(_rem)))
-                return -EFAULT;
+  if (copy_to_user(tp, &_rem, sizeof(_rem)))
+    return -EFAULT;
 
 	return 0;
 }

@@ -11,8 +11,11 @@ sys_gettimeofday(
 	struct timeval  _tv;
 	struct timezone _tz;
 
+	printk("gettimeofday\n");
+
 	if (tv != NULL) {
 		uint64_t now = get_time(); /* nanoseconds */
+		printk("Time is %lu\n", now);
 
 		_tv.tv_sec  = now / NSEC_PER_SEC;
 		_tv.tv_usec = (now % NSEC_PER_SEC) / NSEC_PER_USEC;
