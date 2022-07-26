@@ -3,7 +3,7 @@
 
 
 // Bits in the arch_task.flags field
-#define TF_NEW_TASK_BIT		0
+#define TF_NEW_TASK_BIT		  0
 #define TF_SIG_PENDING_BIT	1
 #define TF_NEED_RESCHED_BIT	2
 

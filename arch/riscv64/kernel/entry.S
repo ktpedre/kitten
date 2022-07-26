@@ -242,9 +242,9 @@ ret_from_syscall_rejected:
 //;; 	call rseq_syscall
 //;; #endif
 	/* Trace syscalls, but only if requested by the user. */
-	REG_L t0, TASK_THREAD_FLAGS(tp)
-	andi t0, t0, _TIF_SYSCALL_WORK
-	bnez t0, handle_syscall_trace_exit
+//	REG_L t0, TASK_THREAD_FLAGS(tp)
+//	andi t0, t0, _TIF_SYSCALL_WORK
+//	bnez t0, handle_syscall_trace_exit
 
 ret_from_exception:
 	REG_L s0, PT_STATUS(sp)

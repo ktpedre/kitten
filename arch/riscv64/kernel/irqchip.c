@@ -1,5 +1,9 @@
-/* 
- * 2021, Jack Lange <jacklange@cs.pitt.edu>
+/*
+ * Nicholas Gordon, Sandia National Labs 2022
+ * nicholasgordon@fastmail.com
+ *
+ * Adapted from ARM64 implementation by
+ *   Jack Lange <jack.lange@cs.pitt.edu>
  */
 
 #include <lwk/kernel.h>
@@ -18,34 +22,33 @@
 
 static struct irqchip * irq_controller = NULL;
 
-int __init 
+int __init
 irqchip_local_init(void)
 {
 	irq_controller->core_init(irq_controller->dt_node);
 }
+p
 
-
-extern int gic3_global_init(struct device_node * dt_node);
-extern int gic2_global_init(struct device_node * dt_node);
-extern int bcm2836_global_init(struct device_node * dt_node);
-#ifdef CONFIG_HAFNIUM
-extern int hafnium_vintc_global_init(struct device_node * dt_node);
-#endif
+/* extern int gic3_global_init(struct device_node * dt_node); */
+/* extern int gic2_global_init(struct device_node * dt_node); */
+/* extern int bcm2836_global_init(struct device_node * dt_node); */
+/* #ifdef CONFIG_HAFNIUM */
+/* extern int hafnium_vintc_global_init(struct device_node * dt_node); */
+/* #endif */
 
 static const struct of_device_id intr_ctrlr_of_match[]  = {
-	{ .compatible = "arm,gic-v3",				.data = gic3_global_init},	          // Qemu w/ gic-version=3
-	{ .compatible = "arm,gic-400",				.data = gic2_global_init},            // Pine A64
-	{ .compatible = "arm,cortex-a15-gic",		.data = gic2_global_init},	          // Qemu default
-	{ .compatible = "brcm,bcm2836-l1-intc",		.data = bcm2836_global_init},         // Raspberry Pi 3
-#ifdef CONFIG_HAFNIUM
-	{ .compatible = "hafnium,vintc",		    .data = hafnium_vintc_global_init},   // Hafnium
-#endif
+	{ .compatible = "riscv,cpu-intc", .data = cpu_intc_init},
+/* 	{ .compatible = "arm,gic-v3",				.data = gic3_global_init},	          // Qemu w/ gic-version=3 */
+/* 	{ .compatible = "arm,gic-400",				.data = gic2_global_init},            // Pine A64 */
+/* 	{ .compatible = "arm,cortex-a15-gic",		.data = gic2_global_init},	          // Qemu default */
+/* 	{ .compatible = "brcm,bcm2836-l1-intc",		.data = bcm2836_global_init},         // Raspberry Pi 3 */
+/* #ifdef CONFIG_HAFNIUM */
+/* 	{ .compatible = "hafnium,vintc",		    .data = hafnium_vintc_global_init},   // Hafnium */
+/* #endif */
 	{},
 };
 
-
-
-int 
+int
 irqchip_register(struct irqchip * chip)
 {
 	if (irq_controller) {
@@ -53,7 +56,7 @@ irqchip_register(struct irqchip * chip)
 	}
 
 	printk("Registering IRQ Controller [%s]\n", chip->name);
-	irq_controller = chip;	
+	irq_controller = chip;
 
 	return 0;
 }
@@ -61,7 +64,7 @@ irqchip_register(struct irqchip * chip)
 
 int __init
 irqchip_global_init(void)
-{	
+{
 
 	struct device_node  * dt_node    = NULL;
 	struct of_device_id * matched_np = NULL;
@@ -79,8 +82,8 @@ irqchip_global_init(void)
 	return init_fn(dt_node);
 }
 
-extern void gic3_probe(void);
-extern void gic2_probe(void);
+/* extern void gic3_probe(void); */
+/* extern void gic2_probe(void); */
 
 void probe_pending_irqs(void) {
 	ASSERT(irq_controller->print_pending_irqs != NULL);

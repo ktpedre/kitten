@@ -38,7 +38,7 @@ arch_pcicfg_read(
 	unsigned int	width
 )
 {
-	printk("Unhandled function %s",__FUNCTION__);
+	//printk("Unhandled function %s",__FUNCTION__);
 #if 0
 	uint32_t addr = calc_addr(bus, slot, func, reg);
 	uint32_t value = 0;
@@ -74,7 +74,7 @@ arch_pcicfg_write(
 	uint32_t	value
 )
 {
-	printk("Unhandled function %s",__FUNCTION__);
+//	printk("Unhandled function %s",__FUNCTION__);
 #if 0
 	uint32_t addr = calc_addr(bus, slot, func, reg);
 	unsigned long irqstate;

@@ -18,4 +18,4 @@ obj-y		:= setup.o \
 obj-$(CONFIG_EFI)     += efi-header.o
 
 obj-y                 += pci/
-# obj-y                 += timers/
+obj-y                 += timers/

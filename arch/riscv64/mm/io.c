@@ -16,6 +16,7 @@ ioremap_nocache(unsigned long offset, unsigned long size)
         int ret=0;
 
         for (paddr = offset; paddr < offset + size; paddr += VM_PAGE_4KB) {
+                printk("paddr 0x%p vaddr 0x%p\n", paddr, __va(paddr));
                 if (arch_aspace_virt_to_phys(&bootstrap_aspace, (vaddr_t)__va(paddr), NULL) == -ENOENT) {
                         ret = arch_aspace_map_page(
                                   &bootstrap_aspace,

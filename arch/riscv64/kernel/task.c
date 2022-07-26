@@ -54,8 +54,8 @@ arch_task_create(
 	/* task->arch.thread.user_sp	 = start_state->stack_ptr;	/\* ustack ptr *\/ */
 	/* task->arch.thread.ra			 = start_state->entry_point; */
 
-	/* Mark this as a new-task... arch_context_switch() checks this flag */
-	task->arch.flags = TF_NEW_TASK_MASK;
+	/* /\* Mark this as a new-task... arch_context_switch() checks this flag *\/ */
+	/* task->arch.flags = TF_NEW_TASK_MASK; */
 
 	/* Task's address space is from [0, task->addr_limit) */
 	task->arch.addr_limit = PAGE_OFFSET;

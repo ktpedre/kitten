@@ -54,21 +54,6 @@ do_unhandled_irq(struct pt_regs *regs, unsigned int vector)
 	
 }
 
-
-static inline u64 get_mair_el1()
-{
-	u64 mair = 0xdeadbeefULL;;
-	__asm__ __volatile__("mrs %0, mair_el1\n":"=r"(mair));
-	return mair;
-}
-
-static inline u64 get_spsr_el1()
-{
-	u64 spsr = 0xdeadbeefULL;
-	__asm__ __volatile__("mrs %0, spsr_el1\n":"=r"(spsr));
-	return spsr;
-}
-
 /* void */
 /* do_mem_abort(unsigned long    addr,  */
 /* 	     unsigned int     esr, */
@@ -109,13 +94,13 @@ static inline u64 get_spsr_el1()
 void
 handle_irq(struct pt_regs * regs)
 {
-	struct arch_irq irq = {0};//irqchip_ack_irq();
+	struct arch_irq irq = {regs->cause};//irqchip_ack_irq();
 
 	irqreturn_t ret = IRQ_NONE;
 
-	//printk(">> Hardware IRQ!!!! [%d]\n", irq.vector);
+	printk(">> Hardware IRQ!!!! [%d]\n", irq.vector);
 
-
+	irqvec_table[irq.vector](regs, irq.vector);
 
 	/* if (irq.type == ARCH_IRQ_EXT) { */
 	/* 	irqvec_table[irq.vector](regs, irq.vector); */
@@ -130,8 +115,6 @@ handle_irq(struct pt_regs * regs)
 
 
 }
-
-
 
 void
 set_irq_handler(

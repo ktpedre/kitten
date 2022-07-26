@@ -506,12 +506,12 @@ schedule_timeout(ktime_t timeout)
 void
 schedule_new_task_tail(struct task_struct *prev, struct task_struct *next)
 {
-        struct run_queue *runq = &per_cpu(run_queue, this_cpu);
+	struct run_queue *runq = &per_cpu(run_queue, this_cpu);
 
-        /* Free memory used by prev if it has exited.
-         * Have to be careful not to free the bootstrap task_struct,
-         * since it is not part of the kmem allocator heap. */
-        if ((prev->state == TASK_EXITED) && (prev != &bootstrap_task)){
+	/* Free memory used by prev if it has exited.
+	 * Have to be careful not to free the bootstrap task_struct,
+	 * since it is not part of the kmem allocator heap. */
+	if ((prev->state == TASK_EXITED) && (prev != &bootstrap_task)){
 #ifdef CONFIG_SCHED_EDF
 		/* Remove the current task from the EDF tree*/
 		if(prev->edf.period){
@@ -520,9 +520,9 @@ schedule_new_task_tail(struct task_struct *prev, struct task_struct *next)
 #endif
 		kmem_free_pages(prev, TASK_ORDER);
 	}
-        spin_unlock(&runq->lock);
-        BUG_ON(irqs_enabled());
-        /* arch code will re-enable IRQs as part of starting the new task */
+	spin_unlock(&runq->lock);
+	BUG_ON(irqs_enabled());
+	/* arch code will re-enable IRQs as part of starting the new task */
 }
 
 void
