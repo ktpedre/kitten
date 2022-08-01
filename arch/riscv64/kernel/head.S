@@ -77,13 +77,13 @@ ENTRY(_start)
 	/* reserved */
 #endif
 	.balign 8
-;; #if __riscv_xlen == 64
+// #if __riscv_xlen == 64
 	/* Image load offset(2MB) from start of RAM */
 	.dword 0x200000
-;; #else
-;; 	/* Image load offset(4MB) from start of RAM */
-;; 	.dword 0x400000
-;; #endif
+// #else
+ 	/* Image load offset(4MB) from start of RAM */
+// 	.dword 0x400000
+// #endif
 	/* Effective size of kernel image */
 	.dword _end - _start
 	.dword __HEAD_FLAGS
