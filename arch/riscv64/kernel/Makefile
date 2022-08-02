@@ -10,7 +10,7 @@ obj-y		:= setup.o \
                traps.o ptrace.o \
                cpu_ops.o cpu_ops_sbi.o \
                reboot.o pda.o memblock.o sbi.o xcall.o \
-               smp.o
+               smp.o fpu.o
 # NMG Disabled for now (or maybe forever)
 # mpboot.o acpi.o entry-fpsimd.o irqchip.o smccc-call.o smp.o smp_spin_table.o psci.o topology.o bitops.o
 #obj-$(CONFIG_ARM64_ACPI_PARKING_PROTOCOL) += acpi_parking_protocol.o
