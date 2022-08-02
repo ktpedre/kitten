@@ -47,10 +47,15 @@
 /** IO port address of the serial port. */
 
 
-static unsigned int port = 0x10000000;
+/* static unsigned int port = 0x10000000; */
+//#define UART_PORT_PHYS 0x10000000
+#define UART_PORT_PHYS 0x10010000
+unsigned long long port = 0;
 
 /** Serial port baud rate. */
-static unsigned int baud = 9600; */
+/* static unsigned int baud = 9600; */
+#define baud 9600
+#define SERIAL_MAX_BAUD	115200
 
 /** Set when serial console has been initialized. */
 static int initialized = 0;
@@ -86,10 +91,11 @@ static inline void wait_for_xmitr(int bits)
  */
 static void serial_putc(struct console *con, unsigned char c)
 {
+	sbi_console_putchar(c);
 	// Wait until the TX buffer is empty
-	wait_for_xmitr(BOTH_EMPTY);
+	//wait_for_xmitr(BOTH_EMPTY);
 	// Slam the 8 bits down the 1 bit pipe... meeeooowwwy!
-	outb(c, port);
+	//outb(c, port);
 }
 
 /**
@@ -120,7 +126,7 @@ static char serial_getc(struct console *con)
 /**
  * Serial port console device.
  */
-static struct console serial_console = {
+static struct console sbi_serial_console = {
 	.name  = "Serial Console",
 	.write = serial_write,
 	.poll_get_char = serial_getc,
@@ -162,17 +168,19 @@ int serial_console_init(void)
 /* 	kgdboc_serial_register(&serial_console, &suppress); */
 /* #endif */
 	if (!suppress)
-		console_register(&serial_console);
+		console_register(&sbi_serial_console);
 	initialized = 1;
+
+	printk("Initid sbi_console driver.\n");
 
 	return 0;
 }
 
-DRIVER_INIT("console", serial_console_init);
+DRIVER_INIT("sbi_console", serial_console_init);
 
 /**
  * Configurable parameters for controlling the serial port
  * I/O port address and baud.
  */
-DRIVER_PARAM(port, uint);
-DRIVER_PARAM(baud, uint);
+/* DRIVER_PARAM(port, uint); */
+/* DRIVER_PARAM(baud, uint); */

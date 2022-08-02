@@ -84,6 +84,9 @@ config BLK_DEV_INITRD
 
 config CONSOLE
 
+config SBI_SERIAL_CONSOLE
+       bool "Use SBI"
+
 config SERIAL_PHYS
 	hex
 #	default "0x3f201000" if ARCH_RASPI3

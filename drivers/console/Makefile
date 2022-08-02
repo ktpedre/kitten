@@ -1,4 +1,5 @@
 obj-$(CONFIG_VGA_CONSOLE)	+= vga.o
 obj-$(CONFIG_SERIAL_CONSOLE)	+= serial.o
+obj-$(CONFIG_SBI_SERIAL_CONSOLE)	+= sbi_serial.o
 obj-$(CONFIG_VM_CONSOLE)	+= vm.o
 obj-$(CONFIG_PISCES)            += pisces.o

@@ -21,17 +21,41 @@
 /*#include <arch/xip_fixup.h>*/
 #include "efi-header.S"
 
-#define UART_PHYS_ADDR 0x10000000
+#define UART_PHYS_ADDR 0x10010000
 
+  /* Clobbers: t3, t4 */
+.macro wait_for_xmit, port
+1001:
+    lw t4, 0x0(\port)
+    li t3, 0x80000000
+    and t4, t4, t3
+    bnez t4, 1001b
+.endm
+
+  /* Clobbers: t1, t2.
+     Calls wait_for_xmit, which clobbers: t3, t4
+  */
 .macro _serial_write_bytes port, val, more:vararg
-    li t1, \port
+  li t1, \port
 
-    li t2, \val
-    REG_S t2, 0(t1)
+  //wait_for_xmit t1
+  li t2, \val
 
-    .ifnb \more
-    _serial_write_bytes \port, \more
-    .endif
+  wait_for_xmit t1
+  //fence w,o
+  sw t2, 0(t1)
+
+  //wait_for_xmit t1
+  //fence w,o
+  //sw t2, 0(t1)
+
+  //wait_for_xmit t1
+  //fence w,o
+  //sw t2, 0(t1)
+
+  .ifnb \more
+  _serial_write_bytes \port, \more
+  .endif
 
 .endm
   
@@ -41,10 +65,10 @@
     li t1, \port
 
     li t2, 0x0d
-    REG_S t2, 0(t1)
+    sb t2, 0(t1)
 
     li t2, 0x0a
-    REG_S t2, 0(t1)
+    sb t2, 0(t1)
 
 .endm
   
@@ -221,6 +245,10 @@ ENTRY(_start_kernel)
 	/* Mask all interrupts */
 	csrw CSR_IE, zero
 	csrw CSR_IP, zero
+  serial_write_str 'E'
+  serial_write_str 'F'
+  serial_write_str 'G'
+
 
 	/* Load the global pointer */
 .option push
@@ -254,7 +282,6 @@ clear_bss_done:
 	/* Initialize page table and relocate to virtual addresses */
   la sp, bootstrap_task_union + TASK_SIZE // -16 NMG:??? //init_thread_union + THREAD_SIZE
 	mv a0, s1
-  serial_write_str 'H', 'I'
 	call setup_vm
 ;; #ifdef CONFIG_MMU
 	la a0, early_pg_dir
