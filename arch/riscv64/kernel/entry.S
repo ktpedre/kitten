@@ -393,6 +393,7 @@ END(handle_exception)
 
 ENTRY(ret_from_fork)
 	la ra, ret_from_exception
+  /* This expects prev/next from context switch to be intact here. */
 	tail schedule_new_task_tail
 ENDPROC(ret_from_fork)
 
@@ -435,8 +436,12 @@ ENTRY(arch_context_switch)
 	REG_S s10, TASK_THREAD_S10_RA(a3)
 	REG_S s11, TASK_THREAD_S11_RA(a3)
 
+  /* This clobbers a0, a2 so they have to be saved. */
+  move t3, a0
+  jal ra, __fstate_save
+  move a0, t3
+
 	REG_L sp,  TASK_THREAD_KERN_SP(a1)
-  REG_L ra,  TASK_THREAD_RA_RA(a4)
 	REG_L s0,  TASK_THREAD_S0_RA(a4)
 	REG_L s1,  TASK_THREAD_S1_RA(a4)
 	REG_L s2,  TASK_THREAD_S2_RA(a4)
@@ -449,122 +454,21 @@ ENTRY(arch_context_switch)
 	REG_L s9,  TASK_THREAD_S9_RA(a4)
 	REG_L s10, TASK_THREAD_S10_RA(a4)
 	REG_L s11, TASK_THREAD_S11_RA(a4)
-  /* NMG Need to call some __arch_context_switch?
-  ARM64 code:
-    - update tls
-    - update the PDA
-    - update FPU stuff
-  */
-  /* call __arch_context_switch */
+
+  move t3, a0
+  move a0, a1
+  /* Restoring from a0. This also clobbers a2, so we have to save it. */
+  jal ra, __fstate_restore
+
+  REG_L ra,  TASK_THREAD_RA_RA(a4)
 
 	/* The offset of thread_info in task_struct is zero. */
   move tp, a1
 
+  move a0, t3
+
 	ret
-//ENDPROC(__switch_to)
 ENDPROC(arch_context_switch)
-  
-//ENTRY(__switch_to)
-/* ENTRY(arch_context_switch) */
-/* 	/\* Save context into prev->thread *\/ */
-/* 	li    a4,  TASK_THREAD_RA */
-/* 	add   a3, a0, a4 */
-/* 	add   a4, a1, a4 */
-/* 	REG_S ra,  TASK_THREAD_RA_RA(a3) */
-/* 	REG_S sp,  TASK_THREAD_USER_SP_RA(a3) */
-/* 	REG_S s0,  TASK_THREAD_S0_RA(a3) */
-/* 	REG_S s1,  TASK_THREAD_S1_RA(a3) */
-/* 	REG_S s2,  TASK_THREAD_S2_RA(a3) */
-/* 	REG_S s3,  TASK_THREAD_S3_RA(a3) */
-/* 	REG_S s4,  TASK_THREAD_S4_RA(a3) */
-/* 	REG_S s5,  TASK_THREAD_S5_RA(a3) */
-/* 	REG_S s6,  TASK_THREAD_S6_RA(a3) */
-/* 	REG_S s7,  TASK_THREAD_S7_RA(a3) */
-/* 	REG_S s8,  TASK_THREAD_S8_RA(a3) */
-/* 	REG_S s9,  TASK_THREAD_S9_RA(a3) */
-/* 	REG_S s10, TASK_THREAD_S10_RA(a3) */
-/* 	REG_S s11, TASK_THREAD_S11_RA(a3) */
-
-/*   /\* NMG Need to call some __arch_context_switch? */
-/*   ARM64 code: */
-/*     - update tls */
-/*     - update the PDA */
-/*     - update FPU stuff */
-/*   *\/ */
-/*   /\* call __arch_context_switch *\/ */
-
-/*   /\* Check if a new task. Otherwise, jump straight to the end of the routine *\/ */
-/*   REG_L t0, TASK_THREAD_FLAGS(a1) */
-/*   andi t0, t0, TF_NEW_TASK_MASK */
-/*   beqz t0, 1f */
-/*   move s1, a1 */
-/*   move s2, a4 */
-
-/* kickstart_new_task: */
-/*   jal ra, schedule_new_task_tail */
-
-/*   move a1, s1 */
-/*   move a4, s2 */
-
-/* 	/\* The offset of thread_info in task_struct is zero. *\/ */
-/*   move tp, a1 */
-
-/*   REG_L a3, TASK_THREAD_KERNEL_SP0(a1) */
-/*   addi a3, a3, -PT_SIZE */
-/*   /\*REG_L x1,  PT_RA(sp)*\/ */
-/* 	REG_L gp, PT_GP(a3) */
-/* /\*	REG_L tp, PT_TP(a3)*\/ */
-/* 	REG_L t0, PT_T0(a3) */
-/* 	REG_L t1, PT_T1(a3) */
-/* 	REG_L t2, PT_T2(a3) */
-/* 	REG_L s0, PT_S0(a3) */
-/* 	REG_L s1, PT_S1(a3) */
-/* 	REG_L a0, PT_A0(a3) */
-/* 	REG_L a1, PT_A1(a3) */
-/* 	REG_L a2, PT_A2(a3) */
-/* 	REG_L a5, PT_A5(a3) */
-/* 	REG_L a6, PT_A6(a3) */
-/* 	REG_L a7, PT_A7(a3) */
-/* 	REG_L s2, PT_S2(a3) */
-/* 	REG_L s3, PT_S3(a3) */
-/* 	REG_L s4, PT_S4(a3) */
-/* 	REG_L s5, PT_S5(a3) */
-/* 	REG_L s6, PT_S6(a3) */
-/* 	REG_L s7, PT_S7(a3) */
-/* 	REG_L s8, PT_S8(a3) */
-/* 	REG_L s9, PT_S9(a3) */
-/* 	REG_L s10, PT_S10(a3) */
-/* 	REG_L s11, PT_S11(a3) */
-/* 	REG_L t3, PT_T3(a3) */
-/* 	REG_L t4, PT_T4(a3) */
-/* 	REG_L t5, PT_T5(a3) */
-/* 	REG_L t6, PT_T6(a3) */
-
-/* 	/\*REG_L sp,  PT_SP(sp)*\/ */
-/* 1: */
-
-/* 	/\* Restore context from next->thread *\/ */
-/* 	REG_L ra,  TASK_THREAD_RA_RA(a4) */
-/* 	REG_L s0,  TASK_THREAD_S0_RA(a4) */
-/* 	REG_L s1,  TASK_THREAD_S1_RA(a4) */
-/* 	REG_L s2,  TASK_THREAD_S2_RA(a4) */
-/* 	REG_L s3,  TASK_THREAD_S3_RA(a4) */
-/* 	REG_L s4,  TASK_THREAD_S4_RA(a4) */
-/* 	REG_L s5,  TASK_THREAD_S5_RA(a4) */
-/* 	REG_L s6,  TASK_THREAD_S6_RA(a4) */
-/* 	REG_L s7,  TASK_THREAD_S7_RA(a4) */
-/* 	REG_L s8,  TASK_THREAD_S8_RA(a4) */
-/* 	REG_L s9,  TASK_THREAD_S9_RA(a4) */
-/* 	REG_L s10, TASK_THREAD_S10_RA(a4) */
-/* 	REG_L s11, TASK_THREAD_S11_RA(a4) */
-/*   REG_L sp,  PT_SP(a3) */
-
-/*   REG_L a4, PT_A4(a3) */
-/*   REG_L a3, PT_A3(a3) */
-
-/* 	ret */
-/* //ENDPROC(__switch_to) */
-/* ENDPROC(arch_context_switch) */
 
 #ifndef CONFIG_MMU
 #define do_page_fault do_trap_unknown

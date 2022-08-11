@@ -16,16 +16,95 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 #include <arch/memblock.h>
 #include <arch/cacheflush.h>
 #include <arch/tlbflush.h>
-#include <arch/pgalloc.h>
 #include <arch/pgtable.h>
 #include <lwk/aspace.h>
 #include <lwk/pfn.h>
 
 #include <lwk/types.h>
 
+#define SATP_MODE_MASK 0xf0000000
+
+static void
+__walk_3lvl_pgtable(vaddr_t vaddr)
+{
+  u64   satp  = csr_read(CSR_SATP);
+
+  printk("0x%p, pfnup 0x%p\n", satp, PFN_PHYS(satp));
+
+  int i = 0;
+  xpte_t * pgd = __va(PFN_PHYS(satp));
+  xpte_t * pmd = NULL;
+  xpte_t * ptd = NULL;
+
+  xpte_t * pge = NULL;
+  xpte_t * pme = NULL;
+  xpte_t * pte = NULL;
+
+  const unsigned int pgd_index = (vaddr >> 30) & 0x1ff;
+  const unsigned int pmd_index = (vaddr >> 21) & 0x1ff;
+  const unsigned int ptd_index = (vaddr >> 12) & 0x1ff;
+
+  pge = &pgd[pgd_index];
+
+  printk("Tables at %p (probe addr %p)\n", pgd, vaddr);
+
+  if (!pge->valid) {
+    printk("Invalid PGD entry (index=%d)\n", pgd_index);
+    return;
+  }
+
+  printk("PGD [%d]: %llx\n", pgd_index, *(u64 *)pge);
+
+  printk("\tvalid=%d, rwx=%d%d%d, user=%d, global=%d, acc=%d, dirty=%d, rsw=%d, ppn0=0x%p, ppn1=0x%p, ppn2=0x%p\n", pge->valid, pge->read, pge->write, pge->exec, pge->user, pge->global, pge->acc, pge->dirty, pge->rsw, pge->ppn0, pge->ppn1, pge->ppn2);
+
+  if (is_leaf(pge)) {
+    printk("\t --> %p\n", xpte_paddr(pge));
+    return;
+  }
+
+  pmd = __va(xpte_paddr(pge));
+  pme = &pmd[pmd_index];
+
+  if (!pme->valid) {
+    printk("Invalid PMD entry (index=%d)\n", pmd_index);
+    return;
+  }
+
+  printk("PMD [%d]: %llx\n", pmd_index, *(u64 *)pme);
+  printk("\tvalid=%d, rwx=%d%d%d, user=%d, global=%d, acc=%d, dirty=%d, rsw=%d, ppn0=0x%p, ppn1=0x%p, ppn2=0x%p\n", pme->valid, pme->read, pme->write, pme->exec, pme->user, pme->global, pme->acc, pme->dirty, pme->rsw, pme->ppn0, pme->ppn1, pme->ppn2);
+
+  if (is_leaf(pme)) {
+    printk("\t --> %p\n", xpte_paddr(pme));
+    return;
+  }
+
+  ptd = __va(xpte_paddr(pme));
+  pte = &ptd[ptd_index];
+
+  if (!pte->valid) {
+    printk("Invalid PTD entry (index=%d)\n", ptd_index);
+    return;
+  } else {
+    printk("PTD [%d]: %llx\n", ptd_index, *(u64 *)pte);
+
+    printk("\tvalid=%d, rwx=%d%d%d, user=%d, global=%d, acc=%d, dirty=%d, rsw=%d, ppn0=0x%p, ppn1=0x%p, ppn2=0x%p\n", pte->valid, pte->read, pte->write, pte->exec, pte->user, pte->global, pte->acc, pte->dirty, pte->rsw, pte->ppn0, pte->ppn1, pte->ppn2);
+    printk("\t --> %p\n", xpte_paddr(pte));
+  }
+
+	return;
+}
+
+void
+print_pgtable_riscv(vaddr_t vaddr)
+{
+  __walk_3lvl_pgtable(vaddr);
+}
+
+#if 0
 
 /* #if 0 */
 /* #include <linux/export.h> */
@@ -61,12 +140,6 @@ pgprot_t pgprot_default;
 
 static pmdval_t prot_sect_kernel;
 
-
-void
-dump_pgtable_riscv()
-{
-
-}
 
 
 static void
@@ -224,13 +297,6 @@ __walk_3lvl_pgtable(vaddr_t vaddr)
 /* #endif */
 
 }
-
-void
-print_pgtable_arm64(vaddr_t vaddr)
-{
-	__walk_3lvl_pgtable(vaddr);
-}
-
 
 /* #if 0 */
 /* struct cachepolicy { */
@@ -660,3 +726,5 @@ void __init paging_init(void)
 /* #endif	/\* CONFIG_ARM64_64K_PAGES *\/ */
 /* #endif	/\* CONFIG_SPARSEMEM_VMEMMAP *\/ */
 /* #endif */
+
+#endif

@@ -25,6 +25,7 @@ extern int riscv_timer_init(struct device_node* dt_node);
 static const struct of_device_id timer_of_match[]  = {
 	{ .compatible = "riscv,clint0",  .data = riscv_timer_init},
 	{ .compatible = "sifive,clint0", .data = riscv_timer_init},
+	{ .compatible = "sifive,fu740-c000-prci", .data = riscv_timer_init},
 	/* { .compatible = "arm,armv8-timer",   .data = armv8_timer_init}, */
 	/* { .compatible = "arm,armv7-timer",	 .data = armv7_timer_init}, */
 	/* { .compatible = "arm,hafnium-timer", .data = hafnium_timer_init}, */
@@ -48,7 +49,6 @@ time_init(void)
 
 	return init_fn(dt_node);
 }
-
 
 
 int 

@@ -22,7 +22,13 @@ arch_in_interrupt(void)
 }
 
 struct arch_irq {
-	uint32_t vector;
+	union {
+		uint64_t value;
+		struct {
+			uint64_t irqnum : 63;
+			uint64_t type  : 1;
+		};
+	};
 };
 
 #endif

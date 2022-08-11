@@ -245,10 +245,6 @@ ENTRY(_start_kernel)
 	/* Mask all interrupts */
 	csrw CSR_IE, zero
 	csrw CSR_IP, zero
-  serial_write_str 'E'
-  serial_write_str 'F'
-  serial_write_str 'G'
-
 
 	/* Load the global pointer */
 .option push

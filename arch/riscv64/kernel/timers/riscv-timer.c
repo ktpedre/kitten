@@ -27,6 +27,8 @@ static unsigned long clint0_size = 0;
 
 static vaddr_t my_mtimecmp = NULL;
 
+static unsigned long timer_freq_hz = 0;
+
 static void
 __reload_timer()
 {
@@ -70,13 +72,16 @@ __riscv_timer_set_timer_freq(unsigned int hz)
         panic("Core-local init not done yet!\n");
     }
 
-    printk("Setting timer frequency to %d HZ\n", hz);
+    unsigned long now  = get_cycles64();
+    unsigned long next = hz*timer_freq_hz;
 
-    csr_set(CSR_IE, IE_TIE);
-    sbi_set_timer(get_cycles64()+(hz*10000000));
+    printk("Setting timer frequency to %d HZ (%lu ticks) from now %lu\n", hz, next, now);
+
+    //csr_set(CSR_IE, IE_TIE);
+    //sbi_set_timer(now+next);
     //my_mtimecmp = hz;
 
-    write_pda(timer_reload_value, hz*10000000);
+    write_pda(timer_reload_value, next);
 
     printk("Timer enabled and running\n");
 }
@@ -128,10 +133,18 @@ riscv_timer_init(struct device_node* dt_node)
     /* NMG Not really sure how to do this. Do we get core-local frequency or what? */
     /* dn = of_find_node_with_property(NULL, allnodes, "clock-frequency"); */
 
-    /* if (dn &&  */
+    if ((dn = of_find_node_by_name(allnodes, "rtcclk")) != NULL)
+    {
+        unsigned freq_hz;
 
-    dn = of_find_node_with_property(allnodes, "timebase-frequency");
-    if (dn)
+        of_property_read_u32(dn, "clock-frequency", &freq_hz);
+        printk("Found RTC frequency: 0x%x (Hz)\n", freq_hz);
+        init_cycles2ns(freq_hz/1000);
+        timer_freq_hz = freq_hz;
+
+        of_node_put(dn);
+    }
+    else if ( (dn = of_find_node_with_property(allnodes, "timebase-frequency")) != NULL)
     {
         unsigned freq;
         of_property_read_u32(dn, "timebase-frequency", &freq);
@@ -141,7 +154,7 @@ riscv_timer_init(struct device_node* dt_node)
     }
     else
     {
-        printk("Did not find dn!\n");
+        printk("Did not find matching dn!\n");
     }
 
     riscv_timer.dt_node = dt_node;

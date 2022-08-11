@@ -33,6 +33,10 @@ void die(struct pt_regs *regs, const char *str)
 	static int die_counter;
 	int ret;
 
+	printk("die\n");
+
+	show_registers(regs);
+
 	asm volatile("j . \n");
 
 	/* oops_enter(); */
@@ -64,6 +68,9 @@ void do_trap(struct pt_regs *regs, int signo, int code, unsigned long addr)
 {
 	struct task_struct *tsk = current;
 
+	printk("Trap\n");
+	show_registers(regs);
+
 	asm volatile("j . \n");
 
 
@@ -82,7 +89,9 @@ void do_trap(struct pt_regs *regs, int signo, int code, unsigned long addr)
 static void do_trap_error(struct pt_regs *regs, int signo, int code,
 	unsigned long addr, const char *str)
 {
+	printk("Trap error: %s\n", str);
 	current->arch.thread.bad_cause = regs->cause;
+	show_registers(regs);
 
 	if (user_mode(regs)) {
 		do_trap(regs, signo, code, addr);
@@ -124,6 +133,7 @@ int handle_misaligned_store(struct pt_regs *regs);
 
 asmlinkage void __trap_section do_trap_load_misaligned(struct pt_regs *regs)
 {
+	show_registers(regs);
 	if (!handle_misaligned_load(regs))
 		return;
 	do_trap_error(regs, SIGBUS, BUS_ADRALN, regs->epc,
@@ -132,6 +142,7 @@ asmlinkage void __trap_section do_trap_load_misaligned(struct pt_regs *regs)
 
 asmlinkage void __trap_section do_trap_store_misaligned(struct pt_regs *regs)
 {
+	show_registers(regs);
 	if (!handle_misaligned_store(regs))
 		return;
 	do_trap_error(regs, SIGBUS, BUS_ADRALN, regs->epc,
@@ -159,11 +170,23 @@ static inline unsigned long get_break_insn_length(unsigned long pc)
 
 asmlinkage __visible __trap_section void do_page_fault(struct pt_regs *regs)
 {
+	printk("Page fault\n");
+	show_registers(regs);
+
+	print_pgtable_riscv(regs->a5);
+
+	id_t myid;
+	aspace_get_myid(&myid);
+
+	aspace_dump2console(myid);
+
 	asm volatile("j . \n");
 }
 
 asmlinkage __visible __trap_section void do_trap_break(struct pt_regs *regs)
 {
+	printk("trap brk\n");
+	show_registers(regs);
 	asm volatile("j . \n");
 /* #ifdef CONFIG_KPROBES */
 /* 	if (kprobe_single_step_handler(regs)) */

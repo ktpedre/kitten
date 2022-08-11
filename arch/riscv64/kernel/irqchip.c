@@ -10,7 +10,6 @@
 #include <lwk/init.h>
 #include <lwk/resource.h>
 
-
 #include <arch/msr.h>
 #include <arch/irqchip.h>
 #include <arch/irq_vectors.h>
@@ -18,54 +17,39 @@
 #include <arch/of.h>
 #include <arch/io.h>
 
-
-
 static struct irqchip * irq_controller = NULL;
+#define NR_CONTROLLERS 4
+static struct irqchip controllers[4];
 
 int __init
 irqchip_local_init(void)
 {
 	irq_controller->core_init(irq_controller->dt_node);
 }
-p
-
-/* extern int gic3_global_init(struct device_node * dt_node); */
-/* extern int gic2_global_init(struct device_node * dt_node); */
-/* extern int bcm2836_global_init(struct device_node * dt_node); */
-/* #ifdef CONFIG_HAFNIUM */
-/* extern int hafnium_vintc_global_init(struct device_node * dt_node); */
-/* #endif */
 
 static const struct of_device_id intr_ctrlr_of_match[]  = {
-	{ .compatible = "riscv,cpu-intc", .data = cpu_intc_init},
-/* 	{ .compatible = "arm,gic-v3",				.data = gic3_global_init},	          // Qemu w/ gic-version=3 */
-/* 	{ .compatible = "arm,gic-400",				.data = gic2_global_init},            // Pine A64 */
-/* 	{ .compatible = "arm,cortex-a15-gic",		.data = gic2_global_init},	          // Qemu default */
-/* 	{ .compatible = "brcm,bcm2836-l1-intc",		.data = bcm2836_global_init},         // Raspberry Pi 3 */
-/* #ifdef CONFIG_HAFNIUM */
-/* 	{ .compatible = "hafnium,vintc",		    .data = hafnium_vintc_global_init},   // Hafnium */
-/* #endif */
+	{ .compatible = "riscv,clint0", .data = clint_global_init},
+	{ .compatible = "riscv,plic0",  .data = plic_init},
 	{},
 };
 
 int
-irqchip_register(struct irqchip * chip)
+irqchip_register(struct irqchip * chip, irq_controller_type_t type)
 {
-	if (irq_controller) {
+	if (controllers[type]) {
 		panic("Failed to register irq controller. Already registered.\n");
 	}
 
-	printk("Registering IRQ Controller [%s]\n", chip->name);
-	irq_controller = chip;
+	printk("Registering IRQ Controller [%s] with type %d\n", chip->name, type);
+
+	controllers[type] = chip;
 
 	return 0;
 }
 
-
 int __init
 irqchip_global_init(void)
 {
-
 	struct device_node  * dt_node    = NULL;
 	struct of_device_id * matched_np = NULL;
 	irqchip_init_fn init_fn;
@@ -81,9 +65,6 @@ irqchip_global_init(void)
 
 	return init_fn(dt_node);
 }
-
-/* extern void gic3_probe(void); */
-/* extern void gic2_probe(void); */
 
 void probe_pending_irqs(void) {
 	ASSERT(irq_controller->print_pending_irqs != NULL);
@@ -104,18 +85,36 @@ irqchip_enable_irq(uint32_t           irq_num,
 	irq_controller->enable_irq(irq_num, trigger_mode);
 }
 
-
-void 
+void
 irqchip_do_eoi(struct arch_irq irq)
 {
 	ASSERT(irq_controller->do_eoi != NULL);
 	irq_controller->do_eoi(irq);
 }
 
-struct arch_irq  
-irqchip_ack_irq(void) {
-	ASSERT(irq_controller->ack_irq != NULL);
-	return irq_controller->ack_irq();
+struct arch_irq
+irqchip_ack_irq(struct pt_regs * regs) {
+	/* NMG Should iterate across all controllers and contain this ugly state */
+	//ASSERT(irq_controller->ack_irq != NULL);
+
+	/* Highest bit set to 1 is an interrupt. Otherwise, it's an exception */
+	struct arch_irq irq = { .value = regs->cause };//irqchip_ack_irq();
+
+	switch (irq.type) {
+	case IRQ_EXCEPTION: {
+		irq = controllers[IRQ_CONTROLLER_EXTERNAL].ack_irq();
+		break;
+	}
+	case IRQ_INTERRUPT: {
+		irq = controllers[IRQ_CONTROLLER_IPI].ack_irq();
+		break;
+	}
+	default: {
+		irq = { .value = 0 };
+	}
+	}
+
+	return irq;
 }
 
 void 

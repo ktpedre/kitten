@@ -65,11 +65,14 @@ create_init_task(void)
 		.use_args	= false,
 	};
 
+	printk("create init\n");
+
 	if (!init_elf_image) {
 		printk("No init_elf_image found.\n");
 		return -EINVAL;
 	}
 	
+	printk("elf load init argv %s init heap %lu\n", init_argv_str, init_heap_size);
 	/* This initializes start_state aspace_id, entry_point, and stack_ptr */
 	status =
 	elf_load(
@@ -92,14 +95,17 @@ create_init_task(void)
 
 	/* This prevents the address space from being deleted by
 	 * user-space, since the kernel never releases this reference */
+	printk("aspac acquire\n");
 	if (!aspace_acquire(INIT_ASPACE_ID)) {
 		printk("Failed to acquire INIT_ASPACE_ID.\n");
 		return status;
 	}
 
 
+	printk("task create\n");
 	struct task_struct *new_task = __task_create(&start_state, NULL);
 
+	printk("wakeup\n");
 	sched_wakeup_task(new_task, TASK_STOPPED);
 
 	return 0;

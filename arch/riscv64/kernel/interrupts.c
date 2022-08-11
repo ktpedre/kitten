@@ -94,26 +94,22 @@ do_unhandled_irq(struct pt_regs *regs, unsigned int vector)
 void
 handle_irq(struct pt_regs * regs)
 {
-	struct arch_irq irq = {regs->cause};//irqchip_ack_irq();
+	/* struct arch_irq irq = irqchip_ack_irq(regs); */
+	/* irqreturn_t			ret = IRQ_NONE; */
 
-	irqreturn_t ret = IRQ_NONE;
+	/* printk(">> Hardware IRQ!!!! [%d]\n", irq.vector); */
 
-	printk(">> Hardware IRQ!!!! [%d]\n", irq.vector);
-
-	irqvec_table[irq.vector](regs, irq.vector);
-
-	/* if (irq.type == ARCH_IRQ_EXT) { */
+	/* if (irq.type == IRQ_EXCEPTION) { */
 	/* 	irqvec_table[irq.vector](regs, irq.vector); */
-	/* } else if (irq.type == ARCH_IRQ_IPI) { */
-	/* 	ipivec_table[irq.vector](regs, irq.vector); */
-	/* } else if (irq.type == ARCH_IRQ_INVALID) { */
-	/* 	printk("Received Spurious IRQ\n"); */
 	/* } */
- 	
-	/* irqchip_do_eoi(irq); */
+	/* else if (irq_type == IRQ_INTERRUPT) { */
+	/* 	ipivec_table[irq.vector](regs, irq.vector); */
+	/* } */
+	/* else { /\* irq_type == IRQ_INVALID or anything else *\/ */
+	/* 	printk("Received unknown/spurious IRQ\n"); */
+	/* } */
 
-
-
+	/* /\* irqchip_do_eoi(irq); *\/ */
 }
 
 void

@@ -80,6 +80,7 @@ arch_task_create(
 		task->arch.thread.ra = ret_from_fork;
 		task->arch.thread.user_sp = start_state->stack_ptr;
 		regs->sp = start_state->stack_ptr;
+		regs->status |= SR_FS_INITIAL;
 	}
 //	repgs->eflags = (1 << 9);  /* enable interrupts */
 	regs->epc    = is_clone ? parent_regs->epc : start_state->entry_point;

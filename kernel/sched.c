@@ -289,6 +289,8 @@ context_switch(struct task_struct *prev, struct task_struct *next)
 	arch_task_meas();
 #endif
 
+	//printk("Switching from %s to %s\n", prev->name, next->name);
+
 	/* Switch to the next task's address space */
 	if (prev->aspace != next->aspace)
 		arch_aspace_activate(next->aspace);
@@ -336,6 +338,8 @@ schedule(void)
 	struct run_queue *runq = &per_cpu(run_queue, this_cpu);
 	struct task_struct *prev = current, *next = NULL, *task, *tmp;
 	ktime_t inttime = 0;
+
+	//printk("Sched\n");
 
 	/* Remember prev's external interrupt state */
 	prev->sched_irqs_on = irqs_enabled();
@@ -407,6 +411,8 @@ schedule(void)
 
 	/* A reschedule has occurred, so clear prev's TF_NEED_RESCHED_BIT */
 	clear_bit(TF_NEED_RESCHED_BIT, &prev->arch.flags);
+	
+	//printk("context switch\n");
 
 	if (prev != next) {
 		fire_sched_out_preempt_notifiers(prev, next);
@@ -572,7 +578,7 @@ repeat_lock_runq:
 	runq = &per_cpu(run_queue, cpu);
 	spin_lock_irqsave(&runq->lock, irqstate);
 	if (cpu != task->cpu_id) {
-		printk("Task %s, cpu %d, task_cpu %d\n", task->name, cpu, task->cpu_id);
+		//printk("Task %s, cpu %d, task_cpu %d\n", task->name, cpu, task->cpu_id);
 		spin_unlock_irqrestore(&runq->lock, irqstate);
 		goto repeat_lock_runq;
 	}

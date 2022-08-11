@@ -425,6 +425,8 @@ write_pte(
 	memset(&_pte, 0, sizeof(_pte));
 
 	_pte.valid	= 1;
+	_pte.acc    = 1;
+	_pte.dirty  = 1;
 
 	if (flags & VM_WRITE)
 		_pte.write = 1;
@@ -439,9 +441,9 @@ write_pte(
 	if (flags & VM_KERNEL) {
 		_pte.global = 1;
 		_pte.write  = 1;
-		_pte.read		= 1;
-		_pte.acc = 1;
-		_pte.dirty    = 1;
+		_pte.read   = 1;
+		_pte.acc    = 1;
+		_pte.dirty  = 1;
 	}
 
 	/* _pte.valid	= 1; */
