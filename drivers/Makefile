@@ -1,5 +1,5 @@
 obj-$(CONFIG_PC) += console/
-obj-y += net/
+obj-y += net/ io/
 obj-$(CONFIG_BLOCK_DEVICE) += block/
 
 obj-$(CONFIG_KEYBOARD) += keyboard.o
