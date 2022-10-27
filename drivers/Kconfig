@@ -103,8 +103,15 @@ config XPMEM_FWD
         bool "The XPMEM forwarding service"
         help 
 	        Select this if you want to run the XPMEM forwarding service
-    
+
 endchoice
+
+config I2C
+			 bool "Enable I2C driver"
+			 depends on ARM64
+			 default n
+			 help
+				Select this if you have an I2C device you want to control from Kitten
 
 
 config RCR
