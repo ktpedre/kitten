@@ -495,7 +495,7 @@ set_cpu_possible(unsigned int cpu, bool possible)
 	if (possible)
 		cpu_set(cpu, cpu_possible_map);
 	else
-		cpum_clear(cpu, cpu_possible_map);
+		cpu_clear(cpu, cpu_possible_map);
 }
 
 static inline void
@@ -504,7 +504,7 @@ set_cpu_present(unsigned int cpu, bool present)
 	if (present)
 		cpu_set(cpu, cpu_present_map);
 	else
-		cpum_clear(cpu, cpu_present_map);
+		cpu_clear(cpu, cpu_present_map);
 }
 
 static inline void

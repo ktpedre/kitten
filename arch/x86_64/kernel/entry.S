@@ -52,7 +52,7 @@ ENTRY(arch_context_switch)
 	movq %gs:pda_pcurrent, %rsi
 
 	/* New tasks need to be kick-started */
-	lock btr $TF_NEW_TASK_BIT, tsk_arch_flags(%rsi)
+	lock btrl $TF_NEW_TASK_BIT, tsk_arch_flags(%rsi)
 	jc kickstart_new_task
 
 	/* Restore next's callee saved registers */
@@ -418,7 +418,7 @@ END(asm_sys_clone)
  */
 ENTRY(asm_syscall_ignore)
 	mov $-ENOSYS,%eax
-	sysret
+	sysretl
 END(asm_syscall_ignore)
 
 
