@@ -58,7 +58,7 @@ void * thread_fn(void * arg) {
 
 	printf("New thread running (tid = %ld) on CPU %d\n", syscall(SYS_gettid), cpu_id);
 
-	return 0xffffeeaa;
+	return (void *)0xffffeeaa;
 }
 
 

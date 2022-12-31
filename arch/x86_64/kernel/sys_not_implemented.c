@@ -28,7 +28,7 @@ syscall_not_implemented(void)
 
 	/************************************************************************/
 	/* BEGIN THIS IS SUPER FRAGILE */
-	asm volatile("mov %%rsp, %0" : "=r"(rsp)::"%rsp");
+	asm volatile("mov %%rsp, %0" : "=r"(rsp)::);
 
 	/* Calculate the base of the register frame that was saved by
 	 * asm_syscall().  This is the super duper fragile part, since

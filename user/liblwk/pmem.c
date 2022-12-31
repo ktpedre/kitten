@@ -12,6 +12,7 @@ pmem_type_to_string(pmem_type_t type)
 		case PMEM_TYPE_INIT_TASK:   return "INIT_TASK";   break;
 		case PMEM_TYPE_KMEM:        return "KMEM";        break;
 		case PMEM_TYPE_UMEM:        return "UMEM";        break;
+		case PMEM_TYPE_FDT:         return "FDT";         break;
 	}
 	return "UNKNOWN";
 }

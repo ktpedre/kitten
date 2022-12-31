@@ -1,5 +1,6 @@
 #include <lwk/kernel.h>
 #include <lwk/cpuinfo.h>
+#include <arch/percpu.h>
 
 
 DEFINE_PER_CPU_READ_MOSTLY(int, numa_node);

@@ -11,6 +11,10 @@
  *
  */
 
+extern int
+sys_dup2(int oldfd,
+	 int newfd);
+
 int
 sys_dup3(int oldfd,
 	 int newfd,

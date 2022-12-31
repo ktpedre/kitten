@@ -10,7 +10,8 @@
 	#include <arch/dwarf2.h>
 	#include <arch/calling.h>			
 	#include <arch/rwlock.h>
-		
+
+#if 0
 	/* rdi:	arg1 ... normal C conventions. rax is saved/restored. */ 	
 	.macro thunk name,func
 	.globl \name
@@ -63,6 +64,7 @@ restore_norax:
 	RESTORE_ARGS 1
 	ret
 	CFI_ENDPROC
+#endif
 
 /* Support for read/write spinlocks. */
 	.text
