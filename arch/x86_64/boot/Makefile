@@ -93,6 +93,9 @@ ifeq ($(CONFIG_SYSLINUX_BOOTLOADER),y)
 			break ; \
 		elif [ -f /usr/$$i/ISOLINUX/isolinux.bin ] ; then \
 			cp /usr/$$i/ISOLINUX/* $(obj)/isoimage ; \
+			if [ -f /usr/$$i/syslinux/modules/bios/ldlinux.c32 ] ; then \
+				cp /usr/$$i/syslinux/modules/bios/ldlinux.c32 $(obj)/isoimage ; \
+			fi ; \
 			break ; \
 		fi ; \
 		if [ $$i = end ] ; then exit 1 ; fi ; \
