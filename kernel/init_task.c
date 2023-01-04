@@ -49,6 +49,43 @@ param_string(init_argv, init_argv_str, sizeof(init_argv_str));
 static char init_envp_str[INIT_ENVP_LEN] = { 0 };
 param_string(init_envp, init_envp_str, sizeof(init_envp_str));
 
+
+static int
+__initrd_is_elf(paddr_t initrd_start, 
+		paddr_t initrd_end)
+{
+	uint8_t elf_hdr[4] = {0x7f, 'E', 'L', 'F'}; 
+
+	if (initrd_end - initrd_start <= sizeof(elf_hdr)) {
+		return 0;
+	} 
+
+	if (memcmp(__va(initrd_start), elf_hdr, sizeof(elf_hdr)) == 0) {
+		return 1;
+	}
+
+	return 0;
+}
+
+
+
+/**
+ *  Set the up userspace environment using INITRD data
+ */
+int
+setup_userspace(paddr_t initrd_start, 
+                paddr_t initrd_end)
+{
+	if (__initrd_is_elf(initrd_start, initrd_end)) {
+		printk("INITRD: ELF executable\n");
+		init_elf_image = initrd_start;
+	} else {
+		printk("Error: Invalid INITRD format\n");
+		return -EINVAL;
+	}
+}
+
+
 /**
  * Creates the init_task.
  */
@@ -104,3 +141,6 @@ create_init_task(void)
 
 	return 0;
 }
+
+
+
