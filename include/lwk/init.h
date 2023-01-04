@@ -81,8 +81,12 @@ extern void setup_arch(void);
 
 extern void start_kernel(void);
 
+int setup_userspace(paddr_t initrd_start, paddr_t initrd_end);
+
+extern paddr_t initrd_start, initrd_end;
+
 extern int create_init_task(void);
-extern paddr_t init_elf_image;
+//extern paddr_t init_elf_image;
 
 #endif /* !__ASSEMBLY__ */
   

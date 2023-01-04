@@ -228,6 +228,9 @@ start_kernel()
 	/*
 	 * Start up user-space...
 	 */
+
+    setup_userspace(initrd_start, initrd_end);
+
 	printk(KERN_INFO "Loading initial user-level task (init_task)...\n");
 	if ((status = create_init_task()) != 0)
 		panic("Failed to create init_task (status=%d).", status);
