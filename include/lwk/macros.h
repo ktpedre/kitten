@@ -3,6 +3,7 @@
 
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
 #define ALIGN(x,a) (((x)+(a)-1)&~((a)-1))
+#define IS_ALIGNED(x, a) ((x % a) == 0)
 #define DIV_ROUND_UP(n,d) (((n) + (d) - 1) / (d))
 
 /*
