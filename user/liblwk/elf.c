@@ -475,7 +475,7 @@ elf_dflt_alloc_pmem(size_t size, size_t alignment, uintptr_t arg)
 }
 
 static int
-load_writable_segment(
+load_segment(
 	void *            elf_image,
 	struct elf_phdr * phdr,
 	id_t              aspace_id,
@@ -543,26 +543,67 @@ load_writable_segment(
 	return 0;
 }
 
+static int 
+load_writable_segment(
+	void *            elf_image,
+	struct elf_phdr * phdr,
+	id_t              aspace_id,
+	vaddr_t           start,
+	size_t            extent,
+	vmpagesize_t      pagesz,
+	uintptr_t         alloc_pmem_arg,
+	paddr_t (*alloc_pmem)(size_t size, size_t alignment, uintptr_t arg)
+)
+{
+	return load_segment(
+		elf_image, 
+		phdr, 
+		aspace_id,
+		start,
+		extent,
+		pagesz,
+		alloc_pmem_arg,
+		alloc_pmem
+	);
+}
+
 static int
 load_readonly_segment(
+	void            * elf_image,
 	paddr_t           elf_image_paddr,
 	struct elf_phdr * phdr,
 	id_t              aspace_id,
 	vaddr_t           start,
 	size_t            extent,
-	vmpagesize_t      pagesz
+	vmpagesize_t      pagesz,
+	uintptr_t         alloc_pmem_arg,
+	paddr_t (*alloc_pmem)(size_t size, size_t alignment, uintptr_t arg)
 )
 {
-	return aspace_map_region(
-		aspace_id,
-		start,
-		extent,
-		elf_pflags_to_vmflags(phdr->p_flags),
-		pagesz,
-		"ELF (mapped)",
-		elf_image_paddr +
-			round_down(phdr->p_offset, pagesz)
-	);
+
+	if (IS_ALIGNED(elf_image_paddr, pagesz)) {
+		return aspace_map_region(
+			aspace_id,
+			start,
+			extent,
+			elf_pflags_to_vmflags(phdr->p_flags),
+			pagesz,
+			"ELF (mapped)",
+			elf_image_paddr +
+				round_down(phdr->p_offset, pagesz)
+		);
+	} else {
+		return load_segment(
+			elf_image, 
+			phdr,
+			aspace_id,
+			start,
+			extent, 
+			pagesz,
+			alloc_pmem_arg,
+			alloc_pmem
+		);
+	}
 }
 
 /**
@@ -620,6 +661,7 @@ elf_load_executable(
 		if (phdr->p_flags & PF_W) {
 			/* Writable segments must be copied into the
 			 * target address space */
+
 			status =
 			load_writable_segment(
 				elf_image,
@@ -636,14 +678,18 @@ elf_load_executable(
 		} else {
 			/* Read-only segments are mapped directly
 			 * from the ELF image */
+			
 			status =
 			load_readonly_segment(
+				elf_image,
 				elf_image_paddr,
 				phdr,
 				aspace_id,
 				start,
 				extent,
-				pagesz
+				pagesz,
+				alloc_pmem_arg,
+				alloc_pmem
 			);
 			if (status)
 				return status;
