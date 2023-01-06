@@ -23,6 +23,7 @@ obj-y := \
 	waitq.o \
 	timer.o \
 	init_task.o \
+	initrd.o \
 	kfs.o \
 	interrupt.o \
 	semaphore.o \
