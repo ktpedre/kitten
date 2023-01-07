@@ -66,6 +66,7 @@ static int initrd_open(struct inode * inode, struct file * file)
 {
 	file->pos = 0;
 	file->private_data = inode->i_private;
+
 	return 0;
 }
 
@@ -75,12 +76,12 @@ initrd_read(struct file * file,
             size_t        len,
             loff_t      * off)
 {
-	struct initrd_file_info * priv = file->private_data;
+	struct initrd_file_info  * file_info = PRIV_DATA(file->private_data);
 
 	len = file->pos + len > file->inode->size ?
 	      file->inode->size - file->pos : len;
 
-	if ( copy_to_user(buf, priv->data + file->pos, len) ) {
+	if ( copy_to_user(buf, file_info->data + file->pos, len) ) {
 		return -EFAULT;
 	}
 
@@ -103,7 +104,7 @@ initrd_lseek(struct file * file,
              off_t         offset,
              int           whence)
 {
-	struct initrd_file_info * priv = file->private_data;
+//	struct initrd_file_info  * file_info = PRIV_DATA(file->private_data);
 
 	switch ( whence ) {
 	    case 0: /* SEEK_SET */
@@ -148,7 +149,7 @@ static int create(struct inode *inode, int mode)
 
 static int unlink(struct inode * inode)
 {
-	struct initrd_file_info  * file_state = PRIV_DATA(inode->i_private);
+	//struct initrd_file_info  * file_info = PRIV_DATA(inode->i_private);
 
 	dbg("\n");
 
@@ -240,14 +241,21 @@ unpack_initrd(paddr_t initrd_start,
 		if (S_ISDIR(file_mode)) {
 			kfs_mkdir(file_name, file_mode);
 		} else if (S_ISREG(file_mode)) {
-			struct initrd_file_info * file_info  = kmem_alloc(sizeof(struct initrd_file_info));
+			struct initrd_file_info * file_info  = NULL;
 			struct inode            * file_inode = NULL;
-			file_info->data = file_data;
 
-			file_inode = kfs_create(file_name, &initrd_iops, &initrd_fops, file_mode, file_info, sizeof(struct initrd_file_info));
+			file_inode = kfs_create(file_name, &initrd_iops, &initrd_fops, file_mode, NULL, 0);
+
+			if (file_inode == NULL) {
+				printk("Error: Could not create file from initrd\n");
+				return NULL;
+			}
+
+			file_info        = PRIV_DATA(file_inode->i_private);
+			file_info->data  = file_data;
 			file_inode->size = data_size;
 
-			//printk("%s\n", file_name);
+			//printk("%s at %p (file_info at %p)\n", file_name, file_data, file_info);
 
 			if (strncmp(file_name, "init", strlen(file_name)) == 0) {
 				printk("Found init\n");
