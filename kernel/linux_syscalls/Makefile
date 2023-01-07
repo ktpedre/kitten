@@ -58,6 +58,7 @@ obj-y := \
 	pipe2.o  \
 	stat.o	 \
 	fstat.o	 \
+	newfstatat.o \
 	getdents.o \
 	getdents64.o \
 	readlink.o \

@@ -582,7 +582,7 @@ __SYSCALL(__NR_fchownat, syscall_not_implemented)
 #define __NR_futimesat		261
 __SYSCALL(__NR_futimesat, syscall_not_implemented)
 #define __NR_newfstatat		262
-__SYSCALL(__NR_newfstatat, syscall_not_implemented)
+__SYSCALL(__NR_newfstatat, newfstatat)
 #define __NR_unlinkat		263
 __SYSCALL(__NR_unlinkat, syscall_not_implemented)
 #define __NR_renameat		264
