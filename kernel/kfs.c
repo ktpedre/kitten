@@ -531,6 +531,7 @@ kfs_create_at(struct inode                  * root_inode,
 		//	__func__, full_filename );
 		//return NULL;
 		root_inode = kfs_root;
+		filename   = full_filename;
 	}else{
 		filename++;
 	}
