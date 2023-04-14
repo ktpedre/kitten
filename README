@@ -72,6 +72,8 @@ Supported Host (Build) Platforms
     x86_64 (64-bit only, no 32-bit support) Linux host. The following
     distributions have been verified to work:
 
+      * RedHat Enterprise Linux 7 (RHEL 7)
+          Must install glibc-static and syslinux packages
       * Fedora Core 15
           Must install glibc-static and syslinux packages
           Known Issue: The "mktemp is dangerous" link warnings can be ignored
