@@ -41,6 +41,7 @@ scripts/kconfig/lxdialog/lxdialog
 scripts/kallsyms
 .tmp_*
 include/arch
+linux/include/asm
 init_task
 user/hello_world/hello_world
 user/hafnium/hafnium
