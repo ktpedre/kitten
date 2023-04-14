@@ -15,6 +15,8 @@
 
 #include <arch/pgtable-bits.h>
 
+#include <lwk/const.h>
+
 #ifndef CONFIG_MMU
 #define KERNEL_LINK_ADDR	PAGE_OFFSET
 #define KERN_VIRT_SIZE		(UL(-1)UL)

@@ -46,11 +46,12 @@
 
 /** IO port address of the serial port. */
 
+//static unsigned int port = 0x2500000;
+static unsigned long port = 0x10000000;
 
-static unsigned int port = 0x10000000;
-
+#define SERIAL_MAX_BAUD	115200
 /** Serial port baud rate. */
-static unsigned int baud = 9600; */
+static unsigned int baud = 9600;
 
 /** Set when serial console has been initialized. */
 static int initialized = 0;
@@ -144,6 +145,8 @@ int serial_console_init(void)
 		return -1;
 	}
 
+	/* Can I do this here? */
+	set_fixmap(FIX_EARLYCON_MEM_BASE, port);
 	port = fix_to_virt(FIX_EARLYCON_MEM_BASE);
 
 /* 	outb( inb(port+LCR) | LCR_DLAB	, port+LCR ); // set DLAB */
@@ -174,5 +177,5 @@ DRIVER_INIT("console", serial_console_init);
  * Configurable parameters for controlling the serial port
  * I/O port address and baud.
  */
-DRIVER_PARAM(port, uint);
+DRIVER_PARAM(port, ulong);
 DRIVER_PARAM(baud, uint);

@@ -77,7 +77,8 @@ start_kernel()
  	 * Initialize the console subsystem.
  	 * printk()'s will be visible after this.
  	 */
-	set_fixmap(FIX_EARLYCON_MEM_BASE, 0x10000000);
+//	set_fixmap(FIX_EARLYCON_MEM_BASE, 0x10000000);
+
 	console_init();
 
 	/*
@@ -114,7 +115,6 @@ start_kernel()
  	 * Initialize the address space management subsystem.
  	 */
 	aspace_subsys_init();
-
 
 	sched_init_runqueue(0); /* This CPUs scheduler state + idle task */
 	sched_add_task(current);  /* now safe to call schedule() */

@@ -48,10 +48,8 @@ do_unhandled_exception(struct pt_regs * regs, unsigned int vector)
 void
 do_unhandled_irq(struct pt_regs *regs, unsigned int vector)
 {
-
 	printk(KERN_EMERG
 		"Unhandled Interrupt! (vector=%u)\n", vector);
-	
 }
 
 /* void */
@@ -97,7 +95,7 @@ handle_irq(struct pt_regs * regs)
 	/* struct arch_irq irq = irqchip_ack_irq(regs); */
 	/* irqreturn_t			ret = IRQ_NONE; */
 
-	/* printk(">> Hardware IRQ!!!! [%d]\n", irq.vector); */
+	/* printk(">> Hardware IRQ!!!!\n"); */
 
 	/* if (irq.type == IRQ_EXCEPTION) { */
 	/* 	irqvec_table[irq.vector](regs, irq.vector); */
