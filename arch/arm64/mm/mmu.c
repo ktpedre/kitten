@@ -199,6 +199,152 @@ dump_pgtable_arm64()
 	return;
 }
 
+static inline u64 get_mair_el1()
+{
+	u64 mair = 0xdeadbeefULL;;
+	__asm__ __volatile__("mrs %0, mair_el1\n":"=r"(mair));
+	return mair;
+}
+
+void
+dump_pgtable_arm64_earlyprintk()
+{
+	u64   ttbr0 = get_ttbr0_el1();
+	u64   ttbr1 = get_ttbr1_el1();
+
+	xpte_t * pgd_array[2] = {NULL, NULL};
+
+	int i = 0;
+	int j = 0;
+	int k = 0;
+
+	early_printk("mair_el1 0x%llx\n", get_mair_el1());
+	early_printk("tcr_el1 0x%llx\n", get_tcr_el1());
+
+	pgd_array[0] = __va(ttbr0 & PAGE_MASK);
+	pgd_array[1] = __va(ttbr1 & PAGE_MASK);
+
+	for (i = 0; i < 2; i++) {
+
+		xpte_t * pgd = pgd_array[i];
+		xpte_t * pmd = NULL;
+		xpte_t * ptd = NULL;
+
+		xpte_t * pge = NULL;
+		xpte_t * pme = NULL;
+		xpte_t * pte = NULL;
+
+		unsigned long pgd_index = 0;
+		unsigned long pmd_index = 0;
+		unsigned long ptd_index = 0;
+
+		unsigned long upper_range = 0xffffff8000000000;
+
+		early_printk("TTBR%d Tables @ %p\n", i, pgd_array[i]);
+		for (pgd_index = 0; pgd_index < 512; pgd_index++)
+		{
+			pge = &pgd[pgd_index];
+			if (!pge->valid) {
+				//early_printk("Invalid PGD entry (index=%d)\n", pgd_index);
+				continue;
+			}
+
+//			early_printk("PGD [%u]: %llx\n", pgd_index, *(u64 *)pge);
+
+			if (pge->type == 0) {
+				// 1GB page
+				xpte_1GB_t * pge_1GB = (xpte_1GB_t *)pge;
+
+				early_printk("\t%s, %s, AttrIdx=%d, been_read=%d, been_written=%d, NS=%d, PXN=%d, XN=%d\n", 
+				       pge_1GB->AP1 ? "user"      : "system",
+				       pge_1GB->AP2 ? "read-only" : "writable",
+				       pge_1GB->attrIndx,
+				       pge_1GB->AF,
+				       pge_1GB->DBM,
+				       pge_1GB->NS,
+				       pge_1GB->PXN, 
+				       pge_1GB->XN);
+				early_printk("\t %p --> %p\n",
+				       upper_range | (pgd_index << 30),
+				       xpte_1GB_paddr(pge_1GB));
+				early_printk("\t0x%llx\n", *pge_1GB);
+				continue;
+			}
+
+			for (pmd_index = 0; pmd_index < 512; pmd_index++)
+			{
+				pmd = __va(xpte_4KB_paddr(pge));
+				pme = &pmd[pmd_index];
+
+				if (!pme->valid) {
+					//early_printk("Invalid PMD entry (index=%d)\n", pmd_index);
+					continue;		
+				} 
+
+//				early_printk("PGD [%u] PMD [%u]: %llx\n", pgd_index, pmd_index, *(u64 *)pme);
+
+				if (pme->type == 0) {
+					// 2MB page;
+					xpte_2MB_t * pme_2MB = (xpte_2MB_t *)pme;
+
+					early_printk("\t%s, %s, AttrIdx=%d, been_read=%d, been_written=%d, NS=%d, PXN=%d, XN=%d\n", 
+					       pme_2MB->AP1 ? "user"      : "system",
+					       pme_2MB->AP2 ? "read-only" : "writable",
+					       pme_2MB->attrIndx,
+					       pme_2MB->AF,
+					       pme_2MB->DBM,
+					       pme_2MB->NS,
+					       pme_2MB->PXN, 
+					       pme_2MB->XN);
+					early_printk("\t %p --> %p\n",
+					       ( upper_range | (pgd_index << 30) | (pmd_index << 21) ),
+					       xpte_2MB_paddr(pme_2MB));
+					early_printk("\t0x%llx\n", *pme_2MB);
+
+					continue;
+				}
+
+				for (ptd_index = 0; ptd_index < 512; ptd_index++)
+				{
+
+					ptd = __va(xpte_4KB_paddr(pme));
+					pte = &ptd[ptd_index];
+
+					if (!pte->valid) {
+						//early_printk("Invalid PTD entry (index=%d)\n", ptd_index);
+						continue;
+					} else {
+						xpte_4KB_t * pte_4KB = (xpte_4KB_t *)pte;
+
+						early_printk("PGD [%u] PMD [%u] PTD [%u]: %llx\n", pgd_index, pmd_index, ptd_index, *(u64 *)pte);
+						early_printk("\t%s, %s, AttrIdx=%d, been_read=%d, been_written=%d, NS=%d, PXN=%d, XN=%d\n", 
+						       pte_4KB->AP1 ? "user"      : "system",
+						       pte_4KB->AP2 ? "read-only" : "writable",
+						       pte_4KB->attrIndx,
+						       pte_4KB->AF,
+						       pte_4KB->DBM,
+						       pte_4KB->NS,
+						       pte_4KB->PXN, 
+						       pte_4KB->XN);
+
+
+						early_printk("\t %p --> %p\n",
+						       ( upper_range | (pgd_index << 30) | (pmd_index << 21) | (ptd_index << 12) ),
+						       xpte_4KB_paddr(pte_4KB));
+						early_printk("\t0x%llx\n", *pte_4KB);
+
+					}
+
+				}
+			}
+
+		}
+
+	}
+
+	return;
+}
+
 
 static void
 __walk_3lvl_pgtable(vaddr_t vaddr)
