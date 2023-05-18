@@ -21,6 +21,10 @@ static struct irqchip * irq_controller = NULL;
 int __init 
 irqchip_local_init(void)
 {
+	if (!irq_controller) {
+		panic("Tried to init NULL local irqchip!\n");
+	}
+
 	irq_controller->core_init(irq_controller->dt_node);
 }
 
@@ -44,13 +48,13 @@ static const struct of_device_id intr_ctrlr_of_match[]  = {
 };
 
 
-
 int 
 irqchip_register(struct irqchip * chip)
 {
 	if (irq_controller) {
 		panic("Failed to register irq controller. Already registered.\n");
 	}
+
 
 	printk("Registering IRQ Controller [%s]\n", chip->name);
 	irq_controller = chip;	
