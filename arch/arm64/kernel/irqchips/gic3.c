@@ -105,9 +105,16 @@ __gic3_print_pending_irqs(void)
 	uint32_t gicd_ctlr  = 0;
 	uint64_t gicr_typer = 0;
 
+	uint32_t gicd_igrp0    = 0;
+	uint32_t gicd_imodgrp0 = 0;
+
 	pending = __gicr_read32(this_cpu, GICR_ISPENDR_0_OFFSET);
 	enabled = __gicr_read32(this_cpu, GICR_ISENABLER_0_OFFSET);
 	printk("GICR_pending_0 = %x, enabled_0=%x\n", pending, enabled);
+
+	pending = __gicr_read32(this_cpu, GICD_ISPENDR_OFFSET(0));
+	enabled = __gicr_read32(this_cpu, GICD_ISENABLER_OFFSET(0));
+	printk("GICD_pending_0 = %x, enabled_0=%x\n", pending, enabled);
 
 	ipriority.val = __gicr_read32(this_cpu, GICR_IPRIORITYR_OFFSET(7));
 	printk("GICR_IPRIORITY(7) = %x, icc_rpr = %p, icc_pmr = %p\n", ipriority.val, (void *)icc_rpr, (void *)icc_pmr);
@@ -119,6 +126,9 @@ __gic3_print_pending_irqs(void)
 	gicr_typer = __gicr_read64(this_cpu, GICR_TYPER_OFFSET);
 	printk("GICR_TYPER = 0x%lx\n", gicr_typer);
 
+	gicd_igrp0 = __gicd_read32(GICD_IGROUPR_OFFSET(0));
+	gicd_imodgrp0 = __gicd_read32(GICD_IGRPMODR_OFFSET(0));
+	printk("GICD_IGRP0 0x%lx GICD_IGRPMODR0 0x%lx\n", gicd_igrp0, gicd_imodgrp0);
 
 }
 
@@ -126,6 +136,8 @@ static void
 __gic3_dump_state(void)
 {
 	printk("Dumping GIC3 state not implemented\n");
+
+	
 }
 
 
@@ -258,12 +270,19 @@ __gicd_setup()
 
 	int i = 0;
 
+#ifndef CONFIG_TEE
 	// disable GICD
 	__gicd_write32(GICD_CTLR_OFFSET, ctlr.val); 
+#endif
 
 	// disable all irqs (manual says there are 32 registers...)
 	for (i = 0; i < 32; i++) {
 		__gicd_write32(GICD_ICENABLER_OFFSET(i), 0xffffffff);
+		/*
+		 * __gicd_write32(GICD_ISENABLER_OFFSET(i), 0xffffffff);
+		 * __gicd_write32(GICD_IGRPMODR_OFFSET(i), 0xffffffff);
+		 * __gicd_write32(GICD_IGROUPR_OFFSET(i), 0x00000000);
+		 */
 	}
 
 	// clear all pending irqs
@@ -274,6 +293,7 @@ __gicd_setup()
 	// set all SPIs to lowest priority
 	for (i = 0; i < 255; i++) {
 		__gicd_write32(GICD_IPRIORITYR_OFFSET(i), 0xffffffff);
+//		__gicd_write32(GICD_IPRIORITYR_OFFSET(i), 0x00000000);
 	}
 
 
@@ -292,7 +312,12 @@ __gicd_setup()
 	printk("CTLR Value = %x\n", ctlr.val);
 
 	// enable GICD
-	__gicd_write32(GICD_CTLR_OFFSET, 0x3); 
+#ifndef CONFIG_TEE
+	__gicd_write32(GICD_CTLR_OFFSET, 0x3);
+#else 
+	/* Shouldn't this be 0b111/0x7? */
+	//__gicd_write32(GICD_CTLR_OFFSET, (ctlr.val | 0x7)); // Why doesn't this value end up as 0x7? Are G1S interrupts disabled?
+#endif
 
 	ctlr.val = __gicd_read32(GICD_CTLR_OFFSET);
 	printk("CTLR Value = %x\n", ctlr.val);
@@ -334,7 +359,11 @@ __gicr_setup()
 	}
 
 	// Enable all SGIs
+#ifndef CONFIG_TEE
+	__gicr_write32(this_cpu, GICR_ISENABLER_OFFSET(0), 0xffffffff);
+#else 
 	__gicr_write32(this_cpu, GICR_ISENABLER_OFFSET(0), 0x0000ffff);
+#endif
 
 
 	// clear all pending irqs
@@ -364,12 +393,20 @@ __gicr_setup()
 		__gicr_write32(this_cpu, GICR_ICFGR_OFFSET(i), 0xffffffff);
 	}
 
-
-	// Set all IRQs to Non-secure Group 1
-	for (i = 0; i < 3; i++) {
+#ifndef CONFIG_TEE
+	 /* Set SGIs and PPIs to 1GS */
+ 	for (i = 0; i < 3; i++) {
 		__gicr_write32(this_cpu, GICR_IGRPMODR_OFFSET(i), 0x00000000);
 		__gicr_write32(this_cpu, GICR_IGROUPR_OFFSET(i),  0xffffffff);
 	}
+#else 
+	/* NMG: Need to figure out how to "share" these with Linux. If we configure these for 1GNS then we don't receive the timer tick, even secure phys timer. */
+	/* Set SGIs and PPIs to 1GS */
+ 	for (i = 0; i < 3; i++) {
+		__gicr_write32(this_cpu, GICR_IGRPMODR_OFFSET(i), 0xffffffff);
+		__gicr_write32(this_cpu, GICR_IGROUPR_OFFSET(i),  0x00000000);
+	}
+#endif
 
 }
 
@@ -417,13 +454,13 @@ __icc_setup()
 	// clear group 0 irqs (I don't think we need to do this...)
 	while (1) {
 		struct icc_hppir hppir = {mrs(ICC_HPPIR0_EL1)};
-
+	
 		if (hppir.intid == GIC3_SPURIOUS_IRQ) {
 			break;
 		}
 		
 		printk("Clearing IRQ %d\n", hppir.intid);
-
+	
 		mrs(ICC_IAR0_EL1);
 		msr(ICC_EOIR0_EL1, hppir.val);
 	}
@@ -431,13 +468,13 @@ __icc_setup()
 	// clear group 1 irqs
 	while (1) {
 		struct icc_hppir hppir = {mrs(ICC_HPPIR1_EL1)};
-
+	
 		if (hppir.intid == GIC3_SPURIOUS_IRQ) {
 			break;
 		}
 		
 		printk("Clearing IRQ %d\n", hppir.intid);
-
+	
 		mrs(ICC_IAR1_EL1);
 		msr(ICC_EOIR1_EL1, hppir.val);
 	}
@@ -539,23 +576,42 @@ __gic3_parse_irqs(struct device_node *  dt_node,
 
 	irq_cells = be32_to_cpup(ip);
 
-	if (irq_cells != 3) {
-		printk("Interrupt Cell size of (%d) is not supported\n", irq_cells);
+	if (! (irq_cells == 3 || irq_cells == 4) ) {
+		printk("Interrupt Cell sizes of (3) and (4) supported only, not (%d)!\n", irq_cells);
 		goto err;
 	}
-	
 
 	for (i = 0; i < num_irqs; i++) {
-		uint32_t type   = 0;
-		uint32_t vector = 0;
-		uint32_t mode   = 0;
-		
-		ret |= of_property_read_u32_index(dt_node, "interrupts", &type,   (i * 3));
-		ret |= of_property_read_u32_index(dt_node, "interrupts", &vector, (i * 3) + 1);
-		ret |= of_property_read_u32_index(dt_node, "interrupts", &mode,   (i * 3) + 2);
+		uint32_t	type	 = 0;
+		uint32_t	vector	 = 0;
+		uint32_t	mode	 = 0;
+		uint32_t	affinity = 0;
+
+		switch (irq_cells) {
+		case 4:
+			ret |= of_property_read_u32_index(dt_node, "interrupts",
+							  &affinity, (i * irq_cells) + 3);
+			// Intentional fall-through
+		case 3:
+			ret |= of_property_read_u32_index(dt_node, "interrupts",
+							  &type,     (i * irq_cells));
+			ret |= of_property_read_u32_index(dt_node, "interrupts",
+							  &vector,   (i * irq_cells) + 1);
+			ret |= of_property_read_u32_index(dt_node, "interrupts",
+							  &mode,     (i * irq_cells) + 2);
+			break;
+		default:
+			printk("Invalid number of IRQ cells\n");
+			goto err;
+		}
 
 		if (ret != 0) {
 			printk("Failed to fetch interrupt cell\n");
+			goto err;
+		}
+
+		if (affinity != 0) {
+			printk("Affinity-enabled interrupts not supported\n");
 			goto err;
 		}
 
@@ -572,6 +628,8 @@ __gic3_parse_irqs(struct device_node *  dt_node,
 		} else {
 			panic("Invalid IRQ Type\n");
 		}
+
+		printk("Adjusting vector %u to %u\n", vector, irqs[i].vector);
 	}
 
 	return 0;
