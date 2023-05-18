@@ -96,7 +96,10 @@ config TIMER_ONESHOT
 
 endchoice
 
-
+config TEE
+			 bool "Configure Kitten to run as a TEE"
+			 help
+			"You need this for running Kitten in TrustZone, like GIC delivering interrupts maybe?"
 
 config BLK_DEV_INITRD
        bool "INITRD support"
