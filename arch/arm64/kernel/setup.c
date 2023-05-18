@@ -358,6 +358,10 @@ setup_arch(void)
 	 */
 	printk("Syscall map NOT initialized\n");
 	//vsyscall_map();
+#ifdef CONFIG_TEE
+	setup_secure();
+	secure_memory(start, end);
+#endif
 
 	cpu_init();
 

@@ -66,11 +66,19 @@ static inline void local_irq_disable(void)
 
 static inline void local_irq_enable(void)
 {
+#if CONFIG_TEE
 	asm volatile(
-		"msr	daifclr, #2		// arch_local_irq_enable"
+		"msr	daifclr, #3		// arch_local_irq_enable"
 		:
 		:
 		: "memory");
+#else
+	asm volatile(
+		"msr	daifclr, #3		// arch_local_irq_enable"
+		:
+		:
+		: "memory");
+#endif
 }
 
 #define irqs_disabled()			\

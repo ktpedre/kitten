@@ -107,7 +107,6 @@
  * in the entry routines.
  */
 
-#	__HEAD
 	.text
 	.section .bootstrap.text
 
@@ -142,17 +141,28 @@ pe_header:
 #endif
 ENTRY(stext)
 
-	serial_write_str 'H', 'E', 'A', 'D'
-    serial_write_reg x0
-    ldr x1, [x0]
-    serial_write_reg x1
+#ifdef CONFIG_TEE
+	serial_write_str 'T', 'E', 'E'
+	adr x21, entry_point_setup_addr
+	ldr x22, [x21]
+	cmp x22, xzr // This value is initialized to zero. If this is zero, we're the boot core.
+	beq 1f       // No way to conditional branch on register.
+  br x22
+1:
+	// If we get here we are the boot core. Reconfigure that jump point to direct secondary cores to the right spot.
+	adr x22, secondary_entry
+	str x22, [x21]
+#endif
+
+  serial_write_str 'H', 'E', 'A', 'D'
+  serial_write_reg x0
+  ldr x1, [x0]
+  serial_write_reg x1
 
 	mov	x21, x0				// x21=FDT
 	bl	el2_setup			// Drop to EL1
 
 /* ****  */
-    serial_write_str 'E', 'L', '1'
-    serial_write_reg x21
 /* ****  */
 
 
@@ -244,8 +254,10 @@ ENDPROC(el2_setup)
 	.align	3
 1:	.quad	.
 	.quad	0//secondary_holding_pen_release
-
-
+#ifdef CONFIG_TEE
+entry_point_setup_addr:
+	.quad 0 // Default value.
+#endif
 
 #define BOOT_CPU_MODE_EL1	(0xe11)
 #define BOOT_CPU_MODE_EL2	(0xe12)
@@ -533,14 +545,15 @@ __create_page_tables:
 
 	create_block_map x0, x7, x3, x5, x6
 #endif
-#if 0
-	.macro	create_pgd_entry, pgd, tbl, virt, tmp1, tmp2
-	lsr	\tmp1, \virt, #PGDIR_SHIFT
-	and	\tmp1, \tmp1, #PTRS_PER_PGD - 1	// PGD index
-	orr	\tmp2, \tbl, #3			// PGD entry table type
-	str	\tmp2, [\pgd, \tmp1, lsl #3]
-	.endm
 
+#ifdef CONFIG_TEE
+#define MMIO_BASE		0xF8000000
+#define SGRF_BASE		(MMIO_BASE + 0x07330000)
+
+	ldr x3, =SGRF_BASE
+	ldr	x7, =(PMD_ATTRINDX(MT_DEVICE_nGnRnE) | PMD_FLAGS)//=MM_MMUFLAGS
+	add x6, x3, #(1<<21)
+	create_block_map x0, x7, x3, x3, x6, idmap=1
 #endif
 
 /*  JRL: WTF is this???

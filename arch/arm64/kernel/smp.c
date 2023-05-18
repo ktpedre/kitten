@@ -205,13 +205,12 @@ static void __init of_parse_and_init_cpus(void)
 {
 	struct device_node *dn;
 
-
 	printk("Parsing FDT for CPUs\n");
 
 	for_each_node_by_type(dn, "cpu") {
 		u64 hwid = of_get_cpu_mpidr(dn);
 
-		printk("Found CPU ID: %p\n", (void *)hwid);
+		printk("Found CPU ID: 0x%lx\n", (void *)hwid);
 
 		if (hwid == INVALID_HWID)
 			goto next;

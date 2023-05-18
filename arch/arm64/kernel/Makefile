@@ -11,9 +11,9 @@ obj-y		:= setup.o memblock.o cpuinfo.o resource.o \
                irqchip.o \
                smccc-call.o cpu_ops.o smp.o \
                smp_spin_table.o psci.o reboot.o \
-               topology.o
-
-
+               topology.o 
+               
+obj-$(CONFIG_TEE)     += secure.o
 
 obj-$(CONFIG_ARM64_ACPI_PARKING_PROTOCOL) += acpi_parking_protocol.o
 

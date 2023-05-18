@@ -144,6 +144,7 @@ arch_boot_cpu(unsigned int cpu)
 	secondary_data.stack = (unsigned long)new_task_union
 	                                  + sizeof(union task_union) - 16;
 	__flush_dcache_area(&secondary_data, sizeof(secondary_data));
+	__flush_dcache_area(new_task, sizeof(struct task_struct));
 
 
 	/*
