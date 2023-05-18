@@ -50,7 +50,12 @@ config ARCH_RASPI3
 config ARCH_PINE64
 	bool "Pine A64 LTS"
 	help
-		Support for Pine A64 LTS 
+		Support for Pine A64 LTS
+
+config ARCH_ROCKPRO
+	bool "Pine Rockchip RK3399"
+	help
+		Support for Pine Rockpro RK3399O
 
 endchoice
 
@@ -126,6 +131,7 @@ config SERIAL_PHYS
 	default "0x3f215040" if ARCH_RASPI3
 	default "0x1c28000"  if ARCH_PINE64
 #	default "0x3f201000" if ARCH_RASPI3
+	default "0xff1a0000" if ARCH_ROCKPRO
 
 
 config NR_CPUS
