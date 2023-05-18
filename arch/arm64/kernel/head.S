@@ -326,7 +326,7 @@ ENTRY(secondary_startup)
 	/*
 	 * Common entry point for secondary CPUs.
 	 */
-	mrs	x22, midr_el1			// x22=cpuid
+	mrs	x22, mpidr_el1			// x22=cpuid
 
 #if 0
 	mov	x0, x22
