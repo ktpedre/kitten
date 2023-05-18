@@ -59,7 +59,7 @@ static uint32_t* addr = NULL;
 #define LCR_DLAB	0x80	// Divisor latch access bit
 
 /** IO port address of the serial port. */
-static volatile u8* port = EARLYCON_IOBASE + (UART_PHYS_ADDR & ((1u << PMD_SHIFT) - 1));  // COM1
+static volatile u8* port = EARLYCON_IOBASE + (CONFIG_SERIAL_PHYS & ((1u << PMD_SHIFT) - 1));  // COM1
 
 /** Serial port baud rate. */
 static unsigned int baud = 115200;
